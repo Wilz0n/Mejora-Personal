@@ -497,9 +497,9 @@ function ViewToggle({ current }: { current: Period }) {
     { view: "semester", label: "Semestral" },
   ];
   const base =
-    "text-center whitespace-nowrap px-3 py-1.5 rounded-md text-label-caps text-[11px] font-label-caps transition-colors";
+    "text-center whitespace-nowrap px-3 py-2.5 sm:py-1.5 rounded-md font-label-caps text-[13px] sm:text-[11px] transition-colors";
   return (
-    <div className="grid grid-cols-2 sm:flex w-full sm:w-auto bg-surface-container rounded-lg p-1 border border-outline-variant gap-0.5">
+    <div className="grid grid-cols-2 sm:flex w-full sm:w-auto bg-surface-container rounded-lg p-1.5 sm:p-1 border border-outline-variant gap-1 sm:gap-0.5">
       {options.map((o) => (
         <Link
           key={o.view}

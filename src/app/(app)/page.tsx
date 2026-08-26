@@ -119,13 +119,13 @@ export default async function DashboardPage() {
         </div>
 
         {/* Distribución financiera */}
-        <div className="glass-panel rounded-2xl p-6 lg:col-span-2 flex flex-col h-[400px]">
-          <div className="flex justify-between mb-6 border-b border-outline-variant/30 pb-4 items-center">
+        <div className="glass-panel rounded-2xl p-4 sm:p-6 lg:col-span-2 flex flex-col h-[320px] sm:h-[400px]">
+          <div className="flex justify-between mb-4 sm:mb-6 border-b border-outline-variant/30 pb-3 sm:pb-4 items-center">
             <div>
-              <h3 className="text-headline-md font-headline-md text-on-surface">
+              <h3 className="text-body-lg sm:text-headline-md font-headline-md text-on-surface">
                 Distribución Financiera
               </h3>
-              <p className="text-sm text-on-surface-variant mt-1 capitalize">
+              <p className="text-[12px] sm:text-sm text-on-surface-variant mt-1 capitalize">
                 {monthLabel()}
               </p>
             </div>
@@ -244,8 +244,8 @@ function Bar({
   segments: { cls: string; h: string }[];
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 z-10 w-full max-w-[60px]">
-      <div className="w-full flex items-end gap-1 h-[200px]">
+    <div className="flex flex-col items-center gap-1 sm:gap-2 z-10 w-full max-w-[48px] sm:max-w-[60px]">
+      <div className="w-full flex items-end gap-1 h-[140px] sm:h-[200px]">
         {segments.map((s, i) => (
           <div
             key={i}
@@ -254,7 +254,7 @@ function Bar({
           />
         ))}
       </div>
-      <span className="text-label-caps font-label-caps text-on-surface-variant text-center">
+      <span className="text-[9px] sm:text-label-caps font-label-caps text-on-surface-variant text-center leading-tight">
         {label}
       </span>
     </div>
