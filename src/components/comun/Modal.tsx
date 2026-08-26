@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "@/components/comun/Icon";
 
 interface ModalProps {
@@ -11,6 +12,11 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
+  const [mounted, setMounted] = useState(false);
+
+  // Necesario para usar portales solo en cliente (evita mismatch de SSR).
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -24,9 +30,13 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  // Se renderiza en document.body vía portal para NO quedar atrapado por
+  // ancestros con backdrop-filter/transform (p. ej. las tarjetas .glass-panel),
+  // que romperían el posicionamiento fixed. Así el modal se centra respecto
+  // al viewport completo.
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] overflow-y-auto"
       role="dialog"
@@ -38,7 +48,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         className="fixed inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      {/* Contenedor centrado con padding para scroll en pantallas pequeñas */}
+      {/* Contenedor centrado; permite scroll si el modal es más alto que la ventana */}
       <div className="relative flex min-h-full items-center justify-center p-4">
         <div
           className="relative w-full max-w-md rounded-2xl bg-surface-container border border-outline-variant p-6 shadow-[0px_20px_50px_rgba(0,0,0,0.5)]"
@@ -60,6 +70,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         </div>
       </div>
       <style>{`@keyframes modalIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }
