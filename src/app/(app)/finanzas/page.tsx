@@ -36,7 +36,7 @@ export default async function FinancePage() {
   const currency = finance.currency;
 
   // Ahorro mensual: el valor guardado por el usuario; si aún no definió uno,
-  // se muestra la sugerencia del 20% del ingreso como referencia.
+  // se muestra (y descuenta) la sugerencia del 20% del ingreso como referencia.
   const savings =
     summary.monthlySavings > 0
       ? summary.monthlySavings
@@ -45,6 +45,16 @@ export default async function FinancePage() {
     summary.monthlyIncome > 0
       ? Math.round((savings / summary.monthlyIncome) * 100)
       : 0;
+
+  // Balance efectivo: descuenta el ahorro MOSTRADO (guardado o sugerido),
+  // los gastos fijos y lo asignado a proyectos. Así el balance siempre
+  // refleja lo que el usuario ve como ahorro en pantalla.
+  const availableBalance =
+    summary.monthlyIncome -
+    savings -
+    summary.totalFixedExpenses -
+    summary.totalAllocated;
+
   // % disponible respecto al ingreso, para la barra del "Balance Restante".
   const availablePct =
     summary.monthlyIncome > 0
@@ -52,7 +62,7 @@ export default async function FinancePage() {
           0,
           Math.min(
             100,
-            Math.round((summary.availableBalance / summary.monthlyIncome) * 100),
+            Math.round((availableBalance / summary.monthlyIncome) * 100),
           ),
         )
       : 0;
@@ -205,10 +215,10 @@ export default async function FinancePage() {
             </h3>
             <div
               className={`text-stats-lg font-stats-lg mb-1 font-mono tracking-tight ${
-                summary.availableBalance < 0 ? "text-error" : "text-on-background"
+                availableBalance < 0 ? "text-error" : "text-on-background"
               }`}
             >
-              {formatCurrency(summary.availableBalance, { currency })}
+              {formatCurrency(availableBalance, { currency })}
             </div>
             <p className="text-body-sm font-body-sm text-on-surface-variant mb-6">
               Disponible para proyectos y ocio.

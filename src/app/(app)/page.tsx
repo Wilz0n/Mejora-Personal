@@ -41,6 +41,14 @@ export default async function DashboardPage() {
       ? summary.monthlySavings
       : Math.round(summary.monthlyIncome * 0.2);
 
+  // Balance efectivo: descuenta el ahorro mostrado (guardado o sugerido),
+  // coherente con la página de Finanzas.
+  const availableBalance =
+    summary.monthlyIncome -
+    protectedSavings -
+    summary.totalFixedExpenses -
+    summary.totalAllocated;
+
   return (
     <>
       <section className="mb-10">
@@ -66,7 +74,7 @@ export default async function DashboardPage() {
           label="Balance Disponible"
           icon="account_balance_wallet"
           iconClass="text-on-surface-variant"
-          value={formatCurrency(summary.availableBalance, { currency })}
+          value={formatCurrency(availableBalance, { currency })}
         />
         <KpiCard
           label="Ahorro Protegido"
@@ -133,7 +141,7 @@ export default async function DashboardPage() {
             income={summary.monthlyIncome}
             fixed={summary.totalFixedExpenses}
             savings={summary.totalAllocated}
-            available={summary.availableBalance}
+            available={availableBalance}
           />
           {topProject && (
             <div className="mt-4 pt-4 border-t border-outline-variant/30">

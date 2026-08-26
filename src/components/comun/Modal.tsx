@@ -28,32 +28,36 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label={title}
     >
+      {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div
-        className="relative w-full max-w-md rounded-2xl bg-surface-container border border-outline-variant p-6 shadow-[0px_20px_50px_rgba(0,0,0,0.5)]"
-        style={{ animation: "modalIn 0.15s ease-out" }}
-      >
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-headline-md font-headline-md text-on-surface">
-            {title}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-on-surface-variant hover:text-primary transition-colors"
-            aria-label="Cerrar"
-          >
-            <Icon name="close" />
-          </button>
+      {/* Contenedor centrado con padding para scroll en pantallas pequeñas */}
+      <div className="relative flex min-h-full items-center justify-center p-4">
+        <div
+          className="relative w-full max-w-md rounded-2xl bg-surface-container border border-outline-variant p-6 shadow-[0px_20px_50px_rgba(0,0,0,0.5)]"
+          style={{ animation: "modalIn 0.15s ease-out" }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <h3 className="text-headline-md font-headline-md text-on-surface">
+              {title}
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-on-surface-variant hover:text-primary transition-colors"
+              aria-label="Cerrar"
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+          {children}
         </div>
-        {children}
       </div>
       <style>{`@keyframes modalIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
