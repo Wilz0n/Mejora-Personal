@@ -286,6 +286,11 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 
 **Ajustes / Perfil (`/settings`)**
 - **Editar perfil:** `src/components/settings/EditProfileButton.tsx` (acción `updateProfile`).
+**Ajustes / Perfil (`/settings`)**
+- **Editar perfil (nombre + foto):** `src/components/settings/EditProfileButton.tsx` (acción `updateProfile`).
+  - **Nombre:** al guardarlo se refleja en el saludo del Dashboard ("Hola, {nombre}") y en el topbar. La acción hace `revalidatePath("/", "layout")` para refrescar toda la app.
+  - **Foto (avatar):** se **sube desde el equipo** y se **optimiza en el navegador** (canvas → recorte cuadrado 128×128 → compresión). Elige el formato más ligero disponible: **AVIF → WebP → JPEG → PNG**. Resultado ~5–15 KB, guardado como Data URL en `User.image` (no satura la BD). Acepta subir AVIF/PNG/WebP/JPG; recomienda AVIF.
+  - El avatar se muestra en el **topbar** (`Topbar` recibe `avatar` desde `layout.tsx`) y en **Settings → Identidad**.
 - **Moneda por defecto (USD/PEN):** `src/components/settings/CurrencySelect.tsx` (acción `setCurrency`). Campo BD: `FinancialSummary.currency`. Constantes/formato: `SUPPORTED_CURRENCIES` y `formatCurrency` en `finance-logic.ts`.
 - **Exportar datos (JSON/CSV):** endpoint `src/app/api/export/route.ts` (usa `getUserExportData`).
 - **Purgar datos de cuenta:** `src/components/settings/PurgeDataButton.tsx` (acción `purgeAccountData`, **destructiva**, con confirmación por palabra).
@@ -297,6 +302,12 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 - `scripts/db-sync.mjs` → hook `predev`: sincroniza tu BD local antes de `npm run dev`.
 
 > 🧩 **Patrón para "quitar" algo:** botón cliente → modal con lista (o botón directo) → Server Action `deleteX` (que ya filtra por `userId`) → `revalidatePath`. Reutiliza los componentes `Remove*Button` existentes como plantilla.
+
+### Notas de UI importantes (para no repetir bugs)
+
+- **Modales = usa siempre `src/components/comun/Modal.tsx`.** Se renderiza con un **React Portal** en `document.body`. Esto es obligatorio porque las tarjetas usan `.glass-panel` (con `backdrop-filter`), y un ancestro con `backdrop-filter`/`transform` **atrapa** los elementos `position: fixed`. Sin el portal, los popups se muestran cortados/descentrados dentro de su tarjeta. No crees modales con `fixed` sueltos dentro de una tarjeta.
+- **Topbar con `shrink-0`:** el header vive en un flex-column; sin `shrink-0` se comprime cuando la página tiene mucho contenido (se veía "aplastado" en Finanzas). Mantén `h-16 shrink-0`.
+- **Subida de imágenes:** Vercel tiene filesystem efímero (no se pueden escribir archivos). Por eso el avatar se comprime y se guarda como Data URL en la BD. Si algún día se necesitan imágenes grandes o muchos usuarios, migrar a **Vercel Blob** (guardar solo la URL).
 
 ---
 

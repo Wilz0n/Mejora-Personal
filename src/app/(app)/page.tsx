@@ -1,5 +1,5 @@
 import { getUserId } from "@/lib/session";
-import { getHabitsForToday, getFinanceData, getHabitsWithLogs } from "@/lib/data";
+import { getHabitsForToday, getFinanceData, getHabitsWithLogs, getUserProfile } from "@/lib/data";
 import {
   computeHabitRates,
   computeHabitKpis,
@@ -21,10 +21,11 @@ export default async function DashboardPage() {
   const userId = await getUserId();
   const today = todayKey();
 
-  const [todayHabits, weekHabits, finance] = await Promise.all([
+  const [todayHabits, weekHabits, finance, profile] = await Promise.all([
     getHabitsForToday(userId, today),
     getHabitsWithLogs(userId, "week"),
     getFinanceData(userId),
+    getUserProfile(userId),
   ]);
 
   const todayList = habitsForToday(todayHabits);
@@ -53,7 +54,7 @@ export default async function DashboardPage() {
     <>
       <section className="mb-10">
         <h2 className="text-headline-lg font-headline-lg text-on-surface mb-2">
-          Hola, Usuario.
+          Hola, {profile.name}.
         </h2>
         <p className="text-body-lg font-body-lg text-on-surface-variant">
           Hoy es un buen día para avanzar.

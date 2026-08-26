@@ -64,8 +64,14 @@ export const updateProfileSchema = z.object({
   image: z
     .string()
     .trim()
-    .url("URL de imagen inválida")
-    .max(500)
+    .max(60_000) // avatar comprimido (~10–40 KB en base64); evita inflar la BD
+    .refine(
+      (v) =>
+        v === "" ||
+        /^https?:\/\//i.test(v) ||
+        /^data:image\/(avif|webp|png|jpe?g);base64,/i.test(v),
+      { message: "Imagen inválida (sube una foto o usa una URL http)" },
+    )
     .optional()
     .or(z.literal("")),
 });
