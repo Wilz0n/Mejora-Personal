@@ -2,11 +2,14 @@
 
 Bienvenido a **LifeTracker**, tu espacio para construir mejores hábitos y tomar el control de tus finanzas personales. Esta guía explica cómo funciona cada pantalla y qué significan las métricas que verás.
 
-La app tiene tres secciones principales, accesibles desde el menú lateral (o la barra inferior en móvil):
+La app tiene estas secciones, accesibles desde el menú lateral (o la barra inferior en móvil):
 
 - 🏠 **Dashboard** — resumen de todo
 - 🔁 **Hábitos** — seguimiento diario y análisis
-- 💰 **Finanzas** — balance, gastos y metas de ahorro
+- 💰 **Finanzas** — balance, gastos, ahorro y metas
+- 🗂️ **Proyectos** — (en construcción, próximamente)
+- ⚙️ **Ajustes** — perfil, moneda y tus datos (también se abre con el icono de perfil, arriba a la derecha)
+- ❓ **Soporte** — (en construcción)
 
 ---
 
@@ -21,9 +24,9 @@ En la parte superior verás cuatro tarjetas:
 | Tarjeta | Qué significa |
 |---------|---------------|
 | **Progreso de Hábitos** | Tu **tasa global** de cumplimiento de la semana actual (%). Incluye una barra de progreso visual. |
-| **Balance Disponible** | El dinero que te queda libre este mes tras gastos fijos y ahorros asignados. |
-| **Gastos Fijos** | La suma de todos tus gastos fijos registrados. |
-| **Fondo de Proyectos** | El total que has asignado (ahorrado) a tus metas. |
+| **Balance Disponible** | El dinero que te queda libre este mes tras el ahorro, los gastos fijos y lo asignado a proyectos. |
+| **Ahorro Protegido** | Tu ahorro mensual (el que definas, o el 20% del ingreso por defecto). |
+| **Fondo de Proyecto Activo** | El total que has asignado (ahorrado) a tus metas. |
 
 ### Hábitos de Hoy — marca al instante ✅
 
@@ -56,9 +59,10 @@ Pensada para el **día a día**:
 
 - Muestra una tabla con tus hábitos en filas y los **7 días de la semana** (Lun–Dom) en columnas.
 - Haz clic en cualquier casilla para **registrar el avance de ese día**. El día de hoy aparece resaltado.
-- El botón **"+ Añadir Hábito"** está disponible **sólo en esta vista**. Al pulsarlo se abre un modal donde defines:
+- El botón **"+ Añadir Hábito"** abre un modal donde defines:
   - **Nombre** del hábito (ej. "Meditar 10 min").
   - **Ícono** (elige entre varias opciones visuales).
+- Con el botón rojo **"Quitar Hábito"** (junto a "Añadir Hábito") abres una lista de tus hábitos para **eliminar** el que quieras. Ojo: quitar un hábito borra también su historial.
 - Cada fila muestra a la derecha su **% de cumplimiento** de la semana.
 
 ### 🗓️ Vista Mensual
@@ -100,14 +104,27 @@ Controla tu dinero y tus metas de ahorro/compra.
 La métrica central se calcula así:
 
 ```
-Balance Disponible = Ingreso Mensual − Gastos Fijos − Asignaciones a Proyectos
+Balance Disponible = Ingreso Mensual − Ahorro Mensual − Gastos Fijos − Asignaciones a Proyectos
 ```
 
 - **Ingreso Mensual:** lo defines con el botón **"Ingreso mensual"**.
+- **Ahorro Mensual:** el dinero que apartas cada mes (ver abajo). **Se descuenta del balance.**
 - **Gastos Fijos:** cada gasto recurrente (renta, servicios, suscripciones…) que agregas con **"Gasto fijo"**.
 - **Asignaciones a Proyectos:** el dinero que has apartado (ahorrado) para tus metas.
 
-> Si el Balance Disponible aparece en **rojo**, significa que asignaste más de lo que tienes disponible: revisa tus gastos o tus metas.
+> Si el Balance Disponible aparece en **rojo**, significa que asignaste más de lo que tienes disponible: revisa tus gastos, tu ahorro o tus metas.
+
+### Ahorro Mensual 🐷
+
+Debajo de "Ingreso Mensual" verás la sección **"Ahorro Mensual"** (con el icono del chanchito):
+
+- Por defecto, sugiere y descuenta el **20% de tu ingreso**.
+- Con el botón **"Editar ahorro"** puedes poner el monto que quieras. El modal incluye un atajo para "Usar sugerencia (20%)".
+- El ahorro **se resta automáticamente del Balance Disponible**.
+
+### Moneda 💱
+
+Tu moneda por defecto (**USD $** o **PEN S/**) se elige en **Ajustes → Moneda por Defecto** y se aplica a todos los montos de Finanzas.
 
 ### Registrar un Proyecto / Meta de compra 🎯
 
@@ -124,6 +141,8 @@ Al guardar:
 - El proyecto aparece **al instante** en la lista.
 - El **Balance Disponible se recalcula automáticamente**, restando el monto que asignaste.
 
+> 🗑️ Para **quitar un proyecto**, usa el botón **"-"** en la esquina superior derecha de su tarjeta.
+
 ### Interpretar el avance de cada meta
 
 Cada proyecto muestra su **porcentaje de progreso**:
@@ -138,7 +157,22 @@ Progreso = (Ahorro Depositado ÷ Costo Total) × 100
 
 ### Gastos Fijos
 
-En el panel lateral se listan todos tus gastos fijos con su categoría y monto. Su suma alimenta directamente el cálculo del Balance Disponible.
+En el panel se listan todos tus gastos fijos con su categoría y monto. Su suma alimenta directamente el cálculo del Balance Disponible.
+
+- Agrega uno con **"+ Gasto fijo"**.
+- Con el botón **"Quitar Gasto"** (se pone rojo) abres una lista de tus gastos para **eliminar** el que quieras.
+
+---
+
+## ⚙️ Ajustes y Perfil
+
+Se abre desde **Ajustes** en el menú o con el **icono de perfil** (arriba a la derecha).
+
+- **Identidad:** tu nombre, correo y avatar. Con **"Editar Perfil"** cambias tu nombre y foto (por URL).
+- **Moneda por Defecto:** elige **USD ($)** o **PEN (S/)**. Se aplica a todo Finanzas.
+- **Gestión de Datos:**
+  - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos).
+  - **Purgar Datos de Cuenta:** borra **de forma permanente** tus hábitos, gastos y proyectos. Pide confirmación escribiendo una palabra; **no se puede deshacer**.
 
 ---
 
