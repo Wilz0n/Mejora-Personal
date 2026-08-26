@@ -15,6 +15,7 @@ import {
 } from "@/lib/dates";
 import { HabitCheckbox } from "@/components/habitos/HabitCheckbox";
 import { AddHabitButton } from "@/components/habitos/AddHabitButton";
+import { RemoveHabitButton } from "@/components/habitos/RemoveHabitButton";
 import { MonthlyTracker } from "@/components/habitos/MonthlyTracker";
 import { ProgressRing } from "@/components/comun/ProgressRing";
 import { Icon } from "@/components/comun/Icon";
@@ -50,6 +51,7 @@ export default async function HabitsPage({
         </div>
         <div className="flex items-center gap-3">
           <ViewToggle current={period} />
+          {habits.length > 0 && <RemoveHabitButton habits={habits} />}
           <AddHabitButton variant="primary" />
         </div>
       </section>
