@@ -68,3 +68,33 @@ export function dayOfMonth(key: string): number {
 export function monthLabel(ref: Date = new Date()): string {
   return ref.toLocaleDateString("es", { month: "long", year: "numeric" });
 }
+
+/**
+ * Agrupa las claves de día del mes en semanas (lunes a domingo).
+ * Cada semana es un array de 7 posiciones; las posiciones fuera del mes
+ * se rellenan con `null` para alinear la cuadrícula por día de la semana.
+ * Útil para el selector "Semana 1..N" de la vista mensual.
+ */
+export function monthWeeks(ref: Date = new Date()): (string | null)[][] {
+  const keys = monthDayKeys(ref);
+  const weeks: (string | null)[][] = [];
+  let current: (string | null)[] = [];
+
+  for (const key of keys) {
+    if (current.length === 0) {
+      // Rellena al inicio hasta el día de la semana (lunes=0).
+      const weekday = (fromDayKey(key).getDay() + 6) % 7;
+      for (let i = 0; i < weekday; i++) current.push(null);
+    }
+    current.push(key);
+    if (current.length === 7) {
+      weeks.push(current);
+      current = [];
+    }
+  }
+  if (current.length > 0) {
+    while (current.length < 7) current.push(null);
+    weeks.push(current);
+  }
+  return weeks;
+}

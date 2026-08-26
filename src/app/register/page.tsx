@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUserIdOrNull } from "@/lib/session";
-import { RegisterForm } from "@/components/RegisterForm";
-import { Icon } from "@/components/Icon";
+import { RegisterForm } from "@/components/auth/RegisterForm";
+import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
 

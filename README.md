@@ -8,6 +8,16 @@ App de mejora personal (hábitos + finanzas) construida con **Next.js 14 (App Ro
 
 > Reemplaza `TU_USUARIO` por tu usuario de GitHub tras subir el repo. Guía completa en **[DEPLOYMENT.md](./DEPLOYMENT.md)** · Manual de uso en **[USER_GUIDE.md](./USER_GUIDE.md)**.
 
+## 📚 Documentación
+
+| Documento | Para quién | Contenido |
+|-----------|-----------|-----------|
+| **[docs/GUIA_USUARIO.md](./docs/GUIA_USUARIO.md)** | Usuario final (no técnico) | Cómo descargar y conectar todo: GitHub, Neon, Vercel y variables |
+| **[USER_GUIDE.md](./USER_GUIDE.md)** | Usuario final | Cómo usar la app día a día (hábitos, finanzas, métricas) |
+| **[DEPLOYMENT.md](./DEPLOYMENT.md)** | Técnico | Instalación local y despliegue en Vercel paso a paso |
+| **[docs/DEV_GUIDE.md](./docs/DEV_GUIDE.md)** | Desarrolladores (junior) | Qué instalar, cómo funciona y cómo trabajar en `dev` local sin afectar producción |
+| **[docs/AI_CONTEXT.md](./docs/AI_CONTEXT.md)** | Asistentes de IA / LLMs | Cómo funciona la web: arquitectura, modelos, lógica y flujo de datos |
+
 ## Modo Usuario Único (self-hosted personal)
 
 Para uso personal sin lidiar con logins, activa el **Modo Usuario Único**: la app omite NextAuth y usa un único usuario creado automáticamente. Define estas variables (mismo valor en ambas):

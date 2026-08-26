@@ -51,3 +51,22 @@ export const registerSchema = z.object({
   password: z.string().min(6, "Mínimo 6 caracteres"),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(1, "El nombre es obligatorio").max(60),
+  image: z
+    .string()
+    .trim()
+    .url("URL de imagen inválida")
+    .max(500)
+    .optional()
+    .or(z.literal("")),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+export const setCurrencySchema = z.object({
+  currency: z.enum(["USD", "PEN"], {
+    errorMap: () => ({ message: "Moneda no soportada" }),
+  }),
+});
+export type SetCurrencyInput = z.infer<typeof setCurrencySchema>;
