@@ -143,6 +143,14 @@ Al guardar:
 
 > 🗑️ Para **quitar un proyecto**, usa el botón **"-"** en la esquina superior derecha de su tarjeta.
 
+### Registrar el abono mensual (botón verde ➕)
+
+Cada proyecto tiene un **botón verde con "+"**. El monto que pusiste en **"Monto a Ahorrar / Depositar Inicialmente"** es tu **abono mensual fijo**:
+
+- Cada vez que pagas/ahorras ese mes, pulsa el **botón verde "+"** → el proyecto **avanza** ese monto y su **porcentaje sube**.
+- Así ves de un vistazo **qué tanto te falta** para tu meta.
+- Cuando el proyecto llega al **100%**, se marca **✓ Cumplido** automáticamente y **deja de descontar** de tu Balance Disponible (tu balance vuelve a subir). El proyecto queda visible como logro; puedes quitarlo cuando quieras.
+
 ### Interpretar el avance de cada meta
 
 Cada proyecto muestra su **porcentaje de progreso**:

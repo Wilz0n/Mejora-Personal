@@ -1,104 +1,186 @@
-# LifeTracker
+<div align="center">
 
-App de mejora personal (hábitos + finanzas) construida con **Next.js 14 (App Router)**, **Prisma + PostgreSQL**, **NextAuth**, **Server Actions** y **Zod**. UI basada en el design system "Nocturne" (dark mode) de `stitch_zenith_personal_dashboard`.
+# 🌙 LifeTracker
 
-## Deploy en 1-Clic
+### Tu vida, en orden. Hábitos y finanzas personales en una sola app.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/TU_USUARIO/lifetracker&env=DATABASE_URL,NEXTAUTH_SECRET,SINGLE_USER_MODE,NEXT_PUBLIC_SINGLE_USER_MODE&envDescription=Conexi%C3%B3n%20Postgres%20y%20modo%20de%20autenticaci%C3%B3n&project-name=lifetracker&repository-name=lifetracker)
+*Construye mejores hábitos, controla tu dinero y visualiza tu progreso — todo con un diseño oscuro, minimalista y enfocado.*
 
-> Reemplaza `TU_USUARIO` por tu usuario de GitHub tras subir el repo. Guía completa en **[DEPLOYMENT.md](./DEPLOYMENT.md)** · Manual de uso en **[USER_GUIDE.md](./USER_GUIDE.md)**.
+<br>
 
-## 📚 Documentación
+![Next.js](https://img.shields.io/badge/Next.js_14-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Neon_Postgres-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
-| Documento | Para quién | Contenido |
-|-----------|-----------|-----------|
-| **[docs/GUIA_USUARIO.md](./docs/GUIA_USUARIO.md)** | Usuario final (no técnico) | Cómo descargar y conectar todo: GitHub, Neon, Vercel y variables |
-| **[USER_GUIDE.md](./USER_GUIDE.md)** | Usuario final | Cómo usar la app día a día (hábitos, finanzas, métricas) |
-| **[DEPLOYMENT.md](./DEPLOYMENT.md)** | Técnico | Instalación local y despliegue en Vercel paso a paso |
-| **[docs/DEV_GUIDE.md](./docs/DEV_GUIDE.md)** | Desarrolladores (junior) | Qué instalar, cómo funciona y cómo trabajar en `dev` local sin afectar producción |
-| **[docs/AI_CONTEXT.md](./docs/AI_CONTEXT.md)** | Asistentes de IA / LLMs | Cómo funciona la web: arquitectura, modelos, lógica y flujo de datos |
+<br>
 
-## Modo Usuario Único (self-hosted personal)
+**[🚀 Empezar](#-empieza-en-3-pasos)** · **[✨ Funciones](#-qué-puedes-hacer)** · **[📚 Documentación](#-documentación)** · **[🛠️ Stack](#️-stack-técnico)**
 
-Para uso personal sin lidiar con logins, activa el **Modo Usuario Único**: la app omite NextAuth y usa un único usuario creado automáticamente. Define estas variables (mismo valor en ambas):
+</div>
+
+---
+
+## ✨ ¿Qué puedes hacer?
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🔁 Hábitos
+- Seguimiento **semanal** y **mensual** (heatmap).
+- Marca tus días con un clic (respuesta instantánea).
+- **Tasa de cumplimiento** automática por hábito.
+- Detecta tu **mejor hábito** y el que hay que **mejorar**.
+- Crea y elimina hábitos fácilmente.
+
+</td>
+<td width="50%" valign="top">
+
+### 💰 Finanzas
+- **Balance disponible** calculado en tiempo real.
+- **Ingreso** y **ahorro mensual** editables.
+- **Gastos fijos** con categorías.
+- **Proyectos/metas** con progreso y abono mensual (botón verde). Al 100% se marca **cumplido** y libera tu balance.
+- Moneda **USD ($)** o **PEN (S/)**.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+### 📊 Dashboard
+- Resumen de KPIs de un vistazo.
+- Progreso de hábitos + distribución financiera.
+- Saludo personalizado con tu nombre.
+
+</td>
+<td width="50%" valign="top">
+
+### ⚙️ Ajustes y Perfil
+- Sube tu **foto de perfil** (optimizada automáticamente).
+- **Exporta** tus datos (JSON / CSV).
+- Elige tu moneda por defecto.
+- Purga tus datos cuando quieras.
+
+</td>
+</tr>
+</table>
+
+> 🔒 **Privado por diseño:** cada usuario solo ve y modifica sus propios datos (aislamiento por `userId` en todas las consultas).
+
+---
+
+## 🚀 Empieza en 3 pasos
+
+Vas a usar **tres servicios gratuitos**. Si ya tienes cuenta en alguno, solo inicia sesión; si no, créala con los enlaces de abajo.
+
+| Paso | Servicio | ¿Para qué? | Crear cuenta / Iniciar sesión |
+|:---:|---|---|---|
+| **1** | **GitHub** | Guarda el código (haz un *fork* del proyecto) | 🔗 [Crear cuenta](https://github.com/signup) · [Iniciar sesión](https://github.com/login) |
+| **2** | **Neon** | Tu base de datos Postgres (donde se guardan tus datos) | 🔗 [Crear cuenta](https://neon.tech) · [Iniciar sesión](https://console.neon.tech) |
+| **3** | **Vercel** | Publica la app en internet (conéctalo con tu GitHub) | 🔗 [Crear cuenta](https://vercel.com/signup) · [Iniciar sesión](https://vercel.com/login) |
+
+**El flujo es simple:** *Fork en GitHub → Importar en Vercel → Conectar Neon (`DATABASE_URL`) → ¡Listo!*
+
+✨ **Despliegue automático:** en cuanto conectas la base de datos, el proyecto **crea las tablas solo** durante el deploy — sin comandos manuales.
+
+<div align="center">
+
+### 👉 Sigue la guía paso a paso según tu perfil:
+
+**[📘 Guía para Usuario (no técnico)](./docs/GUIA_USUARIO.md)** &nbsp;·&nbsp; **[📗 Guía Técnica de Despliegue](./DEPLOYMENT.md)**
+
+</div>
+
+---
+
+## 🖥️ Modo Usuario Único (recomendado para uso personal)
+
+Para uso personal **sin login**, activa el Modo Usuario Único: la app entra directo al Dashboard y usa un único usuario automático. Define estas variables en Vercel:
 
 ```bash
 SINGLE_USER_MODE="true"
 NEXT_PUBLIC_SINGLE_USER_MODE="true"
 ```
 
-Con el modo desactivado (`false`), la app funciona con registro/login normal vía NextAuth.
+Con el modo desactivado (`false`), la app funciona con registro/login normal.
 
-## Stack
+---
 
-- **Next.js App Router** (Server Components + Server Actions)
-- **Prisma ORM** sobre PostgreSQL (compatible con Vercel Postgres / Neon)
-- **NextAuth** (Credentials + Prisma Adapter, estrategia JWT)
-- **Zod** para validación de formularios
-- **Tailwind CSS** con tokens del design system
+## 📚 Documentación
 
-## Multi-tenancy
+| Documento | Para quién | Contenido |
+|-----------|-----------|-----------|
+| 📘 **[docs/GUIA_USUARIO.md](./docs/GUIA_USUARIO.md)** | Usuario final (no técnico) | Cómo descargar y conectar todo: GitHub, Neon, Vercel y variables |
+| 📖 **[USER_GUIDE.md](./USER_GUIDE.md)** | Usuario final | Cómo usar la app día a día (hábitos, finanzas, ajustes) |
+| 📗 **[DEPLOYMENT.md](./DEPLOYMENT.md)** | Técnico | Instalación local y despliegue en Vercel paso a paso |
+| 🛠️ **[docs/DEV_GUIDE.md](./docs/DEV_GUIDE.md)** | Desarrolladores (junior) | Qué instalar, cómo funciona y cómo trabajar sin afectar producción |
+| 🤖 **[docs/AI_CONTEXT.md](./docs/AI_CONTEXT.md)** | Asistentes de IA / LLMs | Arquitectura, modelos, lógica y flujo de datos |
 
-Todas las consultas se filtran por `userId` de la sesión activa (`getUserId()` en `src/lib/session.ts`). Las Server Actions verifican propiedad antes de mutar (`updateMany`/`deleteMany` con `where: { id, userId }`).
+---
 
-## Estructura
+## 🛠️ Stack técnico
+
+- **Next.js 14** (App Router · Server Components + Server Actions)
+- **Prisma ORM** sobre **PostgreSQL** (Neon)
+- **NextAuth** (Credentials + Prisma Adapter, JWT) — opcional con Modo Usuario Único
+- **Zod** para validación · **Tailwind CSS** (design system "Nocturne", dark mode)
+
+### 🗂️ Estructura
 
 ```
 src/
 ├─ app/
 │  ├─ (app)/              # Rutas autenticadas (layout con sidebar/topbar)
-│  │  ├─ page.tsx         # Dashboard: KPIs, hábitos de hoy, distribución financiera
-│  │  ├─ habits/          # Vista semanal/mensual + KPIs (mejor/por mejorar)
-│  │  ├─ finance/         # Balances, proyectos (progreso), gastos
-│  │  ├─ loading.tsx      # Skeletons
-│  │  └─ error.tsx        # Manejo de errores
-│  ├─ actions/            # Server Actions (habits, finance, auth) con Zod + revalidatePath
-│  ├─ api/auth/[...nextauth]/route.ts
-│  ├─ login/ · register/
-├─ components/            # UI: Sidebar, Topbar, Modal, HabitCheckbox (optimista), modales
-├─ lib/                   # prisma, auth, session, dates, habits-logic, finance-logic, validators, data
-└─ types/                 # Augmentación de tipos NextAuth
+│  │  ├─ page.tsx         # Dashboard
+│  │  ├─ habitos/         # Hábitos (semanal + mensual)
+│  │  ├─ finanzas/        # Balance, ahorro, gastos, proyectos
+│  │  ├─ proyectos/       # (en construcción)
+│  │  ├─ settings/        # Ajustes y perfil
+│  │  └─ support/         # (en construcción)
+│  ├─ actions/            # Server Actions (habits, finance, settings, auth) con Zod
+│  ├─ api/export/         # Exportación de datos (JSON/CSV)
+│  └─ login/ · register/
+├─ components/            # UI por dominio: comun/ habitos/ finanzas/ settings/ auth/
+├─ lib/                   # prisma, auth, session, dates, *-logic, validators, data
+└─ types/
+scripts/                  # setup, deploy (auto), dev-verify, db-sync
 ```
 
-## Lógica de negocio
+### 🔢 Lógica de negocio
 
-- **Tasa de hábito** = (días completados en el periodo / días totales) × 100 — `computeHabitRate`.
-- **Tasa global** = promedio de las tasas de todos los hábitos — `computeHabitKpis`.
-- **Mejor / Por mejorar** = hábito con mayor / menor tasa del periodo.
-- **Balance disponible** = ingreso mensual − gastos fijos − asignado a proyectos — `computeFinanceSummary`.
-- **Progreso de meta** = (allocated / target) × 100 — `computeProjectProgress`.
+| Métrica | Fórmula |
+|---|---|
+| **Tasa de hábito** | (días completados ÷ días del periodo) × 100 |
+| **Tasa global** | promedio de las tasas de todos los hábitos |
+| **Balance disponible** | ingreso − ahorro − gastos fijos − proyectos **activos** |
+| **Progreso de meta** | (asignado ÷ meta) × 100 |
 
-## Puesta en marcha
+---
 
-1. Copia las variables de entorno:
+## ⚡ Puesta en marcha (local)
 
-   ```bash
-   cp .env.example .env
-   # Edita DATABASE_URL con tu conexión Postgres (Neon/Vercel) y define NEXTAUTH_SECRET
-   ```
+```bash
+# 1. Clona e instala
+git clone https://github.com/TU_USUARIO/Mejora-Personal.git
+cd Mejora-Personal
 
-2. Instala dependencias y aplica el schema:
+# 2. Configuración guiada (crea .env.local, instala, crea tablas)
+npm run setup
 
-   ```bash
-   npm install
-   npm run db:push      # crea las tablas
-   npm run db:seed      # (opcional) datos de demo -> demo@lifetracker.app / password123
-   ```
+# 3. Arranca
+npm run dev        # http://localhost:3000
+```
 
-3. Desarrollo:
+> 💡 ¿Sin cuenta de base de datos a mano? Usa `npm run dev:verify` para levantar una **BD interna temporal** (requiere Docker) y probar todo de punta a punta.
 
-   ```bash
-   npm run dev
-   ```
+---
 
-4. Producción:
+<div align="center">
 
-   ```bash
-   npm run build && npm start
-   ```
+Hecho con 🌙 y enfoque. &nbsp;·&nbsp; **[Empieza ahora](#-empieza-en-3-pasos)**
 
-## Notas de despliegue (Vercel + Neon)
-
-- Define `DATABASE_URL`, `NEXTAUTH_SECRET` y `NEXTAUTH_URL` en las variables de entorno del proyecto.
-- `npm run build` ejecuta `prisma generate` automáticamente.
-- Ejecuta `prisma db push` (o migraciones) contra la base de datos de producción antes del primer deploy.
+</div>
