@@ -44,7 +44,7 @@ export function MonthlyTracker({ weeks, habits, today }: MonthlyTrackerProps) {
   }
 
   return (
-    <div className="lg:col-span-3 glass-panel rounded-xl overflow-hidden flex flex-col">
+    <div className="lg:col-span-2 glass-panel rounded-xl overflow-hidden flex flex-col">
       {/* Selector de semanas */}
       <div className="px-5 py-2 border-b border-outline-variant/30 bg-surface-container/50 flex items-center gap-2 overflow-x-auto no-scrollbar">
         {weeks.map((_, i) => (

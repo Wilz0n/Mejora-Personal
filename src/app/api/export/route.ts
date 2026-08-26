@@ -34,7 +34,13 @@ export async function GET(req: NextRequest) {
 }
 
 function esc(v: unknown): string {
-  const s = String(v ?? "");
+  let s = String(v ?? "");
+  // Mitiga "CSV/Formula injection": si una celda empieza con un carácter que
+  // Excel/Sheets interpretan como fórmula, se antepone un apóstrofe para
+  // neutralizarla (evita ejecución de fórmulas al abrir el CSV).
+  if (/^[=+\-@\t\r]/.test(s)) {
+    s = `'${s}`;
+  }
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

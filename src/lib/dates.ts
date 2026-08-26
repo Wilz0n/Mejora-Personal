@@ -53,6 +53,48 @@ export function monthDayKeys(ref: Date = new Date()): string[] {
   );
 }
 
+/**
+ * Devuelve todas las claves de día de los últimos `months` meses (incluyendo
+ * el mes actual completo), contadas hacia atrás desde `ref`.
+ * Útil para las vistas trimestral (3) y semestral (6).
+ */
+export function lastMonthsDayKeys(months: number, ref: Date = new Date()): string[] {
+  const keys: string[] = [];
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  // Desde el primer día de (mes - (months-1)) hasta el último día del mes de ref.
+  for (let offset = months - 1; offset >= 0; offset--) {
+    const d = new Date(year, month - offset, 1);
+    keys.push(...monthDayKeys(d));
+  }
+  return keys;
+}
+
+/**
+ * Agrupa los meses de un periodo de N meses (hacia atrás desde `ref`) en un
+ * arreglo de { key: "YYYY-MM", label: "Ago 2026", dayKeys: [...] }.
+ * Útil para las vistas trimestral y semestral (progreso mes a mes).
+ */
+export function periodMonths(
+  months: number,
+  ref: Date = new Date(),
+): { key: string; label: string; dayKeys: string[] }[] {
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+  const out: { key: string; label: string; dayKeys: string[] }[] = [];
+  for (let offset = months - 1; offset >= 0; offset--) {
+    const d = new Date(year, month - offset, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    out.push({
+      key: `${y}-${m}`,
+      label: d.toLocaleDateString("es", { month: "short", year: "numeric" }),
+      dayKeys: monthDayKeys(d),
+    });
+  }
+  return out;
+}
+
 /** Nombre corto del día (Lun, Mar, ...) para una day key. */
 export function shortWeekdayLabel(key: string): string {
   const labels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];

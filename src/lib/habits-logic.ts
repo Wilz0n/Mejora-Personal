@@ -1,6 +1,17 @@
-import { weekDayKeys, monthDayKeys, todayKey } from "@/lib/dates";
+import {
+  weekDayKeys,
+  monthDayKeys,
+  lastMonthsDayKeys,
+  todayKey,
+} from "@/lib/dates";
 
-export type Period = "week" | "month";
+export type Period = "week" | "month" | "quarter" | "semester";
+
+/** Número de meses que abarca cada periodo multi-mes. */
+export const PERIOD_MONTHS: Record<"quarter" | "semester", number> = {
+  quarter: 3,
+  semester: 6,
+};
 
 export interface HabitWithLogs {
   id: string;
@@ -27,11 +38,26 @@ export interface HabitKpis {
   best: HabitRate | null;
   /** Hábito con menor cumplimiento. */
   worst: HabitRate | null;
+  /** Nº de hábitos consolidados (tasa ≥ 80%). */
+  consistentCount: number;
+  /** Nº de hábitos en riesgo (tasa < 40%). */
+  atRiskCount: number;
+  /** Total de hábitos activos considerados. */
+  totalHabits: number;
 }
 
 /** Devuelve las claves de día del periodo dado. */
 export function periodDayKeys(period: Period, ref: Date = new Date()): string[] {
-  return period === "week" ? weekDayKeys(ref) : monthDayKeys(ref);
+  switch (period) {
+    case "week":
+      return weekDayKeys(ref);
+    case "month":
+      return monthDayKeys(ref);
+    case "quarter":
+      return lastMonthsDayKeys(PERIOD_MONTHS.quarter, ref);
+    case "semester":
+      return lastMonthsDayKeys(PERIOD_MONTHS.semester, ref);
+  }
 }
 
 /**
@@ -84,10 +110,19 @@ export function computeHabitRates(
  * - globalRate: promedio de las tasas de todos los hábitos activos.
  * - best: hábito con mayor tasa.
  * - worst: hábito con menor tasa.
+ * - consistentCount: hábitos consolidados (tasa ≥ 80%).
+ * - atRiskCount: hábitos en riesgo (tasa < 40%).
  */
 export function computeHabitKpis(rates: HabitRate[]): HabitKpis {
   if (rates.length === 0) {
-    return { globalRate: 0, best: null, worst: null };
+    return {
+      globalRate: 0,
+      best: null,
+      worst: null,
+      consistentCount: 0,
+      atRiskCount: 0,
+      totalHabits: 0,
+    };
   }
 
   const globalRate = Math.round(
@@ -96,12 +131,23 @@ export function computeHabitKpis(rates: HabitRate[]): HabitKpis {
 
   let best = rates[0];
   let worst = rates[0];
+  let consistentCount = 0;
+  let atRiskCount = 0;
   for (const r of rates) {
     if (r.rate > best.rate) best = r;
     if (r.rate < worst.rate) worst = r;
+    if (r.rate >= 80) consistentCount++;
+    if (r.rate < 40) atRiskCount++;
   }
 
-  return { globalRate, best, worst };
+  return {
+    globalRate,
+    best,
+    worst,
+    consistentCount,
+    atRiskCount,
+    totalHabits: rates.length,
+  };
 }
 
 /**

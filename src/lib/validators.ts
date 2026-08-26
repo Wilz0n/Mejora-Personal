@@ -55,8 +55,13 @@ export type SetSavingsInput = z.infer<typeof setSavingsSchema>;
 
 export const registerSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(60),
-  email: z.string().trim().toLowerCase().email("Email inválido"),
-  password: z.string().min(6, "Mínimo 6 caracteres"),
+  email: z.string().trim().toLowerCase().email("Email inválido").max(120),
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .max(72, "Máximo 72 caracteres") // límite de bcrypt
+    .regex(/[a-zA-Z]/, "Debe incluir al menos una letra")
+    .regex(/[0-9]/, "Debe incluir al menos un número"),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 

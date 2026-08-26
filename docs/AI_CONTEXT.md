@@ -81,13 +81,14 @@ src/app/
 ### Fechas — `src/lib/dates.ts`
 - `toDayKey(date)` / `todayKey()`: fecha → `"YYYY-MM-DD"`.
 - `weekDayKeys(ref)`: 7 claves de la semana (lunes→domingo, ISO).
-- `monthDayKeys(ref)`: claves del mes. `monthWeeks(ref)`: semanas ISO del mes (con `null` para días fuera del mes).
+- `monthDayKeys(ref)`: claves del mes. `monthWeeks(ref)`: semanas ISO del mes (con `null` para días fuera del mes; la página filtra semanas 100% vacías).
+- `lastMonthsDayKeys(months, ref)`: claves de día de los últimos N meses (trimestre=3, semestre=6). `periodMonths(months, ref)`: agrupa esos meses en `[{key "YYYY-MM", label "ago 2026", dayKeys}]` (para el progreso mes a mes).
 - Etiquetas: `shortWeekdayLabel`, `dayOfMonth`, `monthLabel` (ej. "Agosto 2026").
 
 ### Hábitos — `src/lib/habits-logic.ts`
-- `Period = "week" | "month"`. `periodDayKeys(period)`.
+- `Period = "week" | "month" | "quarter" | "semester"`. `periodDayKeys(period)` devuelve las claves de día del periodo (semana ISO, mes, últimos 3 meses = trimestre, últimos 6 = semestre). `PERIOD_MONTHS = { quarter: 3, semester: 6 }`.
 - `computeHabitRate(habit, period)`: **Tasa = (días completados ÷ días del periodo) × 100**. Devuelve `completionByDay` (mapa dayKey→bool).
-- `computeHabitRates`, `computeHabitKpis` (`globalRate` promedio, `best`, `worst`), `habitsForToday`.
+- `computeHabitRates`, `computeHabitKpis` (`globalRate` promedio, `best`, `worst`, `consistentCount` = hábitos con tasa ≥ 80%, `atRiskCount` = hábitos con tasa < 40%, `totalHabits`), `habitsForToday`.
 
 ### Finanzas — `src/lib/finance-logic.ts`
 - `computeFinanceSummary(input)`: `totalFixedExpenses`, `totalAllocated` (solo proyectos **activos**, no completados), y **`availableBalance = monthlyIncome − monthlySavings − totalFixedExpenses − totalAllocated`**.
@@ -130,6 +131,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 - **AddHabitButton** (`habitos/`): modal crear hábito (nombre + selector de ~33 iconos con scroll).
 - **WeeklyTracker** (en `habitos/page.tsx`): grid responsive `[minmax(70px,1fr)_repeat(7,26px)_32px]` móvil / `36px/44px` desktop. Checkboxes interactivos.
 - **MonthlyTracker** (`habitos/`): solo lectura, auto-selecciona la semana que contiene hoy (`weeks.findIndex`), usa dayKey como `key` de React. Leyenda Completado/Pendiente/Fuera del mes + "Solo lectura".
+- **PeriodTracker** (en `habitos/page.tsx`): vistas **trimestral/semestral**. Solo lectura; muestra el progreso **mes a mes** (barra + % por mes de `periodMonths`), con color por nivel (≥80% primary, 40–79% tertiary, <40% error). Leyenda Consolidado/En progreso/En riesgo.
 - **FinanceModals** (`finanzas/`): `AddExpenseButton` (categoría + monto + **selector de 16 iconos**), `SetIncomeButton`, `SetSavingsButton`.
 - **AddProjectButton / RemoveProjectButton / ContributeButton** (`finanzas/`): crear proyecto; quitar con **modal de confirmación** (check verde / X roja); abonar mensual.
 - **SaveFinanceButton** (`finanzas/`): guarda el cierre (`saveMonthlyFinance`) y navega a `/finanzas/mes`.
@@ -138,7 +140,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 ## Pantallas (comportamiento funcional)
 
 - **Dashboard (`/`)**: 4 KPIs (tasa global semanal, balance disponible, ahorro protegido, fondo de proyectos), "Hábitos de Hoy" (toggle instantáneo) y gráfico "Distribución Financiera" con 5 barras: Ingresos, Fijos, Ahorro, Proyectos, Disponible.
-- **Hábitos (`/habitos?view=week|month`)**: vista **semanal editable** (marcar días) y vista **mensual solo lectura** (refleja lo marcado en semanal, auto-abre la semana actual). KPIs de Tasa Global, Mejor Hábito, Por Mejorar. Crear hábito disponible en ambas.
+- **Hábitos (`/habitos?view=week|month|quarter|semester`)**: 4 periodos. **Semanal** = editable (marcar días). **Mensual** = solo lectura (refleja lo marcado en semanal, auto-abre la semana actual, muestra las semanas reales del mes). **Trimestral / Semestral** = solo lectura, progreso mes a mes (`PeriodTracker`). Panel de Resumen (más ancho, grid `lg:grid-cols-3`): anillo de tasa global + tarjetas Mejor Hábito, Por Mejorar, y KPIs **Consolidados** (≥80%) y **En Riesgo** (<40%) con conteo `x/total`. Crear hábito disponible en todas las vistas.
 - **Finanzas — edición (`/finanzas`)**: ingreso, ahorro, gastos fijos (con ícono) y proyectos, todos editables. Balance disponible (rojo si negativo). Botón "Guardar Finanza".
 - **Finanzas del Mes (`/finanzas/mes`)**: cierre guardado. KPIs (Ingreso, Gasto Fijo, Ahorro, Balance), "Metas Activas" (barras de progreso desde `projectsSnapshot`) y "Categorías de Gastos" (anillo + tarjetas desde `expensesByCategory`). Si no hay snapshot **o** el usuario ya no tiene datos actuales → `redirect("/finanzas")`. Botón "Editar Finanza" → `/finanzas`.
 
@@ -150,6 +152,17 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 | `SINGLE_USER_MODE` | `"true"` → servidor omite NextAuth y usa usuario por defecto. |
 | `NEXT_PUBLIC_SINGLE_USER_MODE` | `"true"` → cliente oculta UI de login/logout. Debe coincidir con la anterior. |
 | `NEXTAUTH_SECRET` / `NEXTAUTH_URL` | Solo en modo con login. Obligatorias en producción si NO se usa modo usuario único. En modo usuario único NO deben definirse. |
+
+## Seguridad (medidas implementadas)
+
+- **Secret de NextAuth robusto** (`src/lib/auth.ts` → `resolveSecret()`): usa `NEXTAUTH_SECRET`; en modo usuario único usa un placeholder (NextAuth no se usa); en **producción con login sin secret lanza error** (evita firmar JWT con un secreto público). En dev con login, placeholder.
+- **Login en tiempo constante:** `authorize` compara siempre con bcrypt (contra un hash dummy si el usuario no existe) para no revelar por timing si un email está registrado.
+- **Registro:** bloqueado en modo usuario único; mensaje de error **genérico** (no revela si el email existe); captura P2002 de Prisma. Contraseñas ≥ 8 caracteres con letra y número (Zod), hash bcrypt (10 rounds).
+- **Aislamiento por `userId`** en toda query/mutación (multi-tenancy). Prisma parametrizado → sin inyección SQL.
+- **Headers de seguridad** (`next.config.js`): `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`; `poweredByHeader: false`.
+- **Export CSV:** neutraliza *CSV/formula injection* (celdas que empiezan con `= + - @` se prefijan con `'`).
+- **Avatar:** validado por Zod (solo `data:image/...` o URLs http). Sin `dangerouslySetInnerHTML` ni `eval` en el código.
+- **Secretos:** `.env.local` en `.gitignore`; solo `.env.example` (plantilla) versionado.
 
 ## Invariantes y decisiones de diseño (para no romper)
 
