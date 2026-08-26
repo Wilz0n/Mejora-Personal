@@ -12,7 +12,7 @@ import type { ActionResult } from "@/lib/action-result";
 
 function revalidateFinance() {
   revalidatePath("/");
-  revalidatePath("/finance");
+  revalidatePath("/finanzas");
 }
 
 /** Crea un nuevo ProjectGoal y recalcula (vía revalidate) el balance. */

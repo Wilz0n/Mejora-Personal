@@ -76,12 +76,28 @@ export function computeProjectsProgress(
   return projects.map(computeProjectProgress);
 }
 
-/** Formatea un número como moneda (por defecto USD, sin decimales en miles). */
+/** Monedas soportadas por la app (foco en las más usadas). */
+export const SUPPORTED_CURRENCIES = [
+  { code: "USD", label: "USD ($)", locale: "en-US" },
+  { code: "PEN", label: "PEN (S/)", locale: "es-PE" },
+] as const;
+
+export type CurrencyCode = (typeof SUPPORTED_CURRENCIES)[number]["code"];
+
+/** Locale por defecto para cada moneda soportada. */
+function localeForCurrency(currency: string): string {
+  return (
+    SUPPORTED_CURRENCIES.find((c) => c.code === currency)?.locale ?? "en-US"
+  );
+}
+
+/** Formatea un número como moneda. Usa el locale adecuado según la moneda. */
 export function formatCurrency(
   value: number,
   opts: { currency?: string; locale?: string } = {},
 ): string {
-  const { currency = "USD", locale = "en-US" } = opts;
+  const { currency = "USD" } = opts;
+  const locale = opts.locale ?? localeForCurrency(currency);
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,

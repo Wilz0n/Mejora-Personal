@@ -47,7 +47,7 @@ export async function toggleHabitLog(input: unknown): Promise<ActionResult> {
   });
 
   revalidatePath("/");
-  revalidatePath("/habits");
+  revalidatePath("/habitos");
   return { ok: true };
 }
 
@@ -72,7 +72,7 @@ export async function createHabit(input: unknown): Promise<ActionResult<{ id: st
   });
 
   revalidatePath("/");
-  revalidatePath("/habits");
+  revalidatePath("/habitos");
   return { ok: true, data: { id: habit.id } };
 }
 
@@ -82,6 +82,6 @@ export async function deleteHabit(habitId: string): Promise<ActionResult> {
   const result = await prisma.habit.deleteMany({ where: { id: habitId, userId } });
   if (result.count === 0) return { ok: false, error: "Hábito no encontrado" };
   revalidatePath("/");
-  revalidatePath("/habits");
+  revalidatePath("/habitos");
   return { ok: true };
 }

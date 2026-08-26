@@ -11,9 +11,9 @@ import {
   formatCurrency,
 } from "@/lib/finance-logic";
 import { todayKey, monthLabel } from "@/lib/dates";
-import { HabitCheckbox } from "@/components/HabitCheckbox";
-import { AddHabitButton } from "@/components/AddHabitButton";
-import { Icon } from "@/components/Icon";
+import { HabitCheckbox } from "@/components/habitos/HabitCheckbox";
+import { AddHabitButton } from "@/components/habitos/AddHabitButton";
+import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
 
@@ -32,12 +32,17 @@ export default async function DashboardPage() {
   const summary = computeFinanceSummary(finance);
   const projects = computeProjectsProgress(finance.projects);
   const topProject = projects[0];
+  const currency = finance.currency;
+
+  // "Ahorro Protegido": 20% del ingreso mensual (feature nueva del diseño,
+  // placeholder coherente hasta implementar lógica dedicada).
+  const protectedSavings = Math.round(summary.monthlyIncome * 0.2);
 
   return (
     <>
       <section className="mb-10">
         <h2 className="text-headline-lg font-headline-lg text-on-surface mb-2">
-          Hola de nuevo.
+          Hola, Usuario.
         </h2>
         <p className="text-body-lg font-body-lg text-on-surface-variant">
           Hoy es un buen día para avanzar.
@@ -58,19 +63,19 @@ export default async function DashboardPage() {
           label="Balance Disponible"
           icon="account_balance_wallet"
           iconClass="text-on-surface-variant"
-          value={formatCurrency(summary.availableBalance)}
+          value={formatCurrency(summary.availableBalance, { currency })}
         />
         <KpiCard
-          label="Gastos Fijos"
-          icon="receipt_long"
-          iconClass="text-outline"
-          value={formatCurrency(summary.totalFixedExpenses)}
+          label="Ahorro Protegido"
+          icon="shield"
+          iconClass="text-secondary-container"
+          value={formatCurrency(protectedSavings, { currency })}
         />
         <KpiCard
-          label="Fondo de Proyectos"
+          label="Fondo de Proyecto Activo"
           icon="rocket_launch"
           iconClass="text-tertiary-container"
-          value={formatCurrency(summary.totalAllocated)}
+          value={formatCurrency(summary.totalAllocated, { currency })}
         />
       </section>
 

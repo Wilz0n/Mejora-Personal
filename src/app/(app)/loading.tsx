@@ -1,4 +1,4 @@
-import { Skeleton, KpiSkeletonRow } from "@/components/Skeleton";
+import { Skeleton, KpiSkeletonRow } from "@/components/comun/Skeleton";
 
 export default function DashboardLoading() {
   return (
