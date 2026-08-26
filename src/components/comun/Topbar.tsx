@@ -7,7 +7,7 @@ import { Icon } from "@/components/comun/Icon";
 const NAV = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
   { href: "/habitos", label: "Hábitos", icon: "event_repeat" },
-  { href: "/finanzas", label: "Finanzas", icon: "payments" },
+  { href: "/finanzas/mes", label: "Finanzas", icon: "payments" },
 ];
 
 export function Topbar({ avatar }: { avatar?: string | null }) {
@@ -49,7 +49,8 @@ export function Topbar({ avatar }: { avatar?: string | null }) {
           const active =
             item.href === "/"
               ? pathname === "/"
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href) ||
+                (item.href === "/finanzas/mes" && pathname.startsWith("/finanzas"));
           return (
             <Link
               key={item.href}

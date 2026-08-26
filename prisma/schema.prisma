@@ -104,6 +104,7 @@ model FixedExpense {
   userId   String
   category String
   amount   Decimal @db.Decimal(12, 2)
+  icon     String  @default("receipt_long")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

@@ -12,10 +12,31 @@ const inputClass =
 const labelClass =
   "block text-label-caps font-label-caps text-on-surface-variant uppercase mb-2";
 
+/** Iconos disponibles para etiquetar gastos fijos. */
+const EXPENSE_ICONS = [
+  "home",
+  "bolt",
+  "water_drop",
+  "shopping_cart",
+  "directions_car",
+  "local_gas_station",
+  "wifi",
+  "phone_iphone",
+  "school",
+  "medical_services",
+  "fitness_center",
+  "subscriptions",
+  "credit_card",
+  "pets",
+  "restaurant",
+  "receipt_long",
+];
+
 export function AddExpenseButton() {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
+  const [icon, setIcon] = useState("receipt_long");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -23,7 +44,7 @@ export function AddExpenseButton() {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await createExpense({ category, amount });
+      const res = await createExpense({ category, amount, icon });
       if (!res.ok) {
         setError(
           res.fieldErrors?.category?.[0] ??
@@ -34,6 +55,7 @@ export function AddExpenseButton() {
       }
       setCategory("");
       setAmount("");
+      setIcon("receipt_long");
       setOpen(false);
     });
   }
@@ -70,6 +92,25 @@ export function AddExpenseButton() {
               placeholder="500"
               className={inputClass}
             />
+          </div>
+          <div>
+            <label className={labelClass}>Ícono</label>
+            <div className="grid grid-cols-8 gap-2 max-h-[120px] overflow-y-auto no-scrollbar pr-1">
+              {EXPENSE_ICONS.map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setIcon(opt)}
+                  className={`aspect-square rounded-lg flex items-center justify-center border transition-all ${
+                    icon === opt
+                      ? "bg-primary/20 border-primary text-primary"
+                      : "bg-surface-container-lowest border-outline-variant text-on-surface-variant hover:border-primary/50"
+                  }`}
+                >
+                  <Icon name={opt} className="text-[18px]" />
+                </button>
+              ))}
+            </div>
           </div>
           {error && <p className="text-error text-body-sm">{error}</p>}
           <button

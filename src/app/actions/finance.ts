@@ -149,10 +149,10 @@ export async function createExpense(
     };
   }
 
-  const { category, amount } = parsed.data;
+  const { category, amount, icon } = parsed.data;
 
   const expense = await prisma.fixedExpense.create({
-    data: { userId, category, amount },
+    data: { userId, category, amount, icon },
     select: { id: true },
   });
 

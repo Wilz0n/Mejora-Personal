@@ -264,6 +264,21 @@ Se eliminó la barra de "Proyecto destacado" que aparecía debajo. Ahora toda la
 
 Los controles del módulo de Hábitos (toggle Semanal/Mensual, botones Quitar/Añadir Hábito) ya **no se desbordan en pantallas pequeñas**. Se adaptan correctamente al ancho del móvil.
 
+### 🎨 Más iconos para tus hábitos
+
+Al crear un hábito ahora puedes elegir entre **muchos más iconos** (más de 30): bienestar, estudio, ejercicio, alimentación, ocio y más. Si hay muchos, el selector tiene scroll para que los veas todos.
+
+### 🏷️ Iconos para tus gastos fijos
+
+Al añadir un **Gasto Fijo**, además de la categoría y el monto, ahora puedes elegir un **ícono** (casa, luz, agua, supermercado, auto, wifi, teléfono, etc.) para identificarlo de un vistazo en tu lista de gastos.
+
+### 🧭 Navegación de Finanzas más clara
+
+- Al pulsar **"Finanzas"** en el menú, vas directo a **"Finanzas del Mes"** (tu resumen guardado).
+- Si aún **no has configurado nada**, la app te lleva directo a la vista de edición para que agregues tus ingresos, gastos y proyectos.
+- Con **"Guardar Finanza"** guardas el cierre del mes y ves tu resumen; con **"Editar Finanza"** vuelves a modificar tus datos.
+- Si **borras tus datos**, ya no aparece información vieja: la app te lleva a empezar de cero.
+
 ---
 
 ¿Necesitas instalar o publicar la app? Consulta la guía técnica en **[DEPLOYMENT.md](./DEPLOYMENT.md)**.

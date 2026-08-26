@@ -77,6 +77,7 @@ export async function getFinanceData(userId: string) {
       id: e.id,
       category: e.category,
       amount: Number(e.amount),
+      icon: e.icon,
     })),
     projects: projects.map((p) => ({
       id: p.id,

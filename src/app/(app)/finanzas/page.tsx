@@ -166,7 +166,7 @@ export default async function FinancePage() {
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-md bg-surface-variant/40 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
                         <Icon
-                          name={expenseIcon(e.category)}
+                          name={e.icon && e.icon !== "receipt_long" ? e.icon : expenseIcon(e.category)}
                           className="text-[18px]"
                         />
                       </div>

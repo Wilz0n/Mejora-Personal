@@ -63,9 +63,9 @@ export function MonthlyTracker({ weeks, habits, today }: MonthlyTrackerProps) {
       </div>
 
       {/* Cuadrícula */}
-      <div className="p-5 overflow-x-auto no-scrollbar">
+      <div className="p-3 sm:p-5 overflow-x-auto no-scrollbar">
         <div className="min-w-full">
-          <div className="grid grid-cols-[1fr_repeat(8,40px)] gap-4 mb-4 px-2">
+          <div className="grid grid-cols-[minmax(70px,1fr)_repeat(7,26px)_32px] sm:grid-cols-[1fr_repeat(7,36px)_44px] gap-1 sm:gap-3 mb-3 sm:mb-4 px-1 sm:px-2">
             <div className="text-label-caps text-[10px] text-on-surface-variant uppercase">
               Hábito
             </div>
@@ -78,28 +78,28 @@ export function MonthlyTracker({ weeks, habits, today }: MonthlyTrackerProps) {
               </div>
             ))}
             <div className="text-center text-label-caps text-[10px] text-on-surface-variant">
-              Tasa
+              %
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:gap-3">
             {habits.map((h) => (
               <div
                 key={h.id}
-                className="grid grid-cols-[1fr_repeat(8,40px)] gap-4 items-center p-2 rounded-lg bg-surface-container/40 border border-outline-variant/30 hover:border-outline-variant/60 transition-colors"
+                className="grid grid-cols-[minmax(70px,1fr)_repeat(7,26px)_32px] sm:grid-cols-[1fr_repeat(7,36px)_44px] gap-1 sm:gap-3 items-center p-1.5 sm:p-2 rounded-lg bg-surface-container/40 border border-outline-variant/30 hover:border-outline-variant/60 transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-                    <Icon name={h.icon} className="text-[16px] text-primary" />
+                <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                    <Icon name={h.icon} className="text-[12px] sm:text-[16px] text-primary" />
                   </div>
-                  <span className="text-body-sm text-on-surface truncate">
+                  <span className="text-[11px] sm:text-body-sm text-on-surface truncate">
                     {h.name}
                   </span>
                 </div>
                 {week.map((day, i) =>
                   day === null ? (
                     <div key={`empty-${activeWeek}-${i}`} className="flex justify-center">
-                      <div className="w-8 h-8 rounded-lg bg-surface-container-high/20 border border-outline-variant/20" />
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-surface-container-high/20 border border-outline-variant/20" />
                     </div>
                   ) : (
                     <div key={day} className="flex justify-center">
@@ -126,29 +126,29 @@ export function MonthlyTracker({ weeks, habits, today }: MonthlyTrackerProps) {
       </div>
 
       {/* Leyenda */}
-      <div className="px-5 py-4 mt-auto border-t border-outline-variant/30 bg-surface-container/40 flex items-center gap-6 flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-md bg-primary/90 border border-primary" />
-          <span className="text-[11px] text-on-surface-variant font-label-caps uppercase">
+      <div className="px-3 sm:px-5 py-3 sm:py-4 mt-auto border-t border-outline-variant/30 bg-surface-container/40 flex items-center gap-3 sm:gap-6 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm sm:rounded-md bg-primary/90 border border-primary" />
+          <span className="text-[10px] sm:text-[11px] text-on-surface-variant font-label-caps uppercase">
             Completado
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-md bg-surface-container-high/40 border border-outline-variant/40" />
-          <span className="text-[11px] text-on-surface-variant font-label-caps uppercase">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm sm:rounded-md bg-surface-container-high/40 border border-outline-variant/40" />
+          <span className="text-[10px] sm:text-[11px] text-on-surface-variant font-label-caps uppercase">
             Pendiente
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-md bg-surface-container-high/20 border border-outline-variant/20" />
-          <span className="text-[11px] text-on-surface-variant font-label-caps uppercase">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-sm sm:rounded-md bg-surface-container-high/20 border border-outline-variant/20" />
+          <span className="text-[10px] sm:text-[11px] text-on-surface-variant font-label-caps uppercase">
             Fuera del mes
           </span>
         </div>
-        <div className="flex items-center gap-1.5 ml-auto text-on-surface-variant/70">
-          <Icon name="lock" className="text-[14px]" />
-          <span className="text-[11px] font-label-caps uppercase">
-            Solo lectura · marca desde Semanal
+        <div className="flex items-center gap-1 sm:gap-1.5 ml-auto text-on-surface-variant/70">
+          <Icon name="lock" className="text-[12px] sm:text-[14px]" />
+          <span className="text-[9px] sm:text-[11px] font-label-caps uppercase">
+            Solo lectura
           </span>
         </div>
       </div>

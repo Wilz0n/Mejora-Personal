@@ -6,15 +6,43 @@ import { Modal } from "@/components/comun/Modal";
 import { Icon } from "@/components/comun/Icon";
 
 const ICON_OPTIONS = [
+  // Bienestar y mente
   "self_improvement",
-  "menu_book",
-  "fitness_center",
-  "water_drop",
+  "spa",
   "bedtime",
-  "directions_run",
-  "restaurant",
+  "psychology",
+  "favorite",
+  // Estudio y trabajo
+  "menu_book",
+  "school",
   "code",
+  "laptop_mac",
+  "edit_note",
+  "language",
+  // Ejercicio y salud
+  "fitness_center",
+  "directions_run",
+  "directions_bike",
+  "sports_soccer",
+  "pool",
+  "sports_martial_arts",
+  // Alimentación e hidratación
+  "water_drop",
+  "restaurant",
+  "local_cafe",
+  "nutrition",
+  // Ocio y creatividad
   "brush",
+  "music_note",
+  "photo_camera",
+  "sports_esports",
+  "pets",
+  // Hábitos varios
+  "cleaning_services",
+  "savings",
+  "medication",
+  "smoke_free",
+  "wb_sunny",
   "check_circle",
 ];
 
@@ -88,7 +116,7 @@ export function AddHabitButton({ variant = "ghost" }: AddHabitButtonProps) {
             <label className="block text-label-caps font-label-caps text-on-surface-variant uppercase mb-2">
               Ícono
             </label>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-5 gap-2 max-h-[220px] overflow-y-auto no-scrollbar pr-1">
               {ICON_OPTIONS.map((opt) => (
                 <button
                   key={opt}

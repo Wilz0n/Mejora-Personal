@@ -53,13 +53,13 @@ export function HabitCheckbox({
       return (
         <div
           aria-label={`${label ?? "hábito"} ${date}${initialCompleted ? " completado" : " pendiente"}`}
-          className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+          className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg flex items-center justify-center border ${
             initialCompleted
               ? "bg-primary/90 border-primary text-on-primary"
               : "bg-surface-container-high/40 border-outline-variant/40 text-transparent"
           }`}
         >
-          <Icon name="check" className="text-[18px]" />
+          <Icon name="check" className="text-[14px] sm:text-[16px]" />
         </div>
       );
     }
@@ -69,13 +69,13 @@ export function HabitCheckbox({
         onClick={handleToggle}
         aria-pressed={completed}
         aria-label={`${label ?? "hábito"} ${date}`}
-        className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${
+        className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg flex items-center justify-center border transition-all ${
           completed
             ? "bg-primary border-primary text-on-primary shadow-sm shadow-primary/20"
             : "bg-surface-container-high border-outline-variant text-transparent hover:border-primary hover:bg-primary/10 hover:text-primary/50"
         } ${isPending ? "opacity-70" : ""}`}
       >
-        <Icon name="check" className="text-[18px]" />
+        <Icon name="check" className="text-[14px] sm:text-[16px]" />
       </button>
     );
   }

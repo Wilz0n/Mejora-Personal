@@ -9,7 +9,7 @@ import { isSingleUserModeClient } from "@/lib/single-user-client";
 const NAV = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
   { href: "/habitos", label: "Hábitos", icon: "event_repeat" },
-  { href: "/finanzas", label: "Finanzas", icon: "payments" },
+  { href: "/finanzas/mes", label: "Finanzas", icon: "payments" },
   { href: "/proyectos", label: "Proyectos", icon: "account_tree" },
 ];
 
@@ -42,7 +42,9 @@ export function Sidebar() {
           const active =
             item.href === "/"
               ? pathname === "/"
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.href) ||
+                // "Finanzas" se marca activo tanto en /finanzas como /finanzas/mes
+                (item.href === "/finanzas/mes" && pathname.startsWith("/finanzas"));
           return (
             <Link
               key={item.href}
