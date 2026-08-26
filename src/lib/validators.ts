@@ -45,6 +45,13 @@ export const setIncomeSchema = z.object({
 });
 export type SetIncomeInput = z.infer<typeof setIncomeSchema>;
 
+export const setSavingsSchema = z.object({
+  monthlySavings: z.coerce
+    .number()
+    .min(0, "El ahorro no puede ser negativo"),
+});
+export type SetSavingsInput = z.infer<typeof setSavingsSchema>;
+
 export const registerSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio").max(60),
   email: z.string().trim().toLowerCase().email("Email inválido"),

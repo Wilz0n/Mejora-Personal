@@ -4,12 +4,14 @@ import {
   computeFinanceSummary,
   computeProjectsProgress,
   formatCurrency,
+  suggestedSavings,
 } from "@/lib/finance-logic";
 import { AddProjectButton } from "@/components/finanzas/AddProjectButton";
 import { RemoveProjectButton } from "@/components/finanzas/RemoveProjectButton";
 import {
   AddExpenseButton,
   SetIncomeButton,
+  SetSavingsButton,
 } from "@/components/finanzas/FinanceModals";
 import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
 import { Icon } from "@/components/comun/Icon";
@@ -33,8 +35,16 @@ export default async function FinancePage() {
   const projects = computeProjectsProgress(finance.projects);
   const currency = finance.currency;
 
-  // "Ahorro Automático" = 20% del ingreso (feature del diseño nuevo, placeholder).
-  const autoSavings = Math.round(summary.monthlyIncome * 0.2);
+  // Ahorro mensual: el valor guardado por el usuario; si aún no definió uno,
+  // se muestra la sugerencia del 20% del ingreso como referencia.
+  const savings =
+    summary.monthlySavings > 0
+      ? summary.monthlySavings
+      : suggestedSavings(summary.monthlyIncome);
+  const savingsPctOfIncome =
+    summary.monthlyIncome > 0
+      ? Math.round((savings / summary.monthlyIncome) * 100)
+      : 0;
   // % disponible respecto al ingreso, para la barra del "Balance Restante".
   const availablePct =
     summary.monthlyIncome > 0
@@ -81,6 +91,32 @@ export default async function FinancePage() {
                   {formatCurrency(summary.monthlyIncome, { currency })}
                 </span>
                 <SetIncomeButton current={summary.monthlyIncome} />
+              </div>
+            </div>
+          </div>
+
+          {/* Ahorro mensual (editable, se descuenta del balance) */}
+          <div className="glass-panel rounded-xl p-stack-md flex flex-col sm:flex-row items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 flex-shrink-0">
+              <Icon name="savings" className="text-primary text-2xl" />
+            </div>
+            <div className="flex-1 w-full">
+              <p className="block text-label-caps font-label-caps text-on-surface-variant mb-1 uppercase">
+                Ahorro Mensual
+              </p>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <span className="text-body-lg font-body-lg text-primary font-mono">
+                    {formatCurrency(savings, { currency })}
+                  </span>
+                  <span className="block text-label-caps font-label-caps text-on-surface-variant">
+                    {savingsPctOfIncome}% del ingreso
+                  </span>
+                </div>
+                <SetSavingsButton
+                  current={summary.monthlySavings}
+                  monthlyIncome={summary.monthlyIncome}
+                />
               </div>
             </div>
           </div>
@@ -145,12 +181,12 @@ export default async function FinancePage() {
                       Ahorro Automático
                     </span>
                     <span className="block text-label-caps font-label-caps text-on-surface-variant">
-                      20% del ingreso
+                      {savingsPctOfIncome}% del ingreso
                     </span>
                   </div>
                 </div>
                 <div className="text-body-lg font-body-lg text-primary font-mono font-semibold">
-                  {formatCurrency(autoSavings, { currency })}
+                  {formatCurrency(savings, { currency })}
                 </div>
               </div>
             </div>

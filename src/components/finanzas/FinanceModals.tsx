@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { createExpense, setMonthlyIncome } from "@/app/actions/finance";
+import { setMonthlySavings } from "@/app/actions/finance";
+import { suggestedSavings } from "@/lib/finance-logic";
 import { Modal } from "@/components/comun/Modal";
 import { Icon } from "@/components/comun/Icon";
 
@@ -130,6 +132,78 @@ export function SetIncomeButton({ current }: { current: number }) {
               className={inputClass}
             />
           </div>
+          {error && <p className="text-error text-body-sm">{error}</p>}
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full py-2.5 rounded-xl bg-primary text-on-primary font-medium hover:bg-primary-fixed-dim transition-colors disabled:opacity-60"
+          >
+            {isPending ? "Guardando..." : "Guardar"}
+          </button>
+        </form>
+      </Modal>
+    </>
+  );
+}
+
+export function SetSavingsButton({
+  current,
+  monthlyIncome,
+}: {
+  current: number;
+  monthlyIncome: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const [savings, setSavings] = useState(String(current || ""));
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const suggestion = suggestedSavings(monthlyIncome);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const res = await setMonthlySavings({ monthlySavings: savings });
+      if (!res.ok) {
+        setError(res.fieldErrors?.monthlySavings?.[0] ?? res.error);
+        return;
+      }
+      setOpen(false);
+    });
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="flex items-center gap-2 text-sm border border-outline-variant text-on-surface-variant px-3 py-2 rounded-xl hover:bg-surface-variant transition-colors"
+      >
+        <Icon name="edit" className="text-[18px]" />
+        <span>Editar ahorro</span>
+      </button>
+      <Modal open={open} onClose={() => setOpen(false)} title="Ahorro Mensual">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className={labelClass}>Monto de ahorro mensual</label>
+            <input
+              value={savings}
+              onChange={(e) => setSavings(e.target.value)}
+              autoFocus
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder={String(suggestion)}
+              className={inputClass}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setSavings(String(suggestion))}
+            className="text-sm text-primary hover:underline"
+          >
+            Usar sugerencia (20% del ingreso: {suggestion})
+          </button>
           {error && <p className="text-error text-body-sm">{error}</p>}
           <button
             type="submit"

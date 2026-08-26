@@ -36,7 +36,10 @@ export default async function DashboardPage() {
 
   // "Ahorro Protegido": 20% del ingreso mensual (feature nueva del diseño,
   // placeholder coherente hasta implementar lógica dedicada).
-  const protectedSavings = Math.round(summary.monthlyIncome * 0.2);
+  const protectedSavings =
+    summary.monthlySavings > 0
+      ? summary.monthlySavings
+      : Math.round(summary.monthlyIncome * 0.2);
 
   return (
     <>
