@@ -71,6 +71,7 @@ export async function getFinanceData(userId: string) {
 
   return {
     monthlyIncome: summary ? Number(summary.monthlyIncome) : 0,
+    monthlySavings: summary ? Number(summary.monthlySavings) : 0,
     currency: summary?.currency ?? "USD",
     fixedExpenses: fixedExpenses.map((e) => ({
       id: e.id,

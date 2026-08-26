@@ -7,6 +7,7 @@ import {
   createProjectSchema,
   createExpenseSchema,
   setIncomeSchema,
+  setSavingsSchema,
 } from "@/lib/validators";
 import type { ActionResult } from "@/lib/action-result";
 
@@ -124,6 +125,31 @@ export async function setMonthlyIncome(input: unknown): Promise<ActionResult> {
     where: { userId },
     create: { userId, monthlyIncome },
     update: { monthlyIncome },
+  });
+
+  revalidateFinance();
+  return { ok: true };
+}
+
+/** Define/actualiza el ahorro mensual (se descuenta del balance disponible). */
+export async function setMonthlySavings(input: unknown): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const parsed = setSavingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Datos inválidos",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { monthlySavings } = parsed.data;
+
+  await prisma.financialSummary.upsert({
+    where: { userId },
+    create: { userId, monthlySavings },
+    update: { monthlySavings },
   });
 
   revalidateFinance();
