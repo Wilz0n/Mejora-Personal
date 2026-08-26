@@ -393,11 +393,14 @@ Server Component `force-dynamic`. Lee en paralelo hábitos de hoy, hábitos de l
 **Por qué así:** es una vista de resumen + acción rápida; reutiliza las mismas funciones puras de `lib` que las demás páginas para que los números sean consistentes en toda la app.
 
 ### Hábitos — `src/app/(app)/habitos/page.tsx`
-Server Component. El query param `?view=week|month` decide la vista.
+Server Component. El query param `?view=week|month|quarter|semester` decide la vista (4 periodos).
 - **Semanal (editable):** `WeeklyTracker` con `HabitCheckbox` interactivos que llaman `toggleHabitLog` con mutación optimista.
-- **Mensual (solo lectura):** `MonthlyTracker` con `HabitCheckbox` en modo `readOnly`.
+- **Mensual (solo lectura):** `MonthlyTracker` con `HabitCheckbox` en modo `readOnly`. Las semanas se filtran con `.filter(w => w.some(d => d !== null))` para mostrar solo las reales del mes (4, 5 o 6).
+- **Trimestral / Semestral (solo lectura):** `PeriodTracker` — progreso mes a mes. Usa `periodMonths(3|6)` de `dates.ts` para agrupar por mes. Muestra barras de color por nivel de cumplimiento (≥80% primary, 40–79% tertiary, <40% error) con tasa global del periodo.
 
-**Por qué la mensual es solo lectura:** la semana ISO puede cruzar meses y el estado local de los checkboxes se "pegaba" al cambiar de semana. En `readOnly`, el checkbox renderiza directamente desde la prop `initialCompleted` (no del estado local), y el `MonthlyTracker` usa la `dayKey` como `key` de React para forzar el refresco. Además auto-selecciona la semana que contiene hoy (`weeks.findIndex`). El marcado ocurre **solo** en la vista semanal; la mensual únicamente refleja. Grid responsive: celdas 26px en móvil / 36px en desktop.
+**Por qué las vistas largas (mes/trimestre/semestre) son solo lectura:** la semana ISO puede cruzar meses y el estado local de los checkboxes se "pegaba" al cambiar de semana. En `readOnly`, el checkbox renderiza directamente desde la prop `initialCompleted` (no del estado local), y el `MonthlyTracker` usa la `dayKey` como `key` de React para forzar el refresco. Además auto-selecciona la semana que contiene hoy (`weeks.findIndex`). El marcado ocurre **solo** en la vista semanal.
+
+**Panel de Resumen** (grid `lg:grid-cols-3`, Resumen ocupa 1/3 del ancho): anillo `ProgressRing(180)` + tarjetas Mejor Hábito / Por Mejorar + **Consolidados** (≥80%) y **En Riesgo** (<40%) con `CountCard` (count/total + barra de progreso). Grid responsive: celdas 26px en móvil / 36px en desktop.
 
 ### Finanzas — edición — `src/app/(app)/finanzas/page.tsx`
 Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono) y proyectos, todos editables (`FinanceModals`, `AddProjectButton`, `RemoveProjectButton` con modal de confirmación, `ContributeButton`). El botón `SaveFinanceButton` guarda el cierre del mes.
@@ -414,6 +417,40 @@ Server Component `force-dynamic`. Lee el snapshot guardado (`getMonthlyFinance`)
 
 ### Persistencia del cierre mensual
 Modelo `MonthlyFinance` (unique `userId` + `month`). Se guarda con `saveMonthlyFinance` (upsert), se lee con `getMonthlyFinance`, y se borra en `purgeAccountData`. Detalle de los campos y JSON en `docs/AI_CONTEXT.md`.
+
+---
+
+## 12. Seguridad (medidas implementadas y por qué)
+
+El proyecto sigue prácticas de seguridad por defecto. Cosas que **no debes romper**:
+
+**Autenticación**
+- `src/lib/auth.ts` → `resolveSecret()`: si `NEXTAUTH_SECRET` falta **en producción con login**, lanza error (fail-closed). En modo usuario único usa un placeholder inofensivo (NextAuth no se usa). Nunca pongas un secret estático en código.
+- Login en **tiempo constante**: `authorize` hace `bcrypt.compare` contra un hash dummy si el usuario no existe (evita revelar por timing si un email está registrado).
+- `registerUser` **bloqueado** en modo usuario único (no se pueden crear cuentas en despliegues personales).
+- Mensaje de error de registro **genérico** ("No se pudo completar el registro") — no revela si el email ya existe.
+- Contraseñas: mínimo 8 caracteres, al menos 1 letra y 1 número, máximo 72 (límite bcrypt). Hash con bcrypt salt 10.
+
+**Headers HTTP** (`next.config.js`)
+- `X-Content-Type-Options: nosniff` (evita MIME sniffing).
+- `X-Frame-Options: DENY` (anti-clickjacking).
+- `Referrer-Policy: strict-origin-when-cross-origin`.
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()`.
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` (HSTS 2 años).
+- `X-Powered-By` desactivado (`poweredByHeader: false`).
+
+**Inyección y XSS**
+- Prisma parametrizado en todas las queries → sin inyección SQL.
+- Validación Zod en todas las Server Actions con tipos estrictos.
+- No hay `dangerouslySetInnerHTML` ni `eval` en el código.
+- Avatar validado por regex (solo `data:image/...` o URLs http).
+- Export CSV: celdas que empiezan con `=`, `+`, `-`, `@` se neutralizan con `'` (anti-formula injection).
+
+**Secretos**
+- `.env.local` en `.gitignore`; solo `.env.example` (sin valores reales) se versiona.
+- La validación de `predev` avisa si hay variables innecesarias/conflictivas (ver sección 4).
+
+> **Al agregar funcionalidad nueva**, sigue estas reglas: toda consulta/mutación filtra por `getUserId()` (aislamiento), toda entrada de usuario se valida con Zod antes de tocar la BD, y nunca loguees secretos ni datos sensibles.
 
 ---
 

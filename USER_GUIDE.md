@@ -279,6 +279,24 @@ Al añadir un **Gasto Fijo**, además de la categoría y el monto, ahora puedes 
 - Con **"Guardar Finanza"** guardas el cierre del mes y ves tu resumen; con **"Editar Finanza"** vuelves a modificar tus datos.
 - Si **borras tus datos**, ya no aparece información vieja: la app te lleva a empezar de cero.
 
+### 📈 Nuevas vistas de progreso en Hábitos
+
+Además de **Semanal** y **Mensual**, ahora tienes dos vistas para ver tu progreso a largo plazo:
+
+- **Trimestral** (últimos 3 meses) y **Semestral** (últimos 6 meses): muestran tu progreso **mes a mes** con barras de color, para que veas la tendencia y cuánto has mejorado.
+- Color de las barras: 🟣 Consolidado (≥80%) · 🟠 En progreso (40–79%) · 🔴 En riesgo (<40%).
+
+> 💡 Recuerda: los días solo se marcan desde la vista **Semanal**. Las demás vistas son de solo lectura y reflejan lo que ya marcaste.
+
+### 🎯 Más métricas en el Resumen
+
+El panel de Resumen (ahora más grande) muestra, además de "Mejor Hábito" y "Por Mejorar", dos métricas nuevas:
+
+- **Consolidados:** cuántos hábitos tienes bien afianzados (cumplimiento ≥ 80%).
+- **En Riesgo:** cuántos necesitan atención (cumplimiento < 40%).
+
+Así sabes de un vistazo cuántos hábitos van bien y cuántos deberías reforzar.
+
 ---
 
 ¿Necesitas instalar o publicar la app? Consulta la guía técnica en **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
