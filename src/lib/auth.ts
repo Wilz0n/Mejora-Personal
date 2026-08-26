@@ -8,6 +8,9 @@ import { prisma } from "@/lib/prisma";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: { strategy: "jwt" },
+  // Secret: usa NEXTAUTH_SECRET; si falta (p. ej. en modo usuario único donde
+  // NextAuth no se usa) cae a un valor por defecto para no romper el runtime.
+  secret: process.env.NEXTAUTH_SECRET ?? "lifetracker-dev-secret-change-me",
   pages: {
     signIn: "/login",
   },
