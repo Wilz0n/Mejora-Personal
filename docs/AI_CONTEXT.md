@@ -99,6 +99,11 @@ src/app/
 - `currentMonthKey()`: `"YYYY-MM"` actual.
 - `formatCurrency(value, {currency})`: `Intl.NumberFormat`. `SUPPORTED_CURRENCIES` = USD, PEN.
 
+### Historial de Ahorro — `src/lib/data.ts` → `getSavingsHistory`
+- Lee todos los `MonthlyFinance` del usuario ordenados por mes y devuelve `{ history: [{month, monthLabel, savings, updatedAt}], totalAccumulated }`.
+- Unique `(userId, month)` garantiza un solo registro por mes (upsert). El usuario puede editar y re-guardar durante el mes; al terminar, queda fijo.
+- El componente `SavingsHistory` (`src/components/finanzas/SavingsHistory.tsx`) muestra: total acumulado, mini-gráfico de barras mes a mes, promedio mensual, fecha de última actualización, y **fecha límite de edición** (último día del mes actual + días restantes). Versiones `compact` (para /finanzas) y completa (para /finanzas/mes).
+
 ### Validación — `src/lib/validators.ts`
 Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`, `createExpenseSchema` (incluye `icon`), `setIncomeSchema`, `setSavingsSchema`, `setCurrencySchema`, `updateProfileSchema`, `registerSchema`. Se usan con `.safeParse()` en cada Server Action; errores → `fieldErrors`.
 

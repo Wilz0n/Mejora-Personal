@@ -288,6 +288,20 @@ Además de **Semanal** y **Mensual**, ahora tienes dos vistas para ver tu progre
 
 > 💡 Recuerda: los días solo se marcan desde la vista **Semanal**. Las demás vistas son de solo lectura y reflejan lo que ya marcaste.
 
+### 💰 Historial de Ahorro Acumulado
+
+La app ahora registra y muestra tu **ahorro acumulado mes a mes**:
+
+- En **Finanzas** (edición): un mini-gráfico compacto debajo de "Ahorro Mensual" muestra cuánto llevas ahorrado.
+- En **Finanzas del Mes** (resumen): un gráfico más amplio con barras por mes, promedio mensual y total acumulado.
+
+**Reglas importantes:**
+- Se registra **un solo valor por mes** (el último que guardaste con "Guardar Finanza"). Si editas varias veces, solo cuenta la última.
+- Puedes editar el ahorro del mes **hasta el último día del mes**. Después de esa fecha, queda fijo en tu historial.
+- La app te muestra cuántos días te quedan para editar el mes actual.
+
+> 💡 Así evitas "ahorros falsos": solo se guarda lo definitivo de cada mes.
+
 ### 🎯 Más métricas en el Resumen
 
 El panel de Resumen (ahora más grande) muestra, además de "Mejor Hábito" y "Por Mejorar", dos métricas nuevas:

@@ -169,6 +169,46 @@ export async function getMonthlyFinance(
   };
 }
 
+export interface SavingsHistoryItem {
+  month: string;
+  monthLabel: string;
+  savings: number;
+  updatedAt: string;
+}
+
+export interface SavingsHistoryData {
+  /** Historial ordenado del más antiguo al más reciente. */
+  history: SavingsHistoryItem[];
+  /** Suma total de todos los ahorros mensuales registrados (acumulado). */
+  totalAccumulated: number;
+}
+
+/**
+ * Obtiene el historial de ahorro mes a mes del usuario (de MonthlyFinance).
+ * Devuelve los meses ordenados cronológicamente y el total acumulado.
+ * Si no hay cierres guardados, devuelve historial vacío y total 0.
+ */
+export async function getSavingsHistory(
+  userId: string,
+): Promise<SavingsHistoryData> {
+  const records = await prisma.monthlyFinance.findMany({
+    where: { userId },
+    orderBy: { month: "asc" },
+    select: { month: true, monthLabel: true, monthlySavings: true, updatedAt: true },
+  });
+
+  const history: SavingsHistoryItem[] = records.map((r) => ({
+    month: r.month,
+    monthLabel: r.monthLabel,
+    savings: Number(r.monthlySavings),
+    updatedAt: r.updatedAt.toISOString(),
+  }));
+
+  const totalAccumulated = history.reduce((acc, h) => acc + h.savings, 0);
+
+  return { history, totalAccumulated };
+}
+
 /**
  * Reúne todos los datos del usuario (hábitos + logs, finanzas, proyectos)
  * para exportarlos. Devuelve un objeto serializable a JSON.

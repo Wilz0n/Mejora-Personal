@@ -418,6 +418,19 @@ Server Component `force-dynamic`. Lee el snapshot guardado (`getMonthlyFinance`)
 ### Persistencia del cierre mensual
 Modelo `MonthlyFinance` (unique `userId` + `month`). Se guarda con `saveMonthlyFinance` (upsert), se lee con `getMonthlyFinance`, y se borra en `purgeAccountData`. Detalle de los campos y JSON en `docs/AI_CONTEXT.md`.
 
+### Historial de ahorro — `src/components/finanzas/SavingsHistory.tsx`
+- **Data:** `getSavingsHistory(userId)` en `src/lib/data.ts` — lee `monthlySavings` y `updatedAt` de todos los `MonthlyFinance` del usuario, ordenados por mes ASC. Devuelve `{ history: [{month, monthLabel, savings, updatedAt}], totalAccumulated }`.
+- **Componente:** `SavingsHistory` — server component, recibe `data`, `currency`, `compact?`. Muestra:
+  - Total acumulado (suma de todos los meses).
+  - Mini-gráfico de barras proporcionales por mes (con tooltip hover).
+  - Promedio mensual (cuando hay ≥2 meses).
+  - **Fecha de última actualización** (`updatedAt` del mes más reciente).
+  - **Fecha límite de edición** (`lastDayOfCurrentMonth()` + `daysLeftInMonth()`): helper interno que calcula el último día del mes y cuántos días faltan. Nota visual con ícono `schedule` y destaque en `primary`.
+  - Empty state motivacional si no hay historial.
+- **Integración:** en `/finanzas` (compact, entre Ahorro y Gastos Fijos) y en `/finanzas/mes` (prominente, entre KPIs y Bento grid).
+- **Regla de negocio:** unique `(userId, month)` = un registro por mes (upsert). El usuario puede editar y re-guardar dentro del mes; al terminar, queda fijo. La nota informativa explica esto al usuario.
+- **Para Nivel 2 futuro:** agregar modelo `SavingsLog` con aportes individuales y extender `getSavingsHistory` sin tocar el componente visual.
+
 ---
 
 ## 12. Seguridad (medidas implementadas y por qué)

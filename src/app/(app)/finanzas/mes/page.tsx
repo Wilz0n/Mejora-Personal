@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserId } from "@/lib/session";
-import { getMonthlyFinance, getFinanceData } from "@/lib/data";
+import { getMonthlyFinance, getFinanceData, getSavingsHistory } from "@/lib/data";
 import { formatCurrency } from "@/lib/finance-logic";
+import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,10 @@ const ACCENTS = [
 
 export default async function MonthlyFinancePage() {
   const userId = await getUserId();
-  const [finance, current] = await Promise.all([
+  const [finance, current, savingsHistory] = await Promise.all([
     getMonthlyFinance(userId),
     getFinanceData(userId),
+    getSavingsHistory(userId),
   ]);
 
   // El usuario tiene datos financieros configurados ACTUALMENTE.
@@ -100,6 +102,9 @@ export default async function MonthlyFinancePage() {
           }
         />
       </section>
+
+      {/* Historial de ahorro acumulado */}
+      <SavingsHistory data={savingsHistory} currency={currency} />
 
       {/* Bento grid: Metas activas + Categorías de gastos */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
