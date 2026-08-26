@@ -6,10 +6,12 @@ import {
   formatCurrency,
 } from "@/lib/finance-logic";
 import { AddProjectButton } from "@/components/finanzas/AddProjectButton";
+import { RemoveProjectButton } from "@/components/finanzas/RemoveProjectButton";
 import {
   AddExpenseButton,
   SetIncomeButton,
 } from "@/components/finanzas/FinanceModals";
+import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -89,7 +91,15 @@ export default async function FinancePage() {
               <h3 className="text-headline-md font-headline-md text-on-background text-lg">
                 Gastos Fijos
               </h3>
-              <AddExpenseButton />
+              <div className="flex items-center gap-3">
+                {finance.fixedExpenses.length > 0 && (
+                  <RemoveExpenseButton
+                    expenses={finance.fixedExpenses}
+                    currency={currency}
+                  />
+                )}
+                <AddExpenseButton />
+              </div>
             </div>
 
             {finance.fixedExpenses.length === 0 ? (
@@ -209,7 +219,13 @@ export default async function FinancePage() {
                           {p.tag}
                         </span>
                       </div>
-                      <ProjectRing progress={p.progress} />
+                      <div className="flex items-center gap-2">
+                        <ProjectRing progress={p.progress} />
+                        <RemoveProjectButton
+                          projectId={p.id}
+                          projectName={p.name}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2 mb-4">
                       <div className="flex justify-between items-center">
