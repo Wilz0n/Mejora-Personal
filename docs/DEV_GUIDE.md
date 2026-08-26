@@ -310,6 +310,36 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 - **Topbar con `shrink-0`:** el header vive en un flex-column; sin `shrink-0` se comprime cuando la página tiene mucho contenido (se veía "aplastado" en Finanzas). Mantén `h-16 shrink-0`.
 - **Subida de imágenes:** Vercel tiene filesystem efímero (no se pueden escribir archivos). Por eso el avatar se comprime y se guarda como Data URL en la BD. Si algún día se necesitan imágenes grandes o muchos usuarios, migrar a **Vercel Blob** (guardar solo la URL).
 
+### Mejoras recientes (segunda iteración)
+
+**Finanzas — Guardar Finanza (cierre mensual)**
+- **Modelo BD:** `MonthlyFinance` en `prisma/schema.prisma` — snapshot mensual con unique `(userId, month)`. Campos: `monthlyIncome`, `monthlySavings`, `totalFixedExpenses`, `availableBalance`, `currency`, `expensesByCategory` (JSON text), `projectsSnapshot` (JSON text).
+- **Lógica pura:** `computeExpenseBreakdown()`, `computeProjectsSnapshot()`, `currentMonthKey()` en `src/lib/finance-logic.ts`.
+- **Server Action:** `saveMonthlyFinance()` en `src/app/actions/finance.ts` — lee config actual del usuario, calcula resumen, upsert por `(userId, month)`. No recibe input del cliente.
+- **Data:** `getMonthlyFinance(userId, month?)` en `src/lib/data.ts` — lee el cierre más reciente o por mes específico. Parsea JSON, convierte Decimal→number.
+- **Componente:** `src/components/finanzas/SaveFinanceButton.tsx` — client component con `useTransition`, guarda y navega a `/finanzas/mes`.
+- **Página:** `src/app/(app)/finanzas/mes/page.tsx` — `force-dynamic`, KPIs, Metas Activas (`projectsSnapshot`), Categorías de Gastos (estilo `ProgressRing` + tarjetas barra vertical). Empty state si no hay cierre.
+
+**Finanzas — Confirmación al borrar proyecto**
+- **Componente:** `src/components/finanzas/RemoveProjectButton.tsx` — ahora abre un `Modal` de confirmación con texto "¿Seguro que quieres borrar tu proyecto [nombre]?" y botones check verde / X roja. La acción `deleteProject` solo se ejecuta al confirmar.
+
+**Hábitos — Tracker Semanal rediseñado**
+- **Función** `WeeklyTracker` en `src/app/(app)/habitos/page.tsx` — convertida de tabla HTML a grid CSS (`grid-cols-[1fr_repeat(8,40px)]`), filas como tarjetas con fondo/borde, ícono en badge, mismo estilo visual que el MonthlyTracker.
+
+**Hábitos — Tracker Mensual solo lectura**
+- `HabitCheckbox` (`src/components/habitos/HabitCheckbox.tsx`): nueva prop `readOnly`. En readonly renderiza un `div` (no botón) directamente desde `initialCompleted` (la prop), evitando el bug de estado local "pegado" al cambiar de semana.
+- `MonthlyTracker` (`src/components/habitos/MonthlyTracker.tsx`): pasa `readOnly` a cada celda. Auto-selecciona la semana que contiene hoy (`weeks.findIndex`). Keys por `dayKey` (no por índice) para forzar refresco al cambiar de semana. Leyenda actualizada a estados reales + indicador "🔒 Solo lectura".
+
+**Dashboard — Distribución Financiera con barra de Proyectos**
+- `src/app/(app)/page.tsx`: quitado bloque "Proyecto destacado". `FinanceChart` recibe nueva prop `projects`. Se agrega barra "Proyectos" (color `bg-tertiary`) entre Ahorro y Disponible. Leyenda actualizada con 4 puntos. La barra "Ahorro" ahora usa `protectedSavings` (valor real) en vez de `totalAllocated`.
+
+**Layout — Fix responsive móvil Hábitos**
+- `src/app/(app)/habitos/page.tsx`: fila de controles usa `flex-col sm:flex-row` para apilar en móvil.
+- `src/components/habitos/AddHabitButton.tsx` y `RemoveHabitButton.tsx`: `whitespace-nowrap` + `flex-1 sm:flex-none` para evitar partición de texto.
+- `src/app/(app)/layout.tsx`: `min-w-0 overflow-x-hidden` en contenedor de contenido para eliminar scroll horizontal de página.
+
+> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push` (creará la tabla `MonthlyFinance` sin borrar datos existentes).
+
 ---
 
 ## 📚 Documentos relacionados

@@ -211,4 +211,59 @@ Sí, porque la tasa es días completados sobre días del periodo. Al avanzar el 
 
 ---
 
+## ✨ Novedades recientes
+
+Estas son las mejoras más recientes de LifeTracker:
+
+### 💾 Guardar Finanza (cierre mensual)
+
+En la página de Finanzas ahora tienes un botón **"Guardar Finanza"**. Al pulsarlo, se guarda un resumen/cierre del mes y te lleva a una nueva vista **"Finanzas del Mes"** donde verás:
+
+- **KPIs del mes:** Ingreso Total, Gasto Fijo Total, Ahorro Neto y Balance Disponible.
+- **Metas Activas:** tus proyectos con barras de progreso.
+- **Categorías de Gastos:** anillo visual + tarjetas con el desglose por categoría.
+
+Desde esa vista puedes volver a modificar datos con el botón **"Editar Finanza"**.
+
+### 🗑️ Confirmación al borrar proyecto
+
+Antes, al pulsar **"−"** en un proyecto se borraba de inmediato. Ahora aparece un popup de confirmación:
+
+> *"¿Seguro que quieres borrar tu proyecto [nombre]?"*
+
+- ✅ **Check verde** → confirma y borra.
+- ❌ **X roja** → cancela y vuelve sin cambios.
+
+Así evitas borrados accidentales.
+
+### 📅 Tracker Semanal mejorado
+
+Nuevo diseño más limpio y uniforme:
+
+- Cada hábito se muestra en una **tarjeta** con su ícono en badge.
+- El **día de hoy** aparece resaltado para ubicarte rápido.
+- Las celdas tienen **mejor contraste**, más fáciles de leer.
+
+### 🔒 Tracker Mensual: solo lectura
+
+La vista Mensual ya **no permite marcar días** directamente. Solo refleja lo que marcas desde la vista Semanal.
+
+- Incluye una **leyenda visual**: Completado / Pendiente / Fuera del mes.
+- Muestra la nota: *"🔒 Solo lectura · marca desde Semanal"*.
+- Al entrar, se **auto-selecciona la semana actual** del mes para que veas tu progreso al instante.
+
+### 📊 Dashboard: Distribución Financiera mejorada
+
+El gráfico de barras del Dashboard ahora incluye **5 barras**:
+
+- **Ingresos** · **Fijos** · **Ahorro** · **Proyectos** · **Disponible**
+
+Se eliminó la barra de "Proyecto destacado" que aparecía debajo. Ahora toda la info financiera está en un solo gráfico más completo.
+
+### 📱 Responsive móvil en Hábitos
+
+Los controles del módulo de Hábitos (toggle Semanal/Mensual, botones Quitar/Añadir Hábito) ya **no se desbordan en pantallas pequeñas**. Se adaptan correctamente al ancho del móvil.
+
+---
+
 ¿Necesitas instalar o publicar la app? Consulta la guía técnica en **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
