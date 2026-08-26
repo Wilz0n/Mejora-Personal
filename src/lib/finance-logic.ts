@@ -7,6 +7,8 @@ export interface FinanceInput {
     name: string;
     targetAmount: number;
     allocatedAmount: number;
+    monthlyContribution?: number;
+    completed?: boolean;
     tag: string;
   }[];
 }
@@ -16,7 +18,7 @@ export interface FinanceSummary {
   monthlySavings: number;
   totalFixedExpenses: number;
   totalAllocated: number;
-  /** Balance Disponible = Ingreso - Ahorro - Gastos Fijos - Montos Asignados a Proyectos. */
+  /** Balance Disponible = Ingreso - Ahorro - Gastos Fijos - Asignado a proyectos ACTIVOS (no cumplidos). */
   availableBalance: number;
 }
 
@@ -26,6 +28,8 @@ export interface ProjectProgress {
   tag: string;
   targetAmount: number;
   allocatedAmount: number;
+  monthlyContribution: number;
+  completed: boolean;
   /** Porcentaje de progreso = (allocated / target) * 100, cap a 100. */
   progress: number;
   remaining: number;
@@ -36,10 +40,11 @@ export function computeFinanceSummary(input: FinanceInput): FinanceSummary {
     (acc, e) => acc + e.amount,
     0,
   );
-  const totalAllocated = input.projects.reduce(
-    (acc, p) => acc + p.allocatedAmount,
-    0,
-  );
+  // Solo los proyectos ACTIVOS (no cumplidos) descuentan del balance.
+  // Al completarse un proyecto, su monto deja de restar (Opción A).
+  const totalAllocated = input.projects
+    .filter((p) => !p.completed)
+    .reduce((acc, p) => acc + p.allocatedAmount, 0);
   const monthlySavings = input.monthlySavings ?? 0;
   const availableBalance =
     input.monthlyIncome - monthlySavings - totalFixedExpenses - totalAllocated;
@@ -74,6 +79,8 @@ export function computeProjectProgress(
     tag: project.tag,
     targetAmount: project.targetAmount,
     allocatedAmount: project.allocatedAmount,
+    monthlyContribution: project.monthlyContribution ?? 0,
+    completed: project.completed ?? false,
     progress,
     remaining: Math.max(0, project.targetAmount - project.allocatedAmount),
   };
