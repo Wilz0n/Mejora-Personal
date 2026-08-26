@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "setup": "node scripts/setup.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "dev:verify": "node scripts/dev-verify.mjs",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"

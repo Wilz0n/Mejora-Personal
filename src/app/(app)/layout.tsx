@@ -1,6 +1,6 @@
 import { getUserId } from "@/lib/session";
-import { Sidebar } from "@/components/Sidebar";
-import { Topbar } from "@/components/Topbar";
+import { Sidebar } from "@/components/comun/Sidebar";
+import { Topbar } from "@/components/comun/Topbar";
 
 export default async function AppLayout({
   children,

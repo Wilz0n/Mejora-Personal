@@ -189,13 +189,21 @@ Abre tu navegador en **http://localhost:3000** 🎉
 
 Publica tu app en internet, gratis y accesible desde cualquier dispositivo.
 
+> ⚡ **Despliegue automático (resumen).** El proyecto está configurado para que, una vez conectes GitHub → Vercel → Neon, **todo el resto ocurra solo**:
+> 1. **Copia/forkea** el repo a tu GitHub.
+> 2. **Importa** el repo en Vercel.
+> 3. **Conecta Neon** (integración de Neon en Vercel, o pega `DATABASE_URL` en las variables de entorno).
+> 4. Vercel despliega y el script `scripts/deploy.mjs` **crea las tablas automáticamente** y compila la app.
+>
+> No necesitas correr `prisma db push` ni comandos manuales: en cuanto Vercel detecta la conexión a Neon (`DATABASE_URL`), el deploy deja la app **lista y funcionando**, con arranque limpio.
+
 ### B.1 — Tener lista la base de datos
 
 Si seguiste el **Paso 0**, ya tienes tu base de datos en Neon y tu `DATABASE_URL` guardada. Úsala tal cual en el paso B.4.
 
 > 💡 Si aún no la creaste, vuelve al **[Paso 0](#-paso-0--crear-tu-base-de-datos-gratuita-en-neon-hazlo-primero)**. También sirven **Supabase** (Project Settings → Database → Connection string → URI) o **Vercel Storage → Postgres**.
 >
-> ⚠️ **Importante para producción:** las tablas se crean una sola vez con `prisma db push` (ver **Paso B.5**). Si ya lo hiciste en local contra la **misma** base de datos de Neon, no necesitas repetirlo.
+> ✅ **Producción sin pasos manuales:** las tablas se crean **automáticamente** durante el despliegue (lo hace `scripts/deploy.mjs` en cuanto detecta tu `DATABASE_URL`). No tienes que ejecutar `prisma db push` a mano. Ver **Paso B.5**.
 
 ### B.2 — Subir el repositorio a tu GitHub
 
@@ -219,7 +227,7 @@ Tienes dos caminos:
 **Camino manual:**
 1. Entra a https://vercel.com/new
 2. Selecciona **Import Git Repository** y elige tu repo `lifetracker`.
-3. Vercel detecta Next.js automáticamente. **No cambies** el Build Command (ya está configurado en `vercel.json` como `prisma generate && next build`).
+3. Vercel detecta Next.js automáticamente. **No cambies** el Build Command (ya está configurado en `vercel.json` como `node scripts/deploy.mjs`, que se encarga de crear las tablas y compilar automáticamente).
 
 ### B.4 — Configurar Variables de Entorno en Vercel
 
@@ -227,37 +235,53 @@ En la pantalla de importación (o luego en **Project → Settings → Environmen
 
 | Variable | Valor | ¿Cuándo? |
 |----------|-------|----------|
-| `DATABASE_URL` | La URL de Neon/Supabase del paso B.1 | Siempre |
+| `DATABASE_URL` | La URL **pooled** de Neon del paso 0 (termina en `?sslmode=require`) | Siempre |
 | `SINGLE_USER_MODE` | `true` | Si quieres uso personal sin login |
 | `NEXT_PUBLIC_SINGLE_USER_MODE` | `true` | Igual que la anterior |
-| `NEXTAUTH_SECRET` | Cadena aleatoria (`openssl rand -base64 32`) | Sólo si usas login |
-| `NEXTAUTH_URL` | La URL de tu app (ej. `https://lifetracker.vercel.app`) | Sólo si usas login |
+| `NEXTAUTH_SECRET` | Cadena aleatoria (`openssl rand -base64 32`) | **Sólo** si usas login |
+| `NEXTAUTH_URL` | La URL de tu app (ej. `https://tuapp.vercel.app`) | **Sólo** si usas login |
 
-> ✅ **Para uso personal**, define únicamente `DATABASE_URL`, `SINGLE_USER_MODE=true` y `NEXT_PUBLIC_SINGLE_USER_MODE=true`.
+> Marca cada variable para los entornos **Production, Preview y Development** (o "All Environments").
+
+> ✅ **Para uso personal (recomendado)**, define únicamente estas tres:
+> ```
+> DATABASE_URL = postgresql://...pooler...neon.tech/neondb?sslmode=require
+> SINGLE_USER_MODE = true
+> NEXT_PUBLIC_SINGLE_USER_MODE = true
+> ```
+> Con `SINGLE_USER_MODE=true` la app **omite NextAuth**, así que **NO necesitas** `NEXTAUTH_SECRET` ni `NEXTAUTH_URL`.
+
+> ⚠️ **Error común:** si ves en los logs `[next-auth][error][NO_SECRET] Please define a secret in production` (error 500 al abrir la app), significa que la app está intentando usar login pero falta el secret. La causa casi siempre es que **falta `SINGLE_USER_MODE=true`**. Agrégala (junto con `NEXT_PUBLIC_SINGLE_USER_MODE=true`) y vuelve a desplegar.
 
 Haz clic en **Deploy** y espera a que termine el build.
 
-### B.5 — Crear las tablas en la base de datos de producción
+### B.5 — Creación automática de las tablas (¡sin pasos manuales!) ✨
 
-La primera vez, la base de datos de producción está vacía. Crea las tablas apuntando `prisma db push` a tu `DATABASE_URL` de producción.
+**Ya no necesitas ejecutar `prisma db push` a mano.** El build de Vercel corre `node scripts/deploy.mjs`, que hace todo automáticamente:
 
-Desde tu computadora:
+1. Genera el cliente Prisma.
+2. **Detecta tu `DATABASE_URL`** (la de Neon que configuraste en B.4) y **crea/sincroniza las tablas** en la base de datos automáticamente (`prisma db push`, usando la conexión directa sin `-pooler`).
+3. Compila la app (`next build`).
 
-```bash
-# Usa temporalmente la URL de producción
-DATABASE_URL="postgresql://...tu-url-de-neon..." npx prisma db push
-```
+Es **idempotente y no destructivo**: en cada despliegue vuelve a sincronizar el esquema sin borrar tus datos. La app **arranca limpia** (sin datos de demostración).
 
-> En Windows (PowerShell):
-> ```powershell
-> $env:DATABASE_URL="postgresql://...tu-url-de-neon..."; npx prisma db push
-> ```
+> 🔄 En resumen: en cuanto **Neon está conectado a Vercel** (existe `DATABASE_URL`), el primer deploy deja **todo listo solo** — tablas creadas y app publicada. No hay que correr comandos manuales.
+>
+> ℹ️ Si haces un *preview deploy* sin `DATABASE_URL`, el script omite la creación de tablas para no fallar el build y solo compila.
 
-Esto sincroniza el esquema con la base de producción. Sólo necesitas hacerlo la primera vez (o cuando cambie el esquema).
+### B.6 — Redesplegar tras cambiar variables (¡importante!)
 
-### B.6 — ¡Listo!
+Vercel **no aplica** las variables de entorno nuevas a un deploy que ya existe. Cada vez que agregues o cambies una variable, debes redesplegar:
 
-Abre la URL que te dio Vercel (ej. `https://lifetracker.vercel.app`). Tu app ya está en línea. 🌐
+1. Ve a **Deployments** (barra lateral).
+2. En el deployment más reciente, haz clic en **⋯** (tres puntos) → **Redeploy**.
+3. Confirma y espera a que el estado quede en **Ready** (verde).
+
+### B.7 — ¡Listo!
+
+Abre la URL que te dio Vercel (ej. `https://tuapp.vercel.app`). Con el modo usuario único activo, entrarás **directo al Dashboard** y todo lo que registres se guardará en tu base de datos. 🌐
+
+> 🔐 **Seguridad:** si en algún momento tu `DATABASE_URL` (con la contraseña) quedó expuesta, rótala en Neon con **Reset password** y actualiza la variable en Vercel.
 
 ---
 
@@ -266,7 +290,7 @@ Abre la URL que te dio Vercel (ej. `https://lifetracker.vercel.app`). Tu app ya 
 | Problema | Causa probable | Solución |
 |----------|----------------|----------|
 | `Environment variable not found: DATABASE_URL` | Falta la variable en Vercel | Agrégala en **Settings → Environment Variables** y vuelve a desplegar |
-| Las páginas cargan pero no guardan datos | No corriste `prisma db push` en producción | Ejecuta el paso **B.5** |
+| Las páginas cargan pero no guardan datos | El deploy no pudo crear las tablas (¿faltaba `DATABASE_URL` al desplegar?) | Verifica que `DATABASE_URL` esté en Vercel y vuelve a desplegar (**Deployments → Redeploy**); el script `deploy.mjs` crea las tablas solo |
 | Me pide login y no quiero | Modo usuario único desactivado | Pon `SINGLE_USER_MODE=true` y `NEXT_PUBLIC_SINGLE_USER_MODE=true` y redepliega |
 | Error de conexión SSL a la BD | Falta `sslmode=require` | Añádelo al final de la `DATABASE_URL` |
 | Cambié variables y no aplican | Vercel cachea el build | Ve a **Deployments → Redeploy** |
@@ -279,7 +303,9 @@ Abre la URL que te dio Vercel (ej. `https://lifetracker.vercel.app`). Tu app ya 
 |---------|----------|
 | `npm run setup` | **Configuración guiada**: crea `.env.local`, instala deps, crea tablas y (opcional) datos demo |
 | `npm run dev` | Servidor de desarrollo (localhost:3000) |
+| `npm run dev:verify` | **Verificación local del desarrollador**: levanta una BD interna efímera (Docker), crea las tablas y compila la app de punta a punta. Flags: `SEED=true`, `KEEP_DB=true`, `DEV_DB_PORT=5433` |
 | `npm run build` | Compila para producción (`prisma generate && next build`) |
+| `npm run deploy` | **Despliegue automático** (lo usa Vercel): genera cliente + crea/sincroniza tablas si hay `DATABASE_URL` + compila. Arranque limpio, sin seed |
 | `npm start` | Inicia la app ya compilada |
 | `npm run db:push` | Crea/actualiza las tablas en la BD |
 | `npm run db:seed` | Carga datos de demostración |

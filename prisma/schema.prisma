@@ -92,6 +92,7 @@ model FinancialSummary {
   id            String  @id @default(cuid())
   userId        String  @unique
   monthlyIncome Decimal @default(0) @db.Decimal(12, 2)
+  currency      String  @default("USD")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@/components/Icon";
+import { Icon } from "@/components/comun/Icon";
 
 export default function AppError({
   error,
