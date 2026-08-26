@@ -117,7 +117,7 @@ Con el modo desactivado (`false`), la app funciona con registro/login normal.
 | 📘 **[docs/GUIA_USUARIO.md](./docs/GUIA_USUARIO.md)** | Usuario final (no técnico) | Cómo descargar y conectar todo: GitHub, Neon, Vercel y variables |
 | 📖 **[USER_GUIDE.md](./USER_GUIDE.md)** | Usuario final | Cómo usar la app día a día (hábitos, finanzas, ajustes) |
 | 📗 **[DEPLOYMENT.md](./DEPLOYMENT.md)** | Técnico | Instalación local y despliegue en Vercel paso a paso |
-| 🛠️ **[docs/DEV_GUIDE.md](./docs/DEV_GUIDE.md)** | Desarrolladores (junior) | Qué instalar, cómo funciona y cómo trabajar sin afectar producción |
+| 🛠️ **[docs/DEV_GUIDE.md](./docs/DEV_GUIDE.md)** | Desarrolladores | Qué instalar, cómo funciona y cómo trabajar sin afectar producción |
 | 🤖 **[docs/AI_CONTEXT.md](./docs/AI_CONTEXT.md)** | Asistentes de IA / LLMs | Arquitectura, modelos, lógica y flujo de datos |
 
 ---
