@@ -35,6 +35,7 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export const createExpenseSchema = z.object({
   category: z.string().trim().min(1, "La categoría es obligatoria").max(40),
   amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  icon: z.string().trim().min(1).max(40).default("receipt_long"),
 });
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 

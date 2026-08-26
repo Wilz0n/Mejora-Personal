@@ -116,6 +116,42 @@ NEXTAUTH_URL="http://localhost:3000"
 
 > ⚠️ Detalle sobre Neon: para **migraciones** (`prisma db push`) usa la conexión **directa** (sin `-pooler` en el host); para la app en runtime da igual, pero la *pooled* es la recomendada. El `npm run setup` maneja esto por ti automáticamente.
 
+### Estandarización de variables (qué definir y qué NO)
+
+La app tiene **dos modos** de autenticación. Cada modo necesita un set específico de variables. No mezcles variables de un modo con el otro: confunde y puede dar errores inesperados.
+
+| Variable | Modo A (personal, sin login) | Modo B (con login) |
+|----------|:---:|:---:|
+| `DATABASE_URL` | ✅ Obligatoria | ✅ Obligatoria |
+| `SINGLE_USER_MODE` | ✅ `"true"` | ✅ `"false"` |
+| `NEXT_PUBLIC_SINGLE_USER_MODE` | ✅ `"true"` | ✅ `"false"` |
+| `NEXTAUTH_SECRET` | ❌ **No definir** | ✅ Obligatoria |
+| `NEXTAUTH_URL` | ❌ **No definir** | ✅ Obligatoria |
+
+**Regla de oro:** en modo usuario único (`SINGLE_USER_MODE=true`), NO definas `NEXTAUTH_SECRET` ni `NEXTAUTH_URL`. La app las ignora, pero tenerlas ensucia la configuración y puede confundir a otros desarrolladores. Si ya las tienes (en Vercel o en `.env.local`) no rompe nada, pero la validación de arranque te lo advertirá.
+
+#### Validación automática al arrancar (`predev`)
+
+El hook `predev` (`scripts/db-sync.mjs`) incluye una **validación de variables** que se ejecuta cada vez que corres `npm run dev`. Detecta:
+
+- **Inconsistencia** entre `SINGLE_USER_MODE` y `NEXT_PUBLIC_SINGLE_USER_MODE` (deben coincidir).
+- **Variables innecesarias** para tu modo: te avisa si definiste `NEXTAUTH_*` con modo usuario único activo.
+- **Variables faltantes** para tu modo: te avisa si falta `NEXTAUTH_SECRET` o `NEXTAUTH_URL` en modo login.
+
+**Solo avisa, nunca bloquea.** Verás los avisos amarillos (`⚠`) justo antes de que arranque el servidor de desarrollo. Si todo está correcto, verás `✓ Variables de entorno correctas.`
+
+#### Configuración en Vercel (producción)
+
+Para uso personal, la configuración mínima en Vercel es:
+
+```
+DATABASE_URL = postgresql://...tu-neon-pooler.../neondb?sslmode=require
+SINGLE_USER_MODE = true
+NEXT_PUBLIC_SINGLE_USER_MODE = true
+```
+
+Solo 3 variables. No necesitas `NEXTAUTH_SECRET` ni `NEXTAUTH_URL` en modo usuario único. El script de deploy (`scripts/deploy.mjs`) crea las tablas automáticamente al detectar `DATABASE_URL`.
+
 ---
 
 ## 5. Cómo está organizado el código (dónde tocar qué)
@@ -338,7 +374,46 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 - `src/components/habitos/AddHabitButton.tsx` y `RemoveHabitButton.tsx`: `whitespace-nowrap` + `flex-1 sm:flex-none` para evitar partición de texto.
 - `src/app/(app)/layout.tsx`: `min-w-0 overflow-x-hidden` en contenedor de contenido para eliminar scroll horizontal de página.
 
-> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push` (creará la tabla `MonthlyFinance` sin borrar datos existentes).
+**Iconos (hábitos y gastos)**
+- Los iconos son de **Material Symbols Outlined** (Google Fonts, cargados en el layout root). El componente `src/components/comun/Icon.tsx` renderiza `<span class="material-symbols-outlined">{name}</span>`; `name` es el nombre exacto del ícono en Material Symbols. La prop `filled` activa el relleno (`FILL 1`).
+- **Hábitos:** el catálogo está en el array `ICON_OPTIONS` dentro de `src/components/habitos/AddHabitButton.tsx` (~33 iconos). Se guarda en `Habit.icon`. Para agregar más, añade el string del nombre del ícono a ese array.
+- **Gastos fijos:** el catálogo está en `EXPENSE_ICONS` dentro de `src/components/finanzas/FinanceModals.tsx` (16 iconos). Se guarda en `FixedExpense.icon` (default `receipt_long`). La página `/finanzas` muestra el ícono guardado, con fallback a la heurística `expenseIcon(category)` (adivina por el nombre) para gastos antiguos sin ícono explícito.
+- **Nombres válidos:** catálogo en https://fonts.google.com/icons (estilo *Outlined*).
+
+> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push`. Creará la tabla `MonthlyFinance` y el campo `icon` en `FixedExpense` sin borrar datos existentes. En Vercel, `scripts/deploy.mjs` lo hace automáticamente durante el despliegue.
+
+---
+
+## 11. Cómo funciona cada página (y por qué)
+
+Guía rápida de dónde tocar y por qué cada página está diseñada así.
+
+### Dashboard — `src/app/(app)/page.tsx`
+Server Component `force-dynamic`. Lee en paralelo hábitos de hoy, hábitos de la semana y finanzas vía `data.ts`, y deriva KPIs con las funciones `compute*` de `lib`. Muestra 4 KPIs, "Hábitos de Hoy" (`HabitCheckbox` variante `row`, toggle optimista) y el gráfico "Distribución Financiera" (`FinanceChart` con barras Ingresos / Fijos / Ahorro / Proyectos / Disponible).
+**Por qué así:** es una vista de resumen + acción rápida; reutiliza las mismas funciones puras de `lib` que las demás páginas para que los números sean consistentes en toda la app.
+
+### Hábitos — `src/app/(app)/habitos/page.tsx`
+Server Component. El query param `?view=week|month` decide la vista.
+- **Semanal (editable):** `WeeklyTracker` con `HabitCheckbox` interactivos que llaman `toggleHabitLog` con mutación optimista.
+- **Mensual (solo lectura):** `MonthlyTracker` con `HabitCheckbox` en modo `readOnly`.
+
+**Por qué la mensual es solo lectura:** la semana ISO puede cruzar meses y el estado local de los checkboxes se "pegaba" al cambiar de semana. En `readOnly`, el checkbox renderiza directamente desde la prop `initialCompleted` (no del estado local), y el `MonthlyTracker` usa la `dayKey` como `key` de React para forzar el refresco. Además auto-selecciona la semana que contiene hoy (`weeks.findIndex`). El marcado ocurre **solo** en la vista semanal; la mensual únicamente refleja. Grid responsive: celdas 26px en móvil / 36px en desktop.
+
+### Finanzas — edición — `src/app/(app)/finanzas/page.tsx`
+Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono) y proyectos, todos editables (`FinanceModals`, `AddProjectButton`, `RemoveProjectButton` con modal de confirmación, `ContributeButton`). El botón `SaveFinanceButton` guarda el cierre del mes.
+**Cálculo del balance:** `availableBalance` descuenta el ahorro mostrado (guardado o sugerido 20%), los gastos fijos y lo asignado a proyectos activos. Es la vista donde el usuario *configura* sus finanzas.
+
+### Finanzas del Mes — `src/app/(app)/finanzas/mes/page.tsx`
+Server Component `force-dynamic`. Lee el snapshot guardado (`getMonthlyFinance`) **y** los datos actuales (`getFinanceData`). Si no hay snapshot **o** el usuario ya no tiene datos actuales (ingreso 0, sin gastos, sin proyectos) → `redirect("/finanzas")`.
+**Por qué la doble verificación:** evita mostrar un cierre viejo después de que el usuario purga o borra sus datos. Renderiza KPIs, "Metas Activas" (desde `projectsSnapshot`) y "Categorías de Gastos" (anillo + tarjetas desde `expensesByCategory`, con texto responsive `min(200px, 60vw)` para que no se desborde).
+
+### Flujo de navegación de Finanzas
+- El link "Finanzas" del Sidebar/Topbar apunta a **`/finanzas/mes`**.
+- "Editar Finanza" → `/finanzas`. "Guardar Finanza" → `saveMonthlyFinance` + navega a `/finanzas/mes`.
+- El item de nav se marca activo tanto en `/finanzas` como en `/finanzas/mes`.
+
+### Persistencia del cierre mensual
+Modelo `MonthlyFinance` (unique `userId` + `month`). Se guarda con `saveMonthlyFinance` (upsert), se lee con `getMonthlyFinance`, y se borra en `purgeAccountData`. Detalle de los campos y JSON en `docs/AI_CONTEXT.md`.
 
 ---
 

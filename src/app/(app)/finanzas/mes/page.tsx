@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getUserId } from "@/lib/session";
-import { getMonthlyFinance } from "@/lib/data";
+import { getMonthlyFinance, getFinanceData } from "@/lib/data";
 import { formatCurrency } from "@/lib/finance-logic";
 import { Icon } from "@/components/comun/Icon";
 
@@ -16,33 +17,24 @@ const ACCENTS = [
 
 export default async function MonthlyFinancePage() {
   const userId = await getUserId();
-  const finance = await getMonthlyFinance(userId);
+  const [finance, current] = await Promise.all([
+    getMonthlyFinance(userId),
+    getFinanceData(userId),
+  ]);
 
-  // Estado vacío: aún no se ha guardado ningún cierre financiero.
-  if (!finance) {
-    return (
-      <div className="glass-panel rounded-2xl py-16 flex flex-col items-center justify-center text-center gap-4 text-on-surface-variant">
-        <Icon name="savings" className="text-[40px] opacity-40" />
-        <div>
-          <p className="text-body-md text-on-surface mb-1">
-            Aún no has guardado ninguna finanza.
-          </p>
-          <p className="text-body-sm">
-            Ve a Finanzas y pulsa “Guardar Finanza” para registrar el cierre del
-            mes.
-          </p>
-        </div>
-        <Link
-          href="/finanzas"
-          className="flex items-center gap-2 bg-primary text-on-primary font-medium px-4 py-2 rounded-xl hover:bg-primary-fixed-dim transition-colors"
-        >
-          <Icon name="arrow_back" className="text-[18px]" />
-          Ir a Finanzas
-        </Link>
-      </div>
-    );
+  // El usuario tiene datos financieros configurados ACTUALMENTE.
+  const hasCurrentData =
+    current.monthlyIncome > 0 ||
+    current.fixedExpenses.length > 0 ||
+    current.projects.length > 0;
+
+  // Redirige a la página de edición cuando:
+  //  - No hay cierre guardado, o
+  //  - El usuario ya no tiene datos configurados (p. ej. tras purgar),
+  //    aunque exista un cierre viejo. Así no se muestra info obsoleta.
+  if (!finance || !hasCurrentData) {
+    redirect("/finanzas");
   }
-
   const { currency } = finance;
   const savingsPctOfIncome =
     finance.monthlyIncome > 0
@@ -181,8 +173,8 @@ export default async function MonthlyFinancePage() {
           <div className="flex-1 flex flex-col justify-center items-center pt-2">
             {/* Anillo estilo ProgressRing */}
             <div
-              className="relative flex items-center justify-center mx-auto mb-8"
-              style={{ width: 176, height: 176 }}
+              className="relative flex items-center justify-center mx-auto mb-6 sm:mb-8"
+              style={{ width: "min(200px, 60vw)", height: "min(200px, 60vw)" }}
             >
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                 <circle
@@ -207,11 +199,11 @@ export default async function MonthlyFinancePage() {
                   strokeDashoffset={0}
                 />
               </svg>
-              <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-stats-lg font-stats-lg text-on-background">
+              <div className="absolute flex flex-col items-center justify-center text-center px-2">
+                <span className="text-xl sm:text-2xl font-bold text-on-background leading-tight">
                   {formatCurrency(finance.totalFixedExpenses, { currency })}
                 </span>
-                <span className="text-label-caps font-label-caps text-on-surface-variant mt-1 uppercase">
+                <span className="text-[10px] sm:text-label-caps font-label-caps text-on-surface-variant mt-1 uppercase">
                   Total Gastos
                 </span>
               </div>

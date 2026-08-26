@@ -77,11 +77,13 @@ export async function purgeAccountData(): Promise<ActionResult> {
     prisma.fixedExpense.deleteMany({ where: { userId } }),
     prisma.projectGoal.deleteMany({ where: { userId } }),
     prisma.financialSummary.deleteMany({ where: { userId } }),
+    prisma.monthlyFinance.deleteMany({ where: { userId } }),
   ]);
 
   revalidatePath("/");
   revalidatePath("/habitos");
   revalidatePath("/finanzas");
+  revalidatePath("/finanzas/mes");
   revalidatePath("/settings");
   return { ok: true };
 }

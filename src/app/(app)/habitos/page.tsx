@@ -122,10 +122,10 @@ function WeeklyTracker({
       </div>
 
       {/* Grilla */}
-      <div className="p-5 overflow-x-auto no-scrollbar">
+      <div className="p-3 sm:p-5 overflow-x-auto no-scrollbar">
         <div className="min-w-full">
           {/* Encabezado de días */}
-          <div className="grid grid-cols-[1fr_repeat(8,40px)] gap-4 mb-4 px-2">
+          <div className="grid grid-cols-[minmax(70px,1fr)_repeat(7,26px)_32px] sm:grid-cols-[1fr_repeat(7,36px)_44px] gap-1 sm:gap-3 mb-3 sm:mb-4 px-1 sm:px-2">
             <div className="text-label-caps text-[10px] text-on-surface-variant uppercase">
               Hábito
             </div>
@@ -140,24 +140,24 @@ function WeeklyTracker({
               </div>
             ))}
             <div className="text-center text-label-caps text-[10px] text-on-surface-variant uppercase">
-              Tasa
+              %
             </div>
           </div>
 
           {/* Filas de hábitos */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:gap-3">
             {habits.map((habit) => {
               const rate = rateById.get(habit.id);
               return (
                 <div
                   key={habit.id}
-                  className="grid grid-cols-[1fr_repeat(8,40px)] gap-4 items-center p-2 rounded-lg bg-surface-container/40 border border-outline-variant/30 hover:border-outline-variant/60 transition-colors"
+                  className="grid grid-cols-[minmax(70px,1fr)_repeat(7,26px)_32px] sm:grid-cols-[1fr_repeat(7,36px)_44px] gap-1 sm:gap-3 items-center p-1.5 sm:p-2 rounded-lg bg-surface-container/40 border border-outline-variant/30 hover:border-outline-variant/60 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
-                      <Icon name={habit.icon} className="text-[16px] text-primary" />
+                  <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                      <Icon name={habit.icon} className="text-[12px] sm:text-[16px] text-primary" />
                     </div>
-                    <span className="text-body-sm text-on-surface truncate">
+                    <span className="text-[11px] sm:text-body-sm text-on-surface truncate">
                       {habit.name}
                     </span>
                   </div>

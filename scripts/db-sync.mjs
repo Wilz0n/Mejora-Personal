@@ -80,4 +80,91 @@ try {
   );
 }
 
+// ─── Validación de variables de entorno ────────────────────────────────────
+// Avisa de configuraciones innecesarias o conflictivas, sin bloquear el arranque.
+validateEnvVars();
+
+function loadEnvVar(name) {
+  if (process.env[name]?.trim()) return process.env[name].trim();
+  for (const file of [".env.local", ".env"]) {
+    if (existsSync(file)) {
+      const line = readFileSync(file, "utf8")
+        .split("\n")
+        .find((l) => l.trim().startsWith(`${name}=`));
+      if (line) {
+        return line
+          .slice(line.indexOf("=") + 1)
+          .trim()
+          .replace(/^["']|["']$/g, "");
+      }
+    }
+  }
+  return "";
+}
+
+function validateEnvVars() {
+  const singleUser = loadEnvVar("SINGLE_USER_MODE").toLowerCase() === "true";
+  const singleUserPublic = loadEnvVar("NEXT_PUBLIC_SINGLE_USER_MODE").toLowerCase() === "true";
+  const hasNextAuthSecret = !!loadEnvVar("NEXTAUTH_SECRET");
+  const hasNextAuthUrl = !!loadEnvVar("NEXTAUTH_URL");
+
+  console.log(`\n${c.cyan}▶ Validando variables de entorno...${c.reset}`);
+
+  let warnings = 0;
+
+  // Inconsistencia entre SINGLE_USER_MODE y NEXT_PUBLIC_SINGLE_USER_MODE
+  if (singleUser !== singleUserPublic) {
+    warn(
+      "SINGLE_USER_MODE y NEXT_PUBLIC_SINGLE_USER_MODE tienen valores distintos.\n" +
+        "  Deben coincidir (ambas 'true' o ambas 'false'). Si no, el servidor\n" +
+        "  y el cliente se comportarán de forma diferente.",
+    );
+    warnings++;
+  }
+
+  if (singleUser) {
+    // Modo Usuario Único: NEXTAUTH_* son innecesarias
+    if (hasNextAuthSecret) {
+      warn(
+        "NEXTAUTH_SECRET está definida pero no se usa (modo usuario único).\n" +
+          "  Puedes quitarla para mantener la configuración limpia.",
+      );
+      warnings++;
+    }
+    if (hasNextAuthUrl) {
+      warn(
+        "NEXTAUTH_URL está definida pero no se usa (modo usuario único).\n" +
+          "  Puedes quitarla para mantener la configuración limpia.",
+      );
+      warnings++;
+    }
+  } else {
+    // Modo con login: NEXTAUTH_* son obligatorias
+    if (!hasNextAuthSecret) {
+      warn(
+        "NEXTAUTH_SECRET no está definida. Es obligatoria en modo con login.\n" +
+          "  Genera una con: openssl rand -base64 32\n" +
+          "  Sin ella, NextAuth fallará con error NO_SECRET.",
+      );
+      warnings++;
+    }
+    if (!hasNextAuthUrl) {
+      warn(
+        "NEXTAUTH_URL no está definida. Es obligatoria en modo con login.\n" +
+          '  Para desarrollo local usa: NEXTAUTH_URL="http://localhost:3000"',
+      );
+      warnings++;
+    }
+  }
+
+  if (warnings === 0) {
+    ok("Variables de entorno correctas.");
+  } else {
+    info(
+      `  ${warnings} aviso(s). La app arrancará igual, pero revisa tu .env.local.\n` +
+        "  Ver .env.example para la configuración recomendada.",
+    );
+  }
+}
+
 process.exit(0);
