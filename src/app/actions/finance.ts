@@ -33,13 +33,68 @@ export async function createProject(
 
   const { name, targetAmount, allocatedAmount, tag } = parsed.data;
 
+  // El monto inicial define también el abono mensual fijo (cada clic del botón +).
+  const monthlyContribution = allocatedAmount;
+  const completedAt = allocatedAmount >= targetAmount ? new Date() : null;
+
   const project = await prisma.projectGoal.create({
-    data: { userId, name, targetAmount, allocatedAmount, tag },
+    data: {
+      userId,
+      name,
+      targetAmount,
+      allocatedAmount,
+      monthlyContribution,
+      completedAt,
+      tag,
+    },
     select: { id: true },
   });
 
   revalidateFinance();
   return { ok: true, data: { id: project.id } };
+}
+
+/**
+ * Abona el monto mensual fijo del proyecto (botón verde "+").
+ * Suma monthlyContribution a allocatedAmount, topado a la meta.
+ * Si alcanza la meta, marca el proyecto como cumplido (deja de descontar del balance).
+ */
+export async function contributeToProject(
+  projectId: string,
+): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const project = await prisma.projectGoal.findFirst({
+    where: { id: projectId, userId },
+    select: {
+      targetAmount: true,
+      allocatedAmount: true,
+      monthlyContribution: true,
+    },
+  });
+  if (!project) return { ok: false, error: "Proyecto no encontrado" };
+
+  const target = Number(project.targetAmount);
+  const current = Number(project.allocatedAmount);
+  const step = Number(project.monthlyContribution);
+
+  if (step <= 0) {
+    return {
+      ok: false,
+      error: "Este proyecto no tiene un abono mensual definido.",
+    };
+  }
+
+  const next = Math.min(target, current + step);
+  const completedAt = next >= target ? new Date() : null;
+
+  await prisma.projectGoal.updateMany({
+    where: { id: projectId, userId },
+    data: { allocatedAmount: next, completedAt },
+  });
+
+  revalidateFinance();
+  return { ok: true };
 }
 
 /** Actualiza el monto asignado (ahorro) de un proyecto. */

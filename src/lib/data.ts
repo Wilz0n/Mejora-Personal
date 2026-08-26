@@ -83,6 +83,8 @@ export async function getFinanceData(userId: string) {
       name: p.name,
       targetAmount: Number(p.targetAmount),
       allocatedAmount: Number(p.allocatedAmount),
+      monthlyContribution: Number(p.monthlyContribution),
+      completed: p.completedAt !== null,
       tag: p.tag,
     })),
   };

@@ -8,6 +8,7 @@ import {
 } from "@/lib/finance-logic";
 import { AddProjectButton } from "@/components/finanzas/AddProjectButton";
 import { RemoveProjectButton } from "@/components/finanzas/RemoveProjectButton";
+import { ContributeButton } from "@/components/finanzas/ContributeButton";
 import {
   AddExpenseButton,
   SetIncomeButton,
@@ -267,6 +268,11 @@ export default async function FinancePage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <ProjectRing progress={p.progress} />
+                        <ContributeButton
+                          projectId={p.id}
+                          projectName={p.name}
+                          completed={p.completed}
+                        />
                         <RemoveProjectButton
                           projectId={p.id}
                           projectName={p.name}
