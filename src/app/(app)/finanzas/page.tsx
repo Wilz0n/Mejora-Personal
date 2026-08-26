@@ -1,5 +1,5 @@
 import { getUserId } from "@/lib/session";
-import { getFinanceData } from "@/lib/data";
+import { getFinanceData, getSavingsHistory } from "@/lib/data";
 import {
   computeFinanceSummary,
   computeProjectsProgress,
@@ -16,6 +16,7 @@ import {
 } from "@/components/finanzas/FinanceModals";
 import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
 import { SaveFinanceButton } from "@/components/finanzas/SaveFinanceButton";
+import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,10 @@ function expenseIcon(category: string): string {
 
 export default async function FinancePage() {
   const userId = await getUserId();
-  const finance = await getFinanceData(userId);
+  const [finance, savingsHistory] = await Promise.all([
+    getFinanceData(userId),
+    getSavingsHistory(userId),
+  ]);
   const summary = computeFinanceSummary(finance);
   const projects = computeProjectsProgress(finance.projects);
   const currency = finance.currency;
@@ -133,6 +137,9 @@ export default async function FinancePage() {
               </div>
             </div>
           </div>
+
+          {/* Historial de ahorro (mini-gráfico) */}
+          <SavingsHistory data={savingsHistory} currency={currency} compact />
 
           {/* Gastos fijos */}
           <div className="glass-panel rounded-xl p-stack-md flex flex-col h-full">
