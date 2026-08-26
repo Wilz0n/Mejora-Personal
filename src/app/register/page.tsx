@@ -3,6 +3,8 @@ import { getUserIdOrNull } from "@/lib/session";
 import { RegisterForm } from "@/components/RegisterForm";
 import { Icon } from "@/components/Icon";
 
+export const dynamic = "force-dynamic";
+
 export default async function RegisterPage() {
   if (await getUserIdOrNull()) redirect("/");
 

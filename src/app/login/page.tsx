@@ -3,6 +3,8 @@ import { getUserIdOrNull } from "@/lib/session";
 import { LoginForm } from "@/components/LoginForm";
 import { Icon } from "@/components/Icon";
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   if (await getUserIdOrNull()) redirect("/");
 

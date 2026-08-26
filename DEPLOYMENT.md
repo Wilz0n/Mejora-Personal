@@ -22,30 +22,96 @@ Antes de empezar, asegúrate de tener:
 > npm --version
 > ```
 
+> ✅ **Orden recomendado:** primero el **Paso 0** (crear la base de datos en Neon), luego el **Paso A** (instalación local) y finalmente el **Paso B** (publicar en Vercel).
+
 ---
 
-## 🖥️ PASO A — Despliegue Local (en tu computadora)
+## 🐘 PASO 0 — Crear tu base de datos gratuita en Neon (¡hazlo primero!)
 
-Usa esto para probar la app antes de publicarla.
+**Antes de ejecutar el script de instalación o desplegar, necesitas una base de datos.** Esta es la parte donde se guardan tus hábitos y finanzas. Neon ofrece Postgres gratis y es la opción recomendada.
 
-### 1. Clonar el repositorio
+1. Entra a **https://neon.tech** y haz clic en **Sign Up**. Puedes registrarte con tu cuenta de **GitHub** o **Google** (lo más rápido).
+2. Una vez dentro, haz clic en **Create Project** (Crear proyecto).
+   - **Name:** ponle un nombre, por ejemplo `lifetracker`.
+   - **Postgres version:** deja la que viene por defecto.
+   - **Region:** elige la más cercana a ti (ej. *US East (Ohio)*).
+3. Haz clic en **Create** y espera unos segundos a que se cree.
+4. Se abrirá una ventana **"Connect to your database"** (o ve al botón **Connect** arriba a la izquierda).
+   - Deja activado **Connection pooling** ✅.
+   - Verás la **Connection string**. Cópiala con el botón **Copy snippet**.
+
+Esa cadena tiene esta forma (**ejemplo**, la tuya tendrá otros valores):
+
+```
+postgresql://neondb_owner:npg_ejemplo123ABC@ep-nombre-aleatorio-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+```
+
+> 💾 **Guarda esa cadena en un lugar seguro.** Es tu `DATABASE_URL` y la usarás tanto para el script de instalación local como para Vercel.
+>
+> 🔧 No te preocupes por el parámetro `channel_binding=require`: el script de instalación lo limpia automáticamente porque a veces da problemas con Prisma.
+>
+> 🔐 **Seguridad:** trata esa cadena como una contraseña. Si alguna vez se filtra, en Neon puedes regenerarla con el botón **Reset password** de esa misma pantalla.
+
+> 💡 Alternativa: también puedes usar **Supabase** (https://supabase.com → New Project → Settings → Database → Connection string → URI) o **Vercel Storage → Postgres**. Cualquier Postgres funciona.
+
+---
+
+## 🖥️ PASO A — Instalación Local (en tu computadora)
+
+Usa esto para probar la app antes de publicarla. Tienes dos caminos: el **automático** (recomendado) y el **manual**.
+
+### ⚡ Opción rápida — Script automatizado (recomendado)
+
+Después de clonar el repositorio, un solo comando lo configura todo: crea `.env.local`, instala dependencias, crea las tablas en tu base de datos y opcionalmente carga datos de ejemplo.
+
+```bash
+git clone https://github.com/TU_USUARIO/lifetracker.git
+cd lifetracker
+npm run setup
+```
+
+El asistente te pedirá:
+
+1. **Tu `DATABASE_URL`** → pega la connection string que copiaste de Neon en el Paso 0.
+2. **Modo de uso** → responde **S** (Sí) para *Modo Usuario Único* (entras sin login, ideal para uso personal).
+3. **Datos de ejemplo** → opcional, para ver la app con hábitos y finanzas de muestra.
+
+Cuando termine, verás **"¡Listo! 🎉"**. Inicia la app con:
+
+```bash
+npm run dev
+```
+
+Y abre **http://localhost:3000** 🎉
+
+> 🤖 **Uso avanzado / automatización** (sin preguntas interactivas):
+> ```bash
+> DATABASE_URL="postgresql://...tu-cadena-de-neon..." SINGLE_USER_MODE=true SEED=false npm run setup -- --yes
+> ```
+> Útil para scripts o para configurar la app en varias máquinas rápidamente.
+
+---
+
+### 🔧 Opción manual (paso a paso)
+
+Si prefieres hacerlo a mano o entender qué ocurre por dentro:
+
+#### 1. Clonar el repositorio
 
 ```bash
 git clone https://github.com/TU_USUARIO/lifetracker.git
 cd lifetracker
 ```
 
-> Si aún no está en GitHub, simplemente abre la carpeta del proyecto en tu terminal.
-
-### 2. Instalar dependencias
+#### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-Esto instala todo lo necesario y ejecuta automáticamente `prisma generate` (gracias al script `postinstall`).
+Esto instala todo y ejecuta automáticamente `prisma generate` (gracias al script `postinstall`).
 
-### 3. Crear el archivo de variables de entorno
+#### 3. Crear el archivo de variables de entorno
 
 Copia la plantilla y crea tu archivo local `.env.local`:
 
@@ -55,7 +121,7 @@ cp .env.example .env.local
 
 Abre `.env.local` con tu editor y complétalo. Tienes **dos formas** de configurarlo:
 
-#### Opción 1 — Modo Usuario Único (recomendado para uso personal) ✅
+##### Opción 1 — Modo Usuario Único (recomendado para uso personal) ✅
 
 No pide login: la app crea y usa un único usuario automáticamente.
 
@@ -67,7 +133,7 @@ SINGLE_USER_MODE="true"
 NEXT_PUBLIC_SINGLE_USER_MODE="true"
 ```
 
-#### Opción 2 — Con Login (multiusuario, vía NextAuth)
+##### Opción 2 — Con Login (multiusuario, vía NextAuth)
 
 ```bash
 DATABASE_URL="postgresql://usuario:password@host/basedatos?sslmode=require"
@@ -85,9 +151,9 @@ NEXT_PUBLIC_SINGLE_USER_MODE="false"
 > ```
 > (En Windows sin `openssl`, usa cualquier cadena larga y aleatoria.)
 
-> 📌 La `DATABASE_URL` la obtienes de Neon/Supabase (ver **Paso B.1**). También puedes usar un Postgres local si ya tienes uno instalado.
+> 📌 La `DATABASE_URL` es la que copiaste de Neon en el **Paso 0**. Puedes quitarle el `&channel_binding=require` del final para evitar problemas con Prisma.
 
-### 4. Sincronizar la base de datos (crear las tablas)
+#### 4. Sincronizar la base de datos (crear las tablas)
 
 ```bash
 npx prisma db push
@@ -95,7 +161,7 @@ npx prisma db push
 
 Esto crea todas las tablas (`User`, `Habit`, `HabitLog`, `FinancialSummary`, `FixedExpense`, `ProjectGoal`, etc.) en tu base de datos.
 
-### 5. (Opcional) Cargar datos de prueba
+#### 5. (Opcional) Cargar datos de prueba
 
 ```bash
 npm run db:seed
@@ -106,7 +172,7 @@ Crea un usuario de demostración con hábitos y finanzas de ejemplo:
 - **Email:** `demo@lifetracker.app`
 - **Contraseña:** `password123`
 
-### 6. Iniciar el servidor local
+#### 6. Iniciar el servidor local
 
 ```bash
 npm run dev
@@ -123,30 +189,13 @@ Abre tu navegador en **http://localhost:3000** 🎉
 
 Publica tu app en internet, gratis y accesible desde cualquier dispositivo.
 
-### B.1 — Crear la base de datos Postgres gratuita
+### B.1 — Tener lista la base de datos
 
-Elige **una** opción:
+Si seguiste el **Paso 0**, ya tienes tu base de datos en Neon y tu `DATABASE_URL` guardada. Úsala tal cual en el paso B.4.
 
-#### Opción A: Neon (recomendado)
-
-1. Entra a https://neon.tech e inicia sesión (puedes usar GitHub).
-2. Haz clic en **Create Project** → dale un nombre (ej. `lifetracker`).
-3. Cuando se cree, verás una sección **Connection string**.
-4. Copia la URL que empieza con `postgresql://...`. Esa es tu **`DATABASE_URL`**.
-   - Asegúrate de que termine en `?sslmode=require`.
-
-#### Opción B: Vercel Storage (Postgres)
-
-1. En el panel de Vercel ve a **Storage → Create Database → Postgres**.
-2. Sigue el asistente; Vercel puede inyectar la `DATABASE_URL` automáticamente al proyecto.
-
-#### Opción C: Supabase
-
-1. Entra a https://supabase.com → **New Project**.
-2. Ve a **Project Settings → Database → Connection string → URI**.
-3. Copia la URL y reemplaza `[YOUR-PASSWORD]` por la contraseña que definiste.
-
-> 💾 **Guarda esa `DATABASE_URL`**, la usarás en el paso B.4.
+> 💡 Si aún no la creaste, vuelve al **[Paso 0](#-paso-0--crear-tu-base-de-datos-gratuita-en-neon-hazlo-primero)**. También sirven **Supabase** (Project Settings → Database → Connection string → URI) o **Vercel Storage → Postgres**.
+>
+> ⚠️ **Importante para producción:** las tablas se crean una sola vez con `prisma db push` (ver **Paso B.5**). Si ya lo hiciste en local contra la **misma** base de datos de Neon, no necesitas repetirlo.
 
 ### B.2 — Subir el repositorio a tu GitHub
 
@@ -228,6 +277,7 @@ Abre la URL que te dio Vercel (ej. `https://lifetracker.vercel.app`). Tu app ya 
 
 | Comando | Qué hace |
 |---------|----------|
+| `npm run setup` | **Configuración guiada**: crea `.env.local`, instala deps, crea tablas y (opcional) datos demo |
 | `npm run dev` | Servidor de desarrollo (localhost:3000) |
 | `npm run build` | Compila para producción (`prisma generate && next build`) |
 | `npm start` | Inicia la app ya compilada |
