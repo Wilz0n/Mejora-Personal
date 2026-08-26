@@ -103,6 +103,71 @@ export async function getUserProfile(userId: string) {
   };
 }
 
+export interface MonthlyFinanceData {
+  month: string;
+  monthLabel: string;
+  monthlyIncome: number;
+  monthlySavings: number;
+  totalFixedExpenses: number;
+  availableBalance: number;
+  currency: string;
+  expensesByCategory: {
+    category: string;
+    amount: number;
+    percent: number;
+  }[];
+  projectsSnapshot: {
+    name: string;
+    tag: string;
+    targetAmount: number;
+    allocatedAmount: number;
+    progress: number;
+  }[];
+  updatedAt: string;
+}
+
+/**
+ * Lee el cierre financiero guardado del usuario. Si no se pasa `month`,
+ * devuelve el más reciente. Devuelve null si no hay ningún cierre guardado.
+ * Convierte Decimal→number y parsea los campos JSON.
+ */
+export async function getMonthlyFinance(
+  userId: string,
+  month?: string,
+): Promise<MonthlyFinanceData | null> {
+  const record = month
+    ? await prisma.monthlyFinance.findUnique({
+        where: { userId_month: { userId, month } },
+      })
+    : await prisma.monthlyFinance.findFirst({
+        where: { userId },
+        orderBy: { month: "desc" },
+      });
+
+  if (!record) return null;
+
+  const safeParse = <T>(raw: string, fallback: T): T => {
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
+  };
+
+  return {
+    month: record.month,
+    monthLabel: record.monthLabel,
+    monthlyIncome: Number(record.monthlyIncome),
+    monthlySavings: Number(record.monthlySavings),
+    totalFixedExpenses: Number(record.totalFixedExpenses),
+    availableBalance: Number(record.availableBalance),
+    currency: record.currency,
+    expensesByCategory: safeParse(record.expensesByCategory, []),
+    projectsSnapshot: safeParse(record.projectsSnapshot, []),
+    updatedAt: record.updatedAt.toISOString(),
+  };
+}
+
 /**
  * Reúne todos los datos del usuario (hábitos + logs, finanzas, proyectos)
  * para exportarlos. Devuelve un objeto serializable a JSON.

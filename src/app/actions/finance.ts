@@ -9,11 +9,20 @@ import {
   setIncomeSchema,
   setSavingsSchema,
 } from "@/lib/validators";
+import {
+  computeFinanceSummary,
+  computeExpenseBreakdown,
+  computeProjectsSnapshot,
+  suggestedSavings,
+  currentMonthKey,
+} from "@/lib/finance-logic";
+import { monthLabel } from "@/lib/dates";
 import type { ActionResult } from "@/lib/action-result";
 
 function revalidateFinance() {
   revalidatePath("/");
   revalidatePath("/finanzas");
+  revalidatePath("/finanzas/mes");
 }
 
 /** Crea un nuevo ProjectGoal y recalcula (vía revalidate) el balance. */
@@ -205,6 +214,112 @@ export async function setMonthlySavings(input: unknown): Promise<ActionResult> {
     where: { userId },
     create: { userId, monthlySavings },
     update: { monthlySavings },
+  });
+
+  revalidateFinance();
+  return { ok: true };
+}
+
+/**
+ * Guarda (o actualiza) el cierre financiero del mes actual como un snapshot.
+ *
+ * Toma la configuración actual del usuario (ingreso, ahorro, gastos fijos y
+ * proyectos), calcula el resumen y el desglose, y hace upsert sobre
+ * MonthlyFinance para el mes en curso ("YYYY-MM"). Se muestra luego en la
+ * vista "Finanzas del Mes" (/finanzas/mes).
+ */
+export async function saveMonthlyFinance(): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  // Reúne la configuración financiera actual del usuario.
+  const [summary, fixedExpensesRaw, projectsRaw] = await Promise.all([
+    prisma.financialSummary.findUnique({ where: { userId } }),
+    prisma.fixedExpense.findMany({
+      where: { userId },
+      orderBy: { amount: "desc" },
+    }),
+    prisma.projectGoal.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const monthlyIncome = summary ? Number(summary.monthlyIncome) : 0;
+  const monthlySavingsRaw = summary ? Number(summary.monthlySavings) : 0;
+  const currency = summary?.currency ?? "USD";
+
+  const fixedExpenses = fixedExpensesRaw.map((e) => ({
+    id: e.id,
+    category: e.category,
+    amount: Number(e.amount),
+  }));
+  const projects = projectsRaw.map((p) => ({
+    id: p.id,
+    name: p.name,
+    targetAmount: Number(p.targetAmount),
+    allocatedAmount: Number(p.allocatedAmount),
+    monthlyContribution: Number(p.monthlyContribution),
+    completed: p.completedAt !== null,
+    tag: p.tag,
+  }));
+
+  if (monthlyIncome <= 0 && fixedExpenses.length === 0) {
+    return {
+      ok: false,
+      error: "Configura tu ingreso o gastos antes de guardar la finanza.",
+    };
+  }
+
+  const financeSummary = computeFinanceSummary({
+    monthlyIncome,
+    monthlySavings: monthlySavingsRaw,
+    fixedExpenses,
+    projects,
+  });
+
+  // El ahorro mostrado: el definido o la sugerencia del 20% del ingreso.
+  const savings =
+    financeSummary.monthlySavings > 0
+      ? financeSummary.monthlySavings
+      : suggestedSavings(financeSummary.monthlyIncome);
+
+  // Balance efectivo (mismo criterio que la página de Finanzas).
+  const availableBalance =
+    financeSummary.monthlyIncome -
+    savings -
+    financeSummary.totalFixedExpenses -
+    financeSummary.totalAllocated;
+
+  const expensesByCategory = computeExpenseBreakdown(fixedExpenses);
+  const projectsSnapshot = computeProjectsSnapshot(projects);
+
+  const month = currentMonthKey();
+  const label = monthLabel();
+
+  await prisma.monthlyFinance.upsert({
+    where: { userId_month: { userId, month } },
+    create: {
+      userId,
+      month,
+      monthLabel: label,
+      monthlyIncome: financeSummary.monthlyIncome,
+      monthlySavings: savings,
+      totalFixedExpenses: financeSummary.totalFixedExpenses,
+      availableBalance,
+      currency,
+      expensesByCategory: JSON.stringify(expensesByCategory),
+      projectsSnapshot: JSON.stringify(projectsSnapshot),
+    },
+    update: {
+      monthLabel: label,
+      monthlyIncome: financeSummary.monthlyIncome,
+      monthlySavings: savings,
+      totalFixedExpenses: financeSummary.totalFixedExpenses,
+      availableBalance,
+      currency,
+      expensesByCategory: JSON.stringify(expensesByCategory),
+      projectsSnapshot: JSON.stringify(projectsSnapshot),
+    },
   });
 
   revalidateFinance();

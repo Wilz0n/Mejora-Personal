@@ -49,10 +49,12 @@ export default async function HabitsPage({
             {monthLabel()}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
           <ViewToggle current={period} />
-          {habits.length > 0 && <RemoveHabitButton habits={habits} />}
-          <AddHabitButton variant="primary" />
+          <div className="flex items-center gap-3">
+            {habits.length > 0 && <RemoveHabitButton habits={habits} />}
+            <AddHabitButton variant="primary" />
+          </div>
         </div>
       </section>
 
@@ -99,7 +101,7 @@ export default async function HabitsPage({
   );
 }
 
-/** Tracker semanal: tabla L-D + tasa, ocupa 3 columnas del grid. */
+/** Tracker semanal: grilla L-D + tasa (mismo estilo visual que el mensual). */
 function WeeklyTracker({
   days,
   habits,
@@ -118,66 +120,68 @@ function WeeklyTracker({
           Tracker Semanal
         </h3>
       </div>
-      <div className="p-0 overflow-x-auto no-scrollbar">
-        <table className="w-full text-left border-collapse min-w-[560px]">
-          <thead>
-            <tr className="text-label-caps font-label-caps text-on-surface-variant border-b border-outline-variant/50">
-              <th className="p-4 font-medium sticky left-0 bg-surface-container-low z-10 w-48">
-                Hábito
-              </th>
-              {days.map((d) => (
-                <th
-                  key={d}
-                  className={`p-4 font-medium text-center ${
-                    d === today ? "text-primary" : ""
-                  }`}
-                >
-                  {shortWeekdayLabel(d).charAt(0)}
-                </th>
-              ))}
-              <th className="p-4 font-medium text-right">Tasa</th>
-            </tr>
-          </thead>
-          <tbody className="text-body-sm font-body-sm">
+
+      {/* Grilla */}
+      <div className="p-5 overflow-x-auto no-scrollbar">
+        <div className="min-w-full">
+          {/* Encabezado de días */}
+          <div className="grid grid-cols-[1fr_repeat(8,40px)] gap-4 mb-4 px-2">
+            <div className="text-label-caps text-[10px] text-on-surface-variant uppercase">
+              Hábito
+            </div>
+            {days.map((d) => (
+              <div
+                key={d}
+                className={`text-center text-label-caps text-[10px] uppercase ${
+                  d === today ? "text-primary font-bold" : "text-on-surface-variant"
+                }`}
+              >
+                {shortWeekdayLabel(d).charAt(0)}
+              </div>
+            ))}
+            <div className="text-center text-label-caps text-[10px] text-on-surface-variant uppercase">
+              Tasa
+            </div>
+          </div>
+
+          {/* Filas de hábitos */}
+          <div className="flex flex-col gap-3">
             {habits.map((habit) => {
               const rate = rateById.get(habit.id);
               return (
-                <tr
+                <div
                   key={habit.id}
-                  className="border-b border-outline-variant/20 hover:bg-surface-variant/30 transition-colors group"
+                  className="grid grid-cols-[1fr_repeat(8,40px)] gap-4 items-center p-2 rounded-lg bg-surface-container/40 border border-outline-variant/30 hover:border-outline-variant/60 transition-colors"
                 >
-                  <td className="p-4 sticky left-0 bg-surface-container-low group-hover:bg-surface-variant/30 transition-colors">
-                    <div className="flex items-center gap-3 min-w-[140px]">
-                      <Icon
-                        name={habit.icon}
-                        className="text-[18px] text-primary opacity-80"
-                      />
-                      <span className="text-on-surface truncate">
-                        {habit.name}
-                      </span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 shrink-0">
+                      <Icon name={habit.icon} className="text-[16px] text-primary" />
                     </div>
-                  </td>
+                    <span className="text-body-sm text-on-surface truncate">
+                      {habit.name}
+                    </span>
+                  </div>
                   {days.map((d) => (
-                    <td key={d} className="p-4 text-center">
-                      <div className="flex justify-center">
-                        <HabitCheckbox
-                          habitId={habit.id}
-                          date={d}
-                          initialCompleted={rate?.completionByDay[d] ?? false}
-                          label={habit.name}
-                          variant="cell"
-                        />
-                      </div>
-                    </td>
+                    <div key={d} className="flex justify-center">
+                      <HabitCheckbox
+                        habitId={habit.id}
+                        date={d}
+                        initialCompleted={rate?.completionByDay[d] ?? false}
+                        label={habit.name}
+                        variant="cell"
+                      />
+                    </div>
                   ))}
-                  <td className="p-4 text-right font-medium text-primary-fixed-dim">
-                    {rate?.rate ?? 0}%
-                  </td>
-                </tr>
+                  <div className="flex justify-center">
+                    <span className="text-[11px] font-bold text-primary-fixed-dim">
+                      {rate?.rate ?? 0}%
+                    </span>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -252,9 +256,9 @@ function SummaryCard({
 }
 
 function ViewToggle({ current }: { current: Period }) {
-  const base = "px-4 py-1.5 rounded-md text-label-caps font-label-caps transition-colors";
+  const base = "flex-1 sm:flex-none text-center whitespace-nowrap px-4 py-1.5 rounded-md text-label-caps font-label-caps transition-colors";
   return (
-    <div className="flex bg-surface-container rounded-lg p-1 border border-outline-variant">
+    <div className="flex w-full sm:w-auto bg-surface-container rounded-lg p-1 border border-outline-variant">
       <Link
         href="/habitos?view=week"
         className={

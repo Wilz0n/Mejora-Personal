@@ -54,9 +54,9 @@ export function AddHabitButton({ variant = "ghost" }: AddHabitButtonProps) {
       {variant === "primary" ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 bg-primary text-on-primary font-medium px-4 py-2 rounded-xl hover:bg-primary-fixed-dim transition-colors"
+          className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-primary text-on-primary font-medium px-4 py-2 rounded-xl hover:bg-primary-fixed-dim transition-colors whitespace-nowrap"
         >
-          <Icon name="add" className="text-[20px]" />
+          <Icon name="add" className="text-[20px] shrink-0" />
           <span>Añadir Hábito</span>
         </button>
       ) : (

@@ -11,6 +11,8 @@ interface HabitCheckboxProps {
   label?: string;
   icon?: string;
   variant?: "row" | "cell";
+  /** Si es true, la celda es solo lectura (no se puede marcar). */
+  readOnly?: boolean;
 }
 
 /**
@@ -24,11 +26,13 @@ export function HabitCheckbox({
   label,
   icon,
   variant = "row",
+  readOnly = false,
 }: HabitCheckboxProps) {
   const [completed, setCompleted] = useState(initialCompleted);
   const [isPending, startTransition] = useTransition();
 
   function handleToggle() {
+    if (readOnly) return;
     const next = !completed;
     setCompleted(next); // optimista
     startTransition(async () => {
@@ -40,6 +44,26 @@ export function HabitCheckbox({
   }
 
   if (variant === "cell") {
+    // Modo solo lectura: muestra el estado sin permitir marcarlo (p. ej. la
+    // vista Mensual, que solo refleja lo marcado en la vista Semanal).
+    // Importante: renderiza directamente desde `initialCompleted` (la prop),
+    // NO desde el estado local, para que al cambiar de semana refleje siempre
+    // los datos frescos y no queden checks "pegados" de la semana anterior.
+    if (readOnly) {
+      return (
+        <div
+          aria-label={`${label ?? "hábito"} ${date}${initialCompleted ? " completado" : " pendiente"}`}
+          className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
+            initialCompleted
+              ? "bg-primary/90 border-primary text-on-primary"
+              : "bg-surface-container-high/40 border-outline-variant/40 text-transparent"
+          }`}
+        >
+          <Icon name="check" className="text-[18px]" />
+        </div>
+      );
+    }
+
     return (
       <button
         onClick={handleToggle}
@@ -47,8 +71,8 @@ export function HabitCheckbox({
         aria-label={`${label ?? "hábito"} ${date}`}
         className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${
           completed
-            ? "bg-primary border-primary text-on-primary"
-            : "bg-surface-container border-outline-variant text-transparent hover:border-primary/60"
+            ? "bg-primary border-primary text-on-primary shadow-sm shadow-primary/20"
+            : "bg-surface-container-high border-outline-variant text-transparent hover:border-primary hover:bg-primary/10 hover:text-primary/50"
         } ${isPending ? "opacity-70" : ""}`}
       >
         <Icon name="check" className="text-[18px]" />

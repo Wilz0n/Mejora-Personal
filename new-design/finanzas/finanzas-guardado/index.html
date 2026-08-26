@@ -1,0 +1,413 @@
+<!DOCTYPE html><html class="dark" data-lt-installed="true" lang="es" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>LifeTracker - Finanzas del Mes</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-background": "#e5e1e4",
+                      "on-primary": "#1000a9",
+                      "on-primary-fixed-variant": "#2f2ebe",
+                      "error": "#ffb4ab",
+                      "surface-container-lowest": "#0e0e10",
+                      "on-surface-variant": "#c7c4d7",
+                      "on-tertiary-fixed-variant": "#703700",
+                      "surface": "#131315",
+                      "inverse-surface": "#e5e1e4",
+                      "primary-container": "#8083ff",
+                      "secondary-fixed": "#e9ddff",
+                      "outline": "#908fa0",
+                      "outline-variant": "#464554",
+                      "primary-fixed-dim": "#c0c1ff",
+                      "on-secondary-fixed-variant": "#5516be",
+                      "on-error-container": "#ffdad6",
+                      "on-surface": "#e5e1e4",
+                      "tertiary": "#ffb783",
+                      "secondary-container": "#571bc1",
+                      "surface-dim": "#131315",
+                      "secondary": "#d0bcff",
+                      "surface-container": "#201f22",
+                      "background": "#131315",
+                      "inverse-on-surface": "#313032",
+                      "inverse-primary": "#494bd6",
+                      "on-secondary": "#3c0091",
+                      "on-error": "#690005",
+                      "surface-container-highest": "#353437",
+                      "on-tertiary": "#4f2500",
+                      "secondary-fixed-dim": "#d0bcff",
+                      "surface-container-high": "#2a2a2c",
+                      "surface-bright": "#39393b",
+                      "on-tertiary-fixed": "#301400",
+                      "surface-variant": "#353437",
+                      "primary": "#c0c1ff",
+                      "tertiary-container": "#d97721",
+                      "error-container": "#93000a",
+                      "primary-fixed": "#e1e0ff",
+                      "surface-tint": "#c0c1ff",
+                      "on-primary-container": "#0d0096",
+                      "tertiary-fixed": "#ffdcc5",
+                      "tertiary-fixed-dim": "#ffb783",
+                      "on-primary-fixed": "#07006c",
+                      "on-secondary-fixed": "#23005c",
+                      "on-secondary-container": "#c4abff",
+                      "surface-container-low": "#1c1b1d",
+                      "on-tertiary-container": "#452000"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-md": "1rem",
+                      "margin-mobile": "1rem",
+                      "gutter": "1.5rem",
+                      "stack-sm": "0.5rem",
+                      "container-max": "1280px",
+                      "stack-lg": "2rem"
+              },
+              "fontFamily": {
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "stats-lg": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "stats-lg": [
+                              "36px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "-0.03em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background dark:bg-background text-on-background min-h-screen font-body-md flex">
+<!-- SideNavBar -->
+<nav class="fixed h-screen w-60 left-0 top-0 bg-surface-container-lowest dark:bg-surface-container-lowest border-r border-outline-variant flex flex-col h-full py-stack-md px-gutter hidden md:flex z-50">
+<div class="mb-stack-lg">
+<h1 class="text-headline-md font-headline-md font-bold text-primary dark:text-primary">LifeTracker</h1>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Productive Mindset</p>
+</div>
+<div class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 0;">dashboard</span>
+<span class="">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 0;">event_repeat</span>
+<span class="">Habits</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-primary font-bold border-r-2 border-primary bg-surface-variant/30 opacity-80 scale-95 transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">payments</span>
+<span class="">Finance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 0;">account_tree</span>
+<span class="">Projects</span>
+</a>
+</div>
+<div class="mt-auto space-y-4">
+<div class="border-t border-outline-variant pt-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="">Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-surface-variant dark:hover:bg-surface-variant transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="">Support</span>
+</a>
+</div>
+
+</div>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 ml-0 md:ml-60 min-h-screen pb-24 md:pb-0">
+<!-- TopAppBar (Mobile & Contextual Desktop) -->
+<header class="sticky top-0 w-full z-40 backdrop-blur-md bg-background/80 border-b border-outline-variant flex justify-end items-center h-16 px-gutter">
+<div class="flex items-center gap-4">
+
+<div class="flex gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:text-primary transition-colors hover:scale-105 transition-transform">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full text-on-surface-variant hover:text-primary transition-colors hover:scale-105 transition-transform md:hidden">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<div class="p-gutter max-w-container-max mx-auto space-y-stack-lg mt-stack-md">
+<!-- Content Header -->
+<div class="flex justify-between items-start w-full">
+<div class="flex flex-col">
+<h2 class="text-headline-lg font-headline-lg font-bold text-on-background">Finanzas del Mes</h2>
+<span class="text-body-sm font-body-sm text-on-surface-variant mt-1">Agosto 2023</span>
+</div>
+<button class="hidden md:flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-background hover:bg-surface-variant transition-colors font-body-sm">
+<span class="material-symbols-outlined text-sm">edit</span>
+                    Editar Finanza
+                </button>
+</div>
+<!-- KPIs -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<div class="bg-surface-container-low/50 backdrop-blur-sm border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">arrow_upward</span>
+<h3 class="text-label-caps font-label-caps text-on-surface-variant tracking-wider">Ingreso Total</h3>
+</div>
+<span class="px-2 py-1 bg-surface-container rounded text-[10px] text-on-surface-variant">Mensual</span>
+</div>
+<p class="text-stats-lg font-stats-lg text-on-background">$4,850.00</p>
+</div>
+<div class="bg-surface-container-low/50 backdrop-blur-sm border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-error/10 rounded-full blur-2xl group-hover:bg-error/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-error">arrow_downward</span>
+<h3 class="text-label-caps font-label-caps text-on-surface-variant tracking-wider">Gasto Fijo Total</h3>
+</div>
+<span class="px-2 py-1 bg-surface-container rounded text-[10px] text-on-surface-variant">Mensual</span>
+</div>
+<p class="text-stats-lg font-stats-lg text-on-background">$2,100.00</p>
+</div>
+<div class="bg-surface-container-low/50 backdrop-blur-sm border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-tertiary/10 rounded-full blur-2xl group-hover:bg-tertiary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary">savings</span>
+<h3 class="text-label-caps font-label-caps text-on-surface-variant tracking-wider">Ahorro Neto</h3>
+</div>
+<span class="px-2 py-1 bg-surface-container rounded text-[10px] text-on-surface-variant">25% ingreso</span>
+</div>
+<p class="text-stats-lg font-stats-lg text-on-background">$1,250.00</p>
+</div>
+<div class="bg-surface-container-low/50 backdrop-blur-sm border border-outline-variant rounded-xl p-6 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-all"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary">account_balance_wallet</span>
+<h3 class="text-label-caps font-label-caps text-on-surface-variant tracking-wider">Balance Disponible</h3>
+</div>
+<span class="px-2 py-1 bg-surface-container rounded text-[10px] text-on-surface-variant">Para proyectos</span>
+</div>
+<p class="text-stats-lg font-stats-lg text-on-background">$1,500.00</p>
+</div>
+</div>
+<!-- Bento Grid Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- Main Chart -->
+<div class="lg:col-span-2 bg-surface-container-low/50 backdrop-blur-sm border border-outline-variant rounded-xl p-6 flex flex-col min-h-[400px]">
+<div class="flex justify-between items-center mb-6 border-b border-outline-variant pb-4">
+<h3 class="text-headline-sm font-headline-md font-semibold">Metas Activas</h3>
+<span class="px-3 py-1 bg-surface-container rounded-md text-body-sm text-on-surface-variant">2 proyectos</span>
+</div>
+<div class="flex-1 space-y-4">
+<!-- Proyecto 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4">
+<div class="flex items-start justify-between mb-3">
+<div>
+<h4 class="text-body-md font-body-md text-on-background font-bold mb-1">Compra de Laptop</h4>
+<span class="inline-block px-2 py-0.5 rounded-sm bg-primary/10 text-primary text-label-caps font-label-caps uppercase border border-primary/20">Tech</span>
+</div>
+<span class="text-headline-md font-bold text-primary">40%</span>
+</div>
+<div class="w-full bg-surface-container-lowest rounded-full h-2 overflow-hidden mb-3 border border-outline-variant/30">
+<div class="bg-primary h-2 rounded-full" style="width: 40%;"></div>
+</div>
+<div class="flex justify-between text-label-caps font-label-caps text-on-surface-variant font-mono">
+<span class="">Asignado: $800.00</span>
+<span class="">Meta: $2,000.00</span>
+</div>
+</div>
+<!-- Proyecto 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant/50 rounded-lg p-4">
+<div class="flex items-start justify-between mb-3">
+<div>
+<h4 class="text-body-md font-body-md text-on-background font-bold mb-1">Fondo de Emergencia</h4>
+<span class="inline-block px-2 py-0.5 rounded-sm bg-tertiary/10 text-tertiary text-label-caps font-label-caps uppercase border border-tertiary/20">Ahorro</span>
+</div>
+<span class="text-headline-md font-bold text-tertiary">65%</span>
+</div>
+<div class="w-full bg-surface-container-lowest rounded-full h-2 overflow-hidden mb-3 border border-outline-variant/30">
+<div class="bg-tertiary h-2 rounded-full" style="width: 65%;"></div>
+</div>
+<div class="flex justify-between text-label-caps font-label-caps text-on-surface-variant font-mono">
+<span class="">Asignado: $1,300.00</span>
+<span class="">Meta: $2,000.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Breakdown Chart -->
+<div class="bg-surface-container-low/50 backdrop-blur-sm border border-outline-variant rounded-xl p-6 flex flex-col min-h-[400px]">
+<h3 class="text-headline-sm font-headline-md font-semibold mb-6 border-b border-outline-variant pb-4">Categorías de Gastos</h3>
+<div class="flex-1 flex flex-col justify-center items-center pt-2">
+<!-- Anillo de progreso estilo "Resumen Semanal" (Hábitos) -->
+<div class="relative flex items-center justify-center mx-auto mb-8" style="width: 176px; height: 176px;">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+<circle class="text-surface-container-high" cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary" cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.46" stroke-dashoffset="0"></circle>
+</svg>
+<div class="absolute flex flex-col items-center justify-center text-center">
+<span class="text-stats-lg font-stats-lg text-on-background">$2.1k</span>
+<span class="text-label-caps font-label-caps text-on-surface-variant mt-1 uppercase">Total Gastos</span>
+</div>
+</div>
+<!-- Leyenda con tarjetas y barra vertical de color (estilo Resumen Semanal) -->
+<div class="w-full flex flex-col gap-4">
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 rounded-full bg-primary"></div>
+<div>
+<p class="text-[10px] text-on-surface-variant font-label-caps uppercase">Vivienda</p>
+<p class="text-body-sm font-bold text-on-surface">Gasto fijo</p>
+</div>
+</div>
+<span class="text-headline-md font-bold text-primary">45%</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 rounded-full bg-tertiary"></div>
+<div>
+<p class="text-[10px] text-on-surface-variant font-label-caps uppercase">Alimentación</p>
+<p class="text-body-sm font-bold text-on-surface">Gasto fijo</p>
+</div>
+</div>
+<span class="text-headline-md font-bold text-tertiary">30%</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30">
+<div class="flex items-center gap-3">
+<div class="w-2 h-8 rounded-full bg-error"></div>
+<div>
+<p class="text-[10px] text-on-surface-variant font-label-caps uppercase">Transporte</p>
+<p class="text-body-sm font-bold text-on-surface">Gasto fijo</p>
+</div>
+</div>
+<span class="text-headline-md font-bold text-error">15%</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant z-50 px-4 py-2 flex justify-between items-center">
+<a class="flex flex-col items-center p-2 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px]">Dashboard</span>
+</a>
+<a class="flex flex-col items-center p-2 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">event_repeat</span>
+<span class="text-[10px]">Habits</span>
+</a>
+<a class="flex flex-col items-center p-2 text-primary font-bold" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: &quot;FILL&quot; 1;">payments</span>
+<span class="text-[10px]">Finance</span>
+</a>
+<a class="flex flex-col items-center p-2 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="text-[10px]">Projects</span>
+</a>
+</nav>
+
+
+</body></html>

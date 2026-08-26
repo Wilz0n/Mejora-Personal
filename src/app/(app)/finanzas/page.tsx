@@ -15,6 +15,7 @@ import {
   SetSavingsButton,
 } from "@/components/finanzas/FinanceModals";
 import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
+import { SaveFinanceButton } from "@/components/finanzas/SaveFinanceButton";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +81,7 @@ export default async function FinancePage() {
             Gestiona tus asignaciones mensuales y metas activas.
           </p>
         </div>
+        <SaveFinanceButton />
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-stack-lg">

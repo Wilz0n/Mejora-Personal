@@ -121,3 +121,62 @@ export function formatCurrency(
     maximumFractionDigits: 2,
   }).format(value);
 }
+
+// --- Monthly Snapshot Helpers ---
+
+export interface ExpenseCategoryBreakdown {
+  category: string;
+  amount: number;
+  percent: number;
+}
+
+export interface ProjectSnapshotItem {
+  name: string;
+  tag: string;
+  targetAmount: number;
+  allocatedAmount: number;
+  progress: number;
+}
+
+/**
+ * Calcula el desglose de gastos fijos por categoría (porcentaje sobre el total).
+ * Usado para armar el cierre mensual ("Guardar Finanza").
+ */
+export function computeExpenseBreakdown(
+  fixedExpenses: { category: string; amount: number }[],
+): ExpenseCategoryBreakdown[] {
+  const total = fixedExpenses.reduce((acc, e) => acc + e.amount, 0);
+  if (total === 0) return [];
+  return fixedExpenses.map((e) => ({
+    category: e.category,
+    amount: e.amount,
+    percent: Math.round((e.amount / total) * 100),
+  }));
+}
+
+/**
+ * Arma un snapshot de los proyectos activos para el cierre mensual.
+ */
+export function computeProjectsSnapshot(
+  projects: FinanceInput["projects"],
+): ProjectSnapshotItem[] {
+  return projects
+    .filter((p) => !p.completed)
+    .map((p) => ({
+      name: p.name,
+      tag: p.tag,
+      targetAmount: p.targetAmount,
+      allocatedAmount: p.allocatedAmount,
+      progress: computeProjectProgress(p).progress,
+    }));
+}
+
+/**
+ * Devuelve la clave del mes actual en formato "YYYY-MM" (ej. "2026-08").
+ */
+export function currentMonthKey(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}

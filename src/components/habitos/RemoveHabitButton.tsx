@@ -39,9 +39,9 @@ export function RemoveHabitButton({ habits }: RemoveHabitButtonProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 border border-error/40 text-error font-medium px-4 py-2 rounded-xl hover:bg-error/10 transition-colors"
+        className="flex flex-1 sm:flex-none items-center justify-center gap-2 border border-error/40 text-error font-medium px-4 py-2 rounded-xl hover:bg-error/10 transition-colors whitespace-nowrap"
       >
-        <Icon name="delete" className="text-[20px]" />
+        <Icon name="delete" className="text-[20px] shrink-0" />
         <span>Quitar Hábito</span>
       </button>
 

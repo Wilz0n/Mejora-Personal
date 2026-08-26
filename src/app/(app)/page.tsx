@@ -7,7 +7,6 @@ import {
 } from "@/lib/habits-logic";
 import {
   computeFinanceSummary,
-  computeProjectsProgress,
   formatCurrency,
 } from "@/lib/finance-logic";
 import { todayKey, monthLabel } from "@/lib/dates";
@@ -31,8 +30,6 @@ export default async function DashboardPage() {
   const todayList = habitsForToday(todayHabits);
   const weekKpis = computeHabitKpis(computeHabitRates(weekHabits, "week"));
   const summary = computeFinanceSummary(finance);
-  const projects = computeProjectsProgress(finance.projects);
-  const topProject = projects[0];
   const currency = finance.currency;
 
   // "Ahorro Protegido": 20% del ingreso mensual (feature nueva del diseño,
@@ -136,32 +133,16 @@ export default async function DashboardPage() {
               <Legend color="bg-primary" label="Ingresos" />
               <Legend color="bg-outline" label="Fijos" />
               <Legend color="bg-secondary-container" label="Ahorro" />
+              <Legend color="bg-tertiary" label="Proyectos" />
             </div>
           </div>
           <FinanceChart
             income={summary.monthlyIncome}
             fixed={summary.totalFixedExpenses}
-            savings={summary.totalAllocated}
+            savings={protectedSavings}
+            projects={summary.totalAllocated}
             available={availableBalance}
           />
-          {topProject && (
-            <div className="mt-4 pt-4 border-t border-outline-variant/30">
-              <div className="flex justify-between text-body-sm mb-2">
-                <span className="text-on-surface-variant">
-                  Proyecto destacado: {topProject.name}
-                </span>
-                <span className="text-primary font-medium">
-                  {topProject.progress}%
-                </span>
-              </div>
-              <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-primary h-full rounded-full transition-all"
-                  style={{ width: `${topProject.progress}%` }}
-                />
-              </div>
-            </div>
-          )}
         </div>
       </section>
     </>
@@ -224,14 +205,16 @@ function FinanceChart({
   income,
   fixed,
   savings,
+  projects,
   available,
 }: {
   income: number;
   fixed: number;
   savings: number;
+  projects: number;
   available: number;
 }) {
-  const max = Math.max(income, fixed + savings + Math.max(0, available), 1);
+  const max = Math.max(income, fixed + savings + projects + Math.max(0, available), 1);
   const pct = (v: number) => `${Math.max(2, Math.round((v / max) * 100))}%`;
 
   return (
@@ -242,14 +225,9 @@ function FinanceChart({
         ))}
       </div>
       <Bar label="Ingresos" segments={[{ cls: "chart-bar-income", h: pct(income) }]} />
-      <Bar
-        label="Fijos"
-        segments={[{ cls: "chart-bar-fixed", h: pct(fixed) }]}
-      />
-      <Bar
-        label="Ahorro"
-        segments={[{ cls: "chart-bar-savings", h: pct(savings) }]}
-      />
+      <Bar label="Fijos" segments={[{ cls: "chart-bar-fixed", h: pct(fixed) }]} />
+      <Bar label="Ahorro" segments={[{ cls: "chart-bar-savings", h: pct(savings) }]} />
+      <Bar label="Proyectos" segments={[{ cls: "bg-tertiary", h: pct(projects) }]} />
       <Bar
         label="Disponible"
         segments={[{ cls: "bg-tertiary-container", h: pct(Math.max(0, available)) }]}

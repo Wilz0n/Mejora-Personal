@@ -17,7 +17,7 @@ export default async function AppLayout({
       <Sidebar />
       <main className="flex-1 flex flex-col md:ml-60 h-screen overflow-y-auto bg-background no-scrollbar">
         <Topbar avatar={profile.image} />
-        <div className="p-gutter max-w-container-max mx-auto w-full pb-24 md:pb-12">
+        <div className="p-gutter max-w-container-max mx-auto w-full min-w-0 overflow-x-hidden pb-24 md:pb-12">
           {children}
         </div>
       </main>
