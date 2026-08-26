@@ -10,11 +10,11 @@ const NAV = [
   { href: "/finanzas", label: "Finanzas", icon: "payments" },
 ];
 
-export function Topbar() {
+export function Topbar({ avatar }: { avatar?: string | null }) {
   const pathname = usePathname();
   return (
     <>
-      <header className="flex justify-between items-center h-16 px-gutter sticky top-0 w-full z-40 backdrop-blur-md bg-background/80 border-b border-outline-variant">
+      <header className="flex justify-between items-center h-16 shrink-0 px-gutter sticky top-0 w-full z-40 backdrop-blur-md bg-background/80 border-b border-outline-variant">
         <div className="md:hidden flex items-center gap-3">
           <h1 className="text-headline-md font-headline-md font-bold text-primary">
             LifeTracker
@@ -27,9 +27,18 @@ export function Topbar() {
           <Link
             href="/settings"
             aria-label="Ajustes y perfil"
-            className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container hover:scale-105 transition-transform"
+            className="w-8 h-8 rounded-full overflow-hidden bg-primary-container flex items-center justify-center text-on-primary-container hover:scale-105 transition-transform"
           >
-            <Icon name="person" className="text-[18px]" filled />
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatar}
+                alt="Perfil"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Icon name="person" className="text-[18px]" filled />
+            )}
           </Link>
         </div>
       </header>
