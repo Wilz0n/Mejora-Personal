@@ -281,6 +281,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 **Finanzas**
 - **Quitar proyecto:** botón "-" en cada tarjeta → `src/components/finanzas/RemoveProjectButton.tsx` (acción `deleteProject`).
 - **Quitar gasto fijo:** botón rojo "Quitar Gasto" → modal con lista → `src/components/finanzas/RemoveExpenseButton.tsx` (acción `deleteExpense`).
+- **Abono mensual a proyectos:** botón verde "+" → `src/components/finanzas/ContributeButton.tsx` (acción `contributeToProject`). Suma el `monthlyContribution` (definido al crear el proyecto = monto inicial) a `allocatedAmount`, topado a la meta. Al alcanzar la meta marca `completedAt` → el proyecto queda **cumplido** y **deja de descontar del balance** (`computeFinanceSummary` solo resta proyectos activos). Campos BD: `ProjectGoal.monthlyContribution` y `ProjectGoal.completedAt`.
 - **Modal reutilizable de proyecto:** `src/components/comun/ProjectModal.tsx` (base para otros popups).
 - **Ahorro Mensual:** sección editable con el chanchito. Se **descuenta del balance**. Si no defines un monto, usa el **20% del ingreso** como sugerencia; puedes editarlo. Componente: `SetSavingsButton` en `FinanceModals.tsx`. Acción: `setMonthlySavings`. Lógica: `computeFinanceSummary` (resta el ahorro) y `suggestedSavings()` en `src/lib/finance-logic.ts`. Campo BD: `FinancialSummary.monthlySavings`.
 
