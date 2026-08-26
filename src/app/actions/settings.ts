@@ -32,6 +32,7 @@ export async function updateProfile(
   });
 
   revalidatePath("/settings");
+  revalidatePath("/", "layout"); // refresca topbar (avatar) y dashboard (nombre)
   return { ok: true };
 }
 

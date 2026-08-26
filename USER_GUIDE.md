@@ -168,7 +168,9 @@ En el panel se listan todos tus gastos fijos con su categoría y monto. Su suma 
 
 Se abre desde **Ajustes** en el menú o con el **icono de perfil** (arriba a la derecha).
 
-- **Identidad:** tu nombre, correo y avatar. Con **"Editar Perfil"** cambias tu nombre y foto (por URL).
+- **Identidad:** tu nombre, correo y foto de perfil. Con **"Editar Perfil"** puedes:
+  - **Cambiar tu nombre** → aparece en el saludo del Dashboard ("Hola, tu nombre") y en toda la app.
+  - **Subir una foto de perfil** desde tu equipo. La app la **optimiza automáticamente** (la achica y comprime) para que ocupe muy poco. Puedes usar **AVIF (recomendado, más ligero)**, PNG, WebP o JPG. Tu foto se verá en el icono de perfil (arriba a la derecha) y en esta sección.
 - **Moneda por Defecto:** elige **USD ($)** o **PEN (S/)**. Se aplica a todo Finanzas.
 - **Gestión de Datos:**
   - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos).
