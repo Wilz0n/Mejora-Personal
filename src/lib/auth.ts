@@ -39,6 +39,18 @@ function resolveSecret(): string {
   return "lifetracker-dev-only-secret";
 }
 
+// NextAuth v4 internamente lee NEXTAUTH_URL para construir URLs de callback.
+// Si la variable está definida pero vacía (o no existe), hace `new URL("")`
+// que lanza TypeError: Invalid URL. Esto pasa en Vercel cuando tienes la
+// variable configurada sin valor o en modo usuario único donde no la necesitas.
+// Fijamos un placeholder válido si falta, para que NextAuth no crashee al
+// inicializarse (aunque en single-user mode no se use realmente).
+if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.trim() === "") {
+  process.env.NEXTAUTH_URL = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000";
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   session: { strategy: "jwt" },
