@@ -226,7 +226,7 @@ Vercel generará una **URL de preview** automáticamente para revisar tus cambio
 
 | Comando | Qué hace |
 |---------|----------|
-| `npm run dev` | Servidor de desarrollo con recarga en caliente |
+| `npm run dev` | Servidor de desarrollo con recarga en caliente. **Antes de arrancar** ejecuta `predev` → sincroniza tu BD local con el schema automáticamente (`scripts/db-sync.mjs`) |
 | `npm run dev:verify` | Levanta una **BD interna (Docker)**, crea tablas y compila — verificación de punta a punta |
 | `npm run build` | Compila (¡córrelo antes de hacer push!) |
 | `npm run setup` | Configuración guiada inicial (con tu Neon) |
@@ -234,6 +234,8 @@ Vercel generará una **URL de preview** automáticamente para revisar tus cambio
 | `npm run db:push` | Sincroniza el schema de Prisma con tu BD |
 | `npm run db:seed` | Carga datos de demostración |
 | `npx prisma studio` | Abre un panel visual para ver/editar la BD |
+
+> 🔄 **Sobre `predev` (importante):** cada vez que corres `npm run dev`, se sincroniza tu BD local con el `schema.prisma` automáticamente. Así, al traer cambios que agregan columnas (ej. `currency`, `monthlySavings`), no tienes que acordarte de correr `prisma db push`. Es seguro: si no hay `DATABASE_URL` o la BD está apagada, **avisa pero no bloquea** el arranque. Puedes desactivarlo con `SKIP_DB_SYNC=true npm run dev`.
 
 ---
 
@@ -264,6 +266,37 @@ Vercel generará una **URL de preview** automáticamente para revisar tus cambio
 | Error de tipos al compilar | Corre `npx tsc --noEmit` para ver el detalle. |
 | La app pide login y no quiero | Pon `SINGLE_USER_MODE=true` y `NEXT_PUBLIC_SINGLE_USER_MODE=true` en `.env.local`. |
 | `NO_SECRET` al usar login | Falta `NEXTAUTH_SECRET` en `.env.local`. |
+
+---
+
+## 10. Funcionalidades recientes (dónde vive cada una)
+
+Estas son las features agregadas en el rediseño. Útil para saber qué archivo tocar.
+
+**Hábitos**
+- **Quitar hábito:** botón rojo "Quitar Hábito" (junto a "Añadir Hábito") → abre modal con la lista de hábitos. Componente: `src/components/habitos/RemoveHabitButton.tsx`. Acción: `deleteHabit` en `src/app/actions/habits.ts`.
+- **Vista mensual (heatmap):** `src/components/habitos/MonthlyTracker.tsx` + helper `monthWeeks()` en `src/lib/dates.ts`.
+- **Anillo de progreso:** `src/components/comun/ProgressRing.tsx`.
+
+**Finanzas**
+- **Quitar proyecto:** botón "-" en cada tarjeta → `src/components/finanzas/RemoveProjectButton.tsx` (acción `deleteProject`).
+- **Quitar gasto fijo:** botón rojo "Quitar Gasto" → modal con lista → `src/components/finanzas/RemoveExpenseButton.tsx` (acción `deleteExpense`).
+- **Modal reutilizable de proyecto:** `src/components/comun/ProjectModal.tsx` (base para otros popups).
+- **Ahorro Mensual:** sección editable con el chanchito. Se **descuenta del balance**. Si no defines un monto, usa el **20% del ingreso** como sugerencia; puedes editarlo. Componente: `SetSavingsButton` en `FinanceModals.tsx`. Acción: `setMonthlySavings`. Lógica: `computeFinanceSummary` (resta el ahorro) y `suggestedSavings()` en `src/lib/finance-logic.ts`. Campo BD: `FinancialSummary.monthlySavings`.
+
+**Ajustes / Perfil (`/settings`)**
+- **Editar perfil:** `src/components/settings/EditProfileButton.tsx` (acción `updateProfile`).
+- **Moneda por defecto (USD/PEN):** `src/components/settings/CurrencySelect.tsx` (acción `setCurrency`). Campo BD: `FinancialSummary.currency`. Constantes/formato: `SUPPORTED_CURRENCIES` y `formatCurrency` en `finance-logic.ts`.
+- **Exportar datos (JSON/CSV):** endpoint `src/app/api/export/route.ts` (usa `getUserExportData`).
+- **Purgar datos de cuenta:** `src/components/settings/PurgeDataButton.tsx` (acción `purgeAccountData`, **destructiva**, con confirmación por palabra).
+- Acciones de settings: `src/app/actions/settings.ts`.
+
+**Automatización de BD y despliegue** (ver también `DEPLOYMENT.md`)
+- `scripts/deploy.mjs` → buildCommand de Vercel: crea/sincroniza tablas si hay `DATABASE_URL` + compila.
+- `scripts/dev-verify.mjs` → verificación local con BD interna (Docker).
+- `scripts/db-sync.mjs` → hook `predev`: sincroniza tu BD local antes de `npm run dev`.
+
+> 🧩 **Patrón para "quitar" algo:** botón cliente → modal con lista (o botón directo) → Server Action `deleteX` (que ya filtra por `userId`) → `revalidatePath`. Reutiliza los componentes `Remove*Button` existentes como plantilla.
 
 ---
 
