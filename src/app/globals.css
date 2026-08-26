@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  background-color: #131315;
+}
+
+body {
+  background-color: #131315;
+  color: #e5e1e4;
+}
+
+/* Glass panel usado en las tarjetas del diseño Nocturne */
+.glass-panel {
+  background-color: rgba(28, 27, 29, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid #464554;
+}
+
+/* Chart bars */
+.chart-bar-income {
+  background-color: #c0c1ff;
+}
+.chart-bar-fixed {
+  background-color: #908fa0;
+}
+.chart-bar-savings {
+  background-color: #571bc1;
+}
+
+/* Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #353437;
+  border-radius: 3px;
+}
+
+/* Progress ring animation */
+.progress-ring__circle {
+  transition: stroke-dashoffset 0.35s;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
