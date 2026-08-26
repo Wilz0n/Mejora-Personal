@@ -1,5 +1,6 @@
 export interface FinanceInput {
   monthlyIncome: number;
+  monthlySavings?: number;
   fixedExpenses: { id: string; category: string; amount: number }[];
   projects: {
     id: string;
@@ -12,9 +13,10 @@ export interface FinanceInput {
 
 export interface FinanceSummary {
   monthlyIncome: number;
+  monthlySavings: number;
   totalFixedExpenses: number;
   totalAllocated: number;
-  /** Balance Disponible = Ingreso - Gastos Fijos - Montos Asignados a Proyectos. */
+  /** Balance Disponible = Ingreso - Ahorro - Gastos Fijos - Montos Asignados a Proyectos. */
   availableBalance: number;
 }
 
@@ -38,15 +40,22 @@ export function computeFinanceSummary(input: FinanceInput): FinanceSummary {
     (acc, p) => acc + p.allocatedAmount,
     0,
   );
+  const monthlySavings = input.monthlySavings ?? 0;
   const availableBalance =
-    input.monthlyIncome - totalFixedExpenses - totalAllocated;
+    input.monthlyIncome - monthlySavings - totalFixedExpenses - totalAllocated;
 
   return {
     monthlyIncome: input.monthlyIncome,
+    monthlySavings,
     totalFixedExpenses,
     totalAllocated,
     availableBalance,
   };
+}
+
+/** Ahorro sugerido por defecto: 20% del ingreso mensual. */
+export function suggestedSavings(monthlyIncome: number): number {
+  return Math.round(monthlyIncome * 0.2 * 100) / 100;
 }
 
 export function computeProjectProgress(
