@@ -151,8 +151,16 @@ export async function createExpense(
 
   const { category, amount, icon } = parsed.data;
 
+  // Obtener el orden máximo actual para poner el nuevo al final
+  const lastExpense = await prisma.fixedExpense.findFirst({
+    where: { userId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+  const nextOrder = (lastExpense?.order ?? -1) + 1;
+
   const expense = await prisma.fixedExpense.create({
-    data: { userId, category, amount, icon },
+    data: { userId, category, amount, icon, order: nextOrder },
     select: { id: true },
   });
 
@@ -321,6 +329,37 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
       projectsSnapshot: JSON.stringify(projectsSnapshot),
     },
   });
+
+  revalidateFinance();
+  return { ok: true };
+}
+
+/** Reordena los gastos fijos del usuario. Recibe un array de IDs en el nuevo orden. */
+export async function reorderExpenses(orderedIds: string[]): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  // Verificar que todos los IDs pertenecen al usuario
+  const expenses = await prisma.fixedExpense.findMany({
+    where: { userId },
+    select: { id: true },
+  });
+  const userExpenseIds = new Set(expenses.map((e) => e.id));
+
+  for (const id of orderedIds) {
+    if (!userExpenseIds.has(id)) {
+      return { ok: false, error: "Gasto no encontrado" };
+    }
+  }
+
+  // Actualizar el orden de cada gasto
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.fixedExpense.update({
+        where: { id },
+        data: { order: index },
+      })
+    )
+  );
 
   revalidateFinance();
   return { ok: true };

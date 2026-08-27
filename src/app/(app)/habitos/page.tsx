@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getUserId } from "@/lib/session";
+import { getUserId, getUserTimezone } from "@/lib/session";
 import { getHabitsWithLogs } from "@/lib/data";
 import {
   computeHabitRates,
@@ -14,6 +14,7 @@ import {
   monthLabel,
   monthWeeks,
   periodMonths,
+  nowInTimezone,
 } from "@/lib/dates";
 import { HabitCheckbox } from "@/components/habitos/HabitCheckbox";
 import { AddHabitButton } from "@/components/habitos/AddHabitButton";
@@ -42,12 +43,14 @@ export default async function HabitsPage({
     }
   })();
   const userId = await getUserId();
+  const timezone = await getUserTimezone(userId);
 
-  const habits = await getHabitsWithLogs(userId, period);
-  const rates = computeHabitRates(habits, period);
+  const habits = await getHabitsWithLogs(userId, period, undefined, timezone);
+  const now = nowInTimezone(timezone);
+  const rates = computeHabitRates(habits, period, now);
   const kpis = computeHabitKpis(rates);
-  const days = periodDayKeys(period);
-  const today = todayKey();
+  const days = periodDayKeys(period, undefined, timezone);
+  const today = todayKey(timezone);
   const rateById = new Map(rates.map((r) => [r.id, r]));
 
   const summaryTitle =
@@ -61,7 +64,7 @@ export default async function HabitsPage({
 
   const periodSubtitle =
     period === "week" || period === "month"
-      ? monthLabel()
+      ? monthLabel(undefined, timezone)
       : period === "quarter"
         ? "Últimos 3 meses"
         : "Últimos 6 meses";
@@ -104,7 +107,7 @@ export default async function HabitsPage({
             />
           ) : period === "month" ? (
             <MonthlyTracker
-              weeks={monthWeeks().filter((w) => w.some((d) => d !== null))}
+              weeks={monthWeeks(undefined, timezone).filter((w) => w.some((d) => d !== null))}
               today={today}
               habits={habits.map((h) => {
                 const r = rateById.get(h.id);
@@ -123,6 +126,8 @@ export default async function HabitsPage({
                 period === "quarter"
                   ? PERIOD_MONTHS.quarter
                   : PERIOD_MONTHS.semester,
+                undefined,
+                timezone,
               )}
               habits={habits.map((h) => {
                 const r = rateById.get(h.id);

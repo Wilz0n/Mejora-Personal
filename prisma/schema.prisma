@@ -14,6 +14,7 @@ model User {
   passwordHash  String?
   image         String?
   emailVerified DateTime?
+  timezone      String    @default("America/Lima")
   createdAt     DateTime  @default(now())
 
   accounts         Account[]
@@ -67,6 +68,7 @@ model Habit {
   userId    String
   name      String
   icon      String     @default("check_circle")
+  order     Int        @default(0)
   createdAt DateTime   @default(now())
 
   user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -105,6 +107,7 @@ model FixedExpense {
   category String
   amount   Decimal @db.Decimal(12, 2)
   icon     String  @default("receipt_long")
+  order    Int     @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

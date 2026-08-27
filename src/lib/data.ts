@@ -11,12 +11,13 @@ import type { HabitWithLogs } from "@/lib/habits-logic";
 export async function getHabitsWithLogs(
   userId: string,
   period: Period,
-  ref: Date = new Date(),
+  ref?: Date,
+  timezone?: string,
 ): Promise<HabitWithLogs[]> {
-  const days = periodDayKeys(period, ref);
+  const days = periodDayKeys(period, ref, timezone);
   const habits = await prisma.habit.findMany({
     where: { userId },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     include: {
       logs: {
         where: { date: { in: days } },
@@ -39,7 +40,7 @@ export async function getHabitsForToday(
 ): Promise<HabitWithLogs[]> {
   const habits = await prisma.habit.findMany({
     where: { userId },
-    orderBy: { createdAt: "asc" },
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     include: {
       logs: {
         where: { date: todayKey },
@@ -61,7 +62,7 @@ export async function getFinanceData(userId: string) {
     prisma.financialSummary.findUnique({ where: { userId } }),
     prisma.fixedExpense.findMany({
       where: { userId },
-      orderBy: { amount: "desc" },
+      orderBy: [{ order: "asc" }, { amount: "desc" }],
     }),
     prisma.projectGoal.findMany({
       where: { userId },
@@ -95,12 +96,13 @@ export async function getFinanceData(userId: string) {
 export async function getUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, email: true, image: true },
+    select: { name: true, email: true, image: true, timezone: true },
   });
   return {
     name: user?.name ?? "Usuario",
     email: user?.email ?? "",
     image: user?.image ?? null,
+    timezone: user?.timezone ?? "America/Lima",
   };
 }
 
@@ -222,7 +224,7 @@ export async function getUserExportData(userId: string) {
       }),
       prisma.habit.findMany({
         where: { userId },
-        orderBy: { createdAt: "asc" },
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
         include: {
           logs: {
             select: { date: true, completed: true },
