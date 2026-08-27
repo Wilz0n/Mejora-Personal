@@ -222,25 +222,50 @@ export default async function MonthlyFinancePage() {
               <div className="w-full flex flex-col gap-4">
                 {finance.expensesByCategory.map((c, i) => {
                   const accent = ACCENTS[i % ACCENTS.length];
+                  // Cruzar con el estado live de paidThisMonth
+                  const liveExpense = current.fixedExpenses.find(
+                    (e) => e.category.toLowerCase() === c.category.toLowerCase()
+                  );
+                  const isPaid = liveExpense?.paidThisMonth ?? false;
+
                   return (
                     <div
                       key={`${c.category}-${i}`}
-                      className="flex items-center justify-between p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/30"
+                      className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                        isPaid
+                          ? "bg-green-500/10 border border-green-500/40"
+                          : "bg-surface-container-lowest border border-outline-variant/30"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`w-2 h-8 rounded-full ${accent.bar}`} />
+                        {isPaid ? (
+                          <div className="w-2 h-8 rounded-full bg-green-500" />
+                        ) : (
+                          <div className={`w-2 h-8 rounded-full ${accent.bar}`} />
+                        )}
                         <div>
-                          <p className="text-[10px] text-on-surface-variant font-label-caps uppercase">
+                          <p className={`text-[10px] font-label-caps uppercase ${
+                            isPaid ? "text-green-400" : "text-on-surface-variant"
+                          }`}>
                             {c.category}
                           </p>
-                          <p className="text-body-sm font-bold text-on-surface font-mono">
+                          <p className={`text-body-sm font-bold font-mono ${
+                            isPaid ? "text-green-300 line-through opacity-80" : "text-on-surface"
+                          }`}>
                             {formatCurrency(c.amount, { currency })}
                           </p>
                         </div>
                       </div>
-                      <span className={`text-headline-md font-bold ${accent.text}`}>
-                        {c.percent}%
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-headline-md font-bold ${
+                          isPaid ? "text-green-400" : accent.text
+                        }`}>
+                          {c.percent}%
+                        </span>
+                        {isPaid && (
+                          <Icon name="check_circle" className="text-green-400 text-[18px]" filled />
+                        )}
+                      </div>
                     </div>
                   );
                 })}

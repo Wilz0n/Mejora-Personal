@@ -239,6 +239,23 @@ En la página de **Finanzas (edición)**, ahora puedes marcar cada gasto fijo co
 - Para desmarcar, vuelve a hacer doble clic/tap.
 - Un tip verde arriba de la sección te recuerda cómo funciona.
 
+### 📊 Indicador de pagado en Categorías de Gastos (Finanzas del Mes)
+
+En la página **"Finanzas del Mes"** (`/finanzas/mes`), el apartado **"Categorías de Gastos"** ahora refleja qué gastos ya marcaste como pagados:
+
+- Cuando marcas un gasto como pagado (doble clic/tap en la página de edición), su tarjeta en "Categorías de Gastos" se actualiza automáticamente:
+  - Borde y fondo **verde** 🟢.
+  - La barra lateral de color cambia a **verde**.
+  - El nombre del gasto aparece en verde.
+  - El monto aparece **tachado** con opacidad reducida.
+  - El porcentaje cambia a verde.
+  - Aparece un ícono **✓** (check) verde a la derecha.
+
+- El cambio es **en tiempo real**: no necesitas volver a "Guardar Finanza". Basta con marcar el pago en `/finanzas` y al visitar `/finanzas/mes` ya se ve reflejado.
+- Si desmarcas un pago, la tarjeta vuelve a su aspecto normal.
+
+> 💡 Así puedes ver de un vistazo, tanto en la página de edición como en el resumen mensual, cuáles de tus gastos fijos ya cubriste este mes.
+
 ### 💾 Guardar Finanza (cierre mensual)
 
 En la página de Finanzas ahora tienes un botón **"Guardar Finanza"**. Al pulsarlo, se guarda un resumen/cierre del mes y te lleva a una nueva vista **"Finanzas del Mes"** donde verás:
