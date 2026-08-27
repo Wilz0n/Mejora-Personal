@@ -17,6 +17,7 @@ import {
 import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
 import { SaveFinanceButton } from "@/components/finanzas/SaveFinanceButton";
 import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
+import { FixedExpenseItem } from "@/components/finanzas/FixedExpenseItem";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -141,6 +142,15 @@ export default async function FinancePage() {
           {/* Historial de ahorro (mini-gráfico) */}
           <SavingsHistory data={savingsHistory} currency={currency} compact />
 
+          {/* Instrucciones de Gastos Fijos */}
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/20">
+            <Icon name="touch_app" className="text-green-400 text-[20px] mt-0.5 flex-shrink-0" />
+            <p className="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              <span className="text-green-400 font-medium">Doble clic</span> (o doble tap en móvil) sobre un gasto fijo para marcarlo como{" "}
+              <span className="text-green-400 font-medium">pagado</span>. Se pondrá verde para que sepas que ya no te preocupes por él este mes.
+            </p>
+          </div>
+
           {/* Gastos fijos */}
           <div className="glass-panel rounded-xl p-stack-md flex flex-col h-full">
             <div className="flex items-center justify-between mb-stack-md pb-stack-sm border-b border-outline-variant/30">
@@ -166,25 +176,14 @@ export default async function FinancePage() {
             ) : (
               <div className="space-y-3">
                 {finance.fixedExpenses.map((e) => (
-                  <div
+                  <FixedExpenseItem
                     key={e.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-surface-container-low border border-transparent hover:border-outline-variant transition-colors group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-md bg-surface-variant/40 flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
-                        <Icon
-                          name={e.icon && e.icon !== "receipt_long" ? e.icon : expenseIcon(e.category)}
-                          className="text-[18px]"
-                        />
-                      </div>
-                      <span className="text-body-md font-body-md text-on-background">
-                        {e.category}
-                      </span>
-                    </div>
-                    <div className="text-body-md font-body-md text-on-surface font-mono">
-                      {formatCurrency(e.amount, { currency })}
-                    </div>
-                  </div>
+                    id={e.id}
+                    category={e.category}
+                    amount={formatCurrency(e.amount, { currency })}
+                    icon={e.icon && e.icon !== "receipt_long" ? e.icon : expenseIcon(e.category)}
+                    paidThisMonth={e.paidThisMonth}
+                  />
                 ))}
               </div>
             )}

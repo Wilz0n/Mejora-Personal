@@ -102,12 +102,13 @@ model FinancialSummary {
 }
 
 model FixedExpense {
-  id       String  @id @default(cuid())
-  userId   String
-  category String
-  amount   Decimal @db.Decimal(12, 2)
-  icon     String  @default("receipt_long")
-  order    Int     @default(0)
+  id            String  @id @default(cuid())
+  userId        String
+  category      String
+  amount        Decimal @db.Decimal(12, 2)
+  icon          String  @default("receipt_long")
+  order         Int     @default(0)
+  paidThisMonth Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

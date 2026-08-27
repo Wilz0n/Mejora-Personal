@@ -170,6 +170,22 @@ En el panel se listan todos tus gastos fijos con su categoría y monto. Su suma 
 - Agrega uno con **"+ Gasto fijo"**.
 - Con el botón **"Quitar Gasto"** (se pone rojo) abres una lista de tus gastos para **eliminar** el que quieras.
 
+#### ✅ Marcar como pagado (doble clic / doble tap)
+
+Puedes marcar cada gasto fijo como **"pagado"** para saber de un vistazo cuáles ya cubriste este mes:
+
+- **En desktop:** haz **doble clic** sobre el gasto.
+- **En móvil:** haz **doble tap** (dos toques rápidos) sobre el gasto.
+
+Cuando un gasto está marcado como pagado:
+- Su fondo se pone **verde** 🟢.
+- El icono cambia a un **check** y el nombre se tacha.
+- Aparece un badge "verificado" junto al monto.
+
+Para **desmarcarlo**, simplemente vuelve a hacer doble clic/tap. El cambio es instantáneo (mutación optimista).
+
+> 💡 Arriba de la sección "Gastos Fijos" verás un tip recordándote cómo funciona esta acción.
+
 ---
 
 ## ⚙️ Ajustes y Perfil
@@ -214,6 +230,14 @@ Sí, porque la tasa es días completados sobre días del periodo. Al avanzar el 
 ## ✨ Novedades recientes
 
 Estas son las mejoras más recientes de LifeTracker:
+
+### ✅ Marcar gastos fijos como pagados
+
+En la página de **Finanzas (edición)**, ahora puedes marcar cada gasto fijo como **pagado** con un **doble clic** (desktop) o **doble tap** (móvil):
+
+- El gasto se pone con **fondo verde**, icono de check y texto tachado → sabes de un vistazo qué ya pagaste.
+- Para desmarcar, vuelve a hacer doble clic/tap.
+- Un tip verde arriba de la sección te recuerda cómo funciona.
 
 ### 💾 Guardar Finanza (cierre mensual)
 
