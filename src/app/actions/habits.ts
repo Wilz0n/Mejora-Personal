@@ -66,8 +66,16 @@ export async function createHabit(input: unknown): Promise<ActionResult<{ id: st
 
   const { name, icon } = parsed.data;
 
+  // Obtener el orden máximo actual para poner el nuevo al final
+  const lastHabit = await prisma.habit.findFirst({
+    where: { userId },
+    orderBy: { order: "desc" },
+    select: { order: true },
+  });
+  const nextOrder = (lastHabit?.order ?? -1) + 1;
+
   const habit = await prisma.habit.create({
-    data: { userId, name, icon },
+    data: { userId, name, icon, order: nextOrder },
     select: { id: true },
   });
 
@@ -81,6 +89,38 @@ export async function deleteHabit(habitId: string): Promise<ActionResult> {
   const userId = await getUserId();
   const result = await prisma.habit.deleteMany({ where: { id: habitId, userId } });
   if (result.count === 0) return { ok: false, error: "Hábito no encontrado" };
+  revalidatePath("/");
+  revalidatePath("/habitos");
+  return { ok: true };
+}
+
+/** Reordena los hábitos del usuario. Recibe un array de IDs en el nuevo orden. */
+export async function reorderHabits(orderedIds: string[]): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  // Verificar que todos los IDs pertenecen al usuario
+  const habits = await prisma.habit.findMany({
+    where: { userId },
+    select: { id: true },
+  });
+  const userHabitIds = new Set(habits.map((h) => h.id));
+
+  for (const id of orderedIds) {
+    if (!userHabitIds.has(id)) {
+      return { ok: false, error: "Hábito no encontrado" };
+    }
+  }
+
+  // Actualizar el orden de cada hábito
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.habit.update({
+        where: { id },
+        data: { order: index },
+      })
+    )
+  );
+
   revalidatePath("/");
   revalidatePath("/habitos");
   return { ok: true };

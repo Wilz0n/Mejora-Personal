@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { isSingleUserMode, getOrCreateSingleUserId } from "@/lib/single-user";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Devuelve el userId de la sesión activa.
@@ -33,4 +34,13 @@ export async function getUserIdOrNull(): Promise<string | null> {
 
   const session = await auth();
   return session?.user?.id ?? null;
+}
+
+/** Obtiene la timezone del usuario (default: America/Lima). */
+export async function getUserTimezone(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { timezone: true },
+  });
+  return user?.timezone ?? "America/Lima";
 }

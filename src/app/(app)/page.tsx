@@ -1,4 +1,4 @@
-import { getUserId } from "@/lib/session";
+import { getUserId, getUserTimezone } from "@/lib/session";
 import { getHabitsForToday, getFinanceData, getHabitsWithLogs, getUserProfile } from "@/lib/data";
 import {
   computeHabitRates,
@@ -18,11 +18,12 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const userId = await getUserId();
-  const today = todayKey();
+  const timezone = await getUserTimezone(userId);
+  const today = todayKey(timezone);
 
   const [todayHabits, weekHabits, finance, profile] = await Promise.all([
     getHabitsForToday(userId, today),
-    getHabitsWithLogs(userId, "week"),
+    getHabitsWithLogs(userId, "week", undefined, timezone),
     getFinanceData(userId),
     getUserProfile(userId),
   ]);

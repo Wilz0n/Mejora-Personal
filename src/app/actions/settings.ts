@@ -87,3 +87,26 @@ export async function purgeAccountData(): Promise<ActionResult> {
   revalidatePath("/settings");
   return { ok: true };
 }
+
+/** Zonas horarias soportadas por la app. */
+const SUPPORTED_TIMEZONES = ["America/Lima", "America/New_York"];
+
+/** Define la zona horaria del usuario. */
+export async function setTimezone(input: { timezone: string }): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const { timezone } = input;
+  if (!SUPPORTED_TIMEZONES.includes(timezone)) {
+    return { ok: false, error: "Zona horaria no soportada" };
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { timezone },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/habitos");
+  revalidatePath("/settings");
+  return { ok: true };
+}

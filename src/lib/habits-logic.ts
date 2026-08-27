@@ -3,6 +3,7 @@ import {
   monthDayKeys,
   lastMonthsDayKeys,
   todayKey,
+  nowInTimezone,
 } from "@/lib/dates";
 
 export type Period = "week" | "month" | "quarter" | "semester";
@@ -47,16 +48,17 @@ export interface HabitKpis {
 }
 
 /** Devuelve las claves de día del periodo dado. */
-export function periodDayKeys(period: Period, ref: Date = new Date()): string[] {
+export function periodDayKeys(period: Period, ref?: Date, timezone?: string): string[] {
+  const date = ref ?? (timezone ? nowInTimezone(timezone) : new Date());
   switch (period) {
     case "week":
-      return weekDayKeys(ref);
+      return weekDayKeys(date);
     case "month":
-      return monthDayKeys(ref);
+      return monthDayKeys(date);
     case "quarter":
-      return lastMonthsDayKeys(PERIOD_MONTHS.quarter, ref);
+      return lastMonthsDayKeys(PERIOD_MONTHS.quarter, date);
     case "semester":
-      return lastMonthsDayKeys(PERIOD_MONTHS.semester, ref);
+      return lastMonthsDayKeys(PERIOD_MONTHS.semester, date);
   }
 }
 

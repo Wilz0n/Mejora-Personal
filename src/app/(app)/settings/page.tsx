@@ -3,6 +3,7 @@ import { getUserProfile, getFinanceData } from "@/lib/data";
 import { Icon } from "@/components/comun/Icon";
 import { EditProfileButton } from "@/components/settings/EditProfileButton";
 import { CurrencySelect } from "@/components/settings/CurrencySelect";
+import { TimezoneSelect } from "@/components/settings/TimezoneSelect";
 import { PurgeDataButton } from "@/components/settings/PurgeDataButton";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default async function SettingsPage() {
     getUserProfile(userId),
     getFinanceData(userId),
   ]);
+  const timezone = profile.timezone;
 
   return (
     <div className="max-w-container-max mx-auto">
@@ -77,6 +79,19 @@ export default async function SettingsPage() {
                 </p>
               </div>
               <CurrencySelect current={finance.currency} />
+            </div>
+
+            {/* Zona Horaria */}
+            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-surface-variant">
+              <div>
+                <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
+                  Zona Horaria
+                </h4>
+                <p className="text-body-sm font-body-sm text-on-surface-variant">
+                  Define qué día es &quot;hoy&quot; en tus hábitos.
+                </p>
+              </div>
+              <TimezoneSelect current={timezone} />
             </div>
 
             {/* Tema (placeholder: app dark-only) */}
