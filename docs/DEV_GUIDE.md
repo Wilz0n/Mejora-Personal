@@ -317,6 +317,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 **Finanzas**
 - **Quitar proyecto:** botón "-" en cada tarjeta → `src/components/finanzas/RemoveProjectButton.tsx` (acción `deleteProject`).
 - **Quitar gasto fijo:** botón rojo "Quitar Gasto" → modal con lista → `src/components/finanzas/RemoveExpenseButton.tsx` (acción `deleteExpense`).
+- **Marcar gasto como pagado (doble clic/tap):** `src/components/finanzas/FixedExpenseItem.tsx` — client component. Detecta doble clic (desktop) y doble tap (móvil, timeout 300ms). Toggle optimista del campo `paidThisMonth` vía acción `toggleExpensePaid` en `src/app/actions/finance.ts`. Visual: fondo `bg-green-500/15` + borde verde + icono `check_circle` filled + line-through + badge `verified`. Tip informativo verde (fuera del panel, arriba de la sección Gastos Fijos) explica la interacción al usuario. Campo BD: `FixedExpense.paidThisMonth` (Boolean, default false).
 - **Abono mensual a proyectos:** botón verde "+" → `src/components/finanzas/ContributeButton.tsx` (acción `contributeToProject`). Suma el `monthlyContribution` (definido al crear el proyecto = monto inicial) a `allocatedAmount`, topado a la meta. Al alcanzar la meta marca `completedAt` → el proyecto queda **cumplido** y **deja de descontar del balance** (`computeFinanceSummary` solo resta proyectos activos). Campos BD: `ProjectGoal.monthlyContribution` y `ProjectGoal.completedAt`.
 - **Modal reutilizable de proyecto:** `src/components/comun/ProjectModal.tsx` (base para otros popups).
 - **Ahorro Mensual:** sección editable con el chanchito. Se **descuenta del balance**. Si no defines un monto, usa el **20% del ingreso** como sugerencia; puedes editarlo. Componente: `SetSavingsButton` en `FinanceModals.tsx`. Acción: `setMonthlySavings`. Lógica: `computeFinanceSummary` (resta el ahorro) y `suggestedSavings()` en `src/lib/finance-logic.ts`. Campo BD: `FinancialSummary.monthlySavings`.
@@ -380,7 +381,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 - **Gastos fijos:** el catálogo está en `EXPENSE_ICONS` dentro de `src/components/finanzas/FinanceModals.tsx` (16 iconos). Se guarda en `FixedExpense.icon` (default `receipt_long`). La página `/finanzas` muestra el ícono guardado, con fallback a la heurística `expenseIcon(category)` (adivina por el nombre) para gastos antiguos sin ícono explícito.
 - **Nombres válidos:** catálogo en https://fonts.google.com/icons (estilo *Outlined*).
 
-> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push`. Creará la tabla `MonthlyFinance` y el campo `icon` en `FixedExpense` sin borrar datos existentes. En Vercel, `scripts/deploy.mjs` lo hace automáticamente durante el despliegue.
+> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push`. Creará la tabla `MonthlyFinance`, el campo `icon` en `FixedExpense` y el campo `paidThisMonth` en `FixedExpense` sin borrar datos existentes. En Vercel, `scripts/deploy.mjs` lo hace automáticamente durante el despliegue.
 
 ---
 
@@ -403,7 +404,7 @@ Server Component. El query param `?view=week|month|quarter|semester` decide la v
 **Panel de Resumen** (grid `lg:grid-cols-3`, Resumen ocupa 1/3 del ancho): anillo `ProgressRing(180)` + tarjetas Mejor Hábito / Por Mejorar + **Consolidados** (≥80%) y **En Riesgo** (<40%) con `CountCard` (count/total + barra de progreso). Grid responsive: celdas 26px en móvil / 36px en desktop.
 
 ### Finanzas — edición — `src/app/(app)/finanzas/page.tsx`
-Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono) y proyectos, todos editables (`FinanceModals`, `AddProjectButton`, `RemoveProjectButton` con modal de confirmación, `ContributeButton`). El botón `SaveFinanceButton` guarda el cierre del mes.
+Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono, marcables como pagado vía `FixedExpenseItem`) y proyectos, todos editables (`FinanceModals`, `AddProjectButton`, `RemoveProjectButton` con modal de confirmación, `ContributeButton`). Arriba de la sección de gastos fijos hay un tip informativo verde que explica la interacción de doble clic/tap. El botón `SaveFinanceButton` guarda el cierre del mes.
 **Cálculo del balance:** `availableBalance` descuenta el ahorro mostrado (guardado o sugerido 20%), los gastos fijos y lo asignado a proyectos activos. Es la vista donde el usuario *configura* sus finanzas.
 
 ### Finanzas del Mes — `src/app/(app)/finanzas/mes/page.tsx`

@@ -29,7 +29,7 @@ Todos los modelos de dominio se aíslan por `userId` (multi-tenancy).
 - **Habit**: `id, userId, name, icon (default "check_circle"), createdAt`. Tiene muchos `HabitLog`.
 - **HabitLog**: `id, habitId, date (String "YYYY-MM-DD"), completed (Boolean), createdAt`. **Unique(`habitId`, `date`)**: un registro por hábito por día. La fecha es un *day key* string para evitar problemas de zona horaria.
 - **FinancialSummary**: `id, userId (unique), monthlyIncome (Decimal), monthlySavings (Decimal), currency (default "USD")`. Uno por usuario.
-- **FixedExpense**: `id, userId, category, amount (Decimal), icon (default "receipt_long")`. El campo `icon` permite etiquetar el gasto (Material Symbols).
+- **FixedExpense**: `id, userId, category, amount (Decimal), icon (default "receipt_long"), order (Int), paidThisMonth (Boolean, default false)`. El campo `icon` permite etiquetar el gasto (Material Symbols). `paidThisMonth` marca si el usuario ya pagó ese gasto en el mes actual (toggle con doble clic/tap).
 - **ProjectGoal**: `id, userId, name, targetAmount (Decimal), allocatedAmount (Decimal), monthlyContribution (Decimal), completedAt (DateTime?), tag (default "General"), createdAt`. `completedAt != null` ⇒ proyecto cumplido (deja de descontar del balance).
 - **MonthlyFinance**: snapshot del cierre mensual. `id, userId, month ("YYYY-MM"), monthLabel ("Agosto 2026"), monthlyIncome, monthlySavings, totalFixedExpenses, availableBalance (Decimals), currency, expensesByCategory (Text JSON: `[{category, amount, percent}]`), projectsSnapshot (Text JSON: `[{name, tag, targetAmount, allocatedAmount, progress}]`), createdAt, updatedAt`. **Unique(`userId`, `month`)** → upsert por mes.
 
@@ -69,7 +69,8 @@ src/app/
    ├─ habits.ts                     # toggleHabitLog, createHabit, deleteHabit
    ├─ finance.ts                    # createProject, contributeToProject, updateProjectAllocation,
    │                                #   deleteProject, createExpense, deleteExpense,
-   │                                #   setMonthlyIncome, setMonthlySavings, saveMonthlyFinance
+   │                                #   setMonthlyIncome, setMonthlySavings, saveMonthlyFinance,
+   │                                #   toggleExpensePaid, reorderExpenses
    ├─ settings.ts                   # updateProfile, setCurrency, purgeAccountData
    └─ auth.ts                       # registerUser
 ```
@@ -138,6 +139,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 - **MonthlyTracker** (`habitos/`): solo lectura, auto-selecciona la semana que contiene hoy (`weeks.findIndex`), usa dayKey como `key` de React. Leyenda Completado/Pendiente/Fuera del mes + "Solo lectura".
 - **PeriodTracker** (en `habitos/page.tsx`): vistas **trimestral/semestral**. Solo lectura; muestra el progreso **mes a mes** (barra + % por mes de `periodMonths`), con color por nivel (≥80% primary, 40–79% tertiary, <40% error). Leyenda Consolidado/En progreso/En riesgo.
 - **FinanceModals** (`finanzas/`): `AddExpenseButton` (categoría + monto + **selector de 16 iconos**), `SetIncomeButton`, `SetSavingsButton`.
+- **FixedExpenseItem** (`finanzas/`): client component con doble clic (desktop) y doble tap (móvil, timeout 300ms) para toggle `paidThisMonth`. Mutación optimista → `toggleExpensePaid`. Visual: fondo verde + icono `check_circle` filled + line-through + badge `verified` cuando pagado; fondo normal + icono del gasto cuando no pagado.
 - **AddProjectButton / RemoveProjectButton / ContributeButton** (`finanzas/`): crear proyecto; quitar con **modal de confirmación** (check verde / X roja); abonar mensual.
 - **SaveFinanceButton** (`finanzas/`): guarda el cierre (`saveMonthlyFinance`) y navega a `/finanzas/mes`.
 - **Modal, Icon, ProgressRing, ProjectModal, Providers, Skeleton** (`comun/`): primitivos. `Modal` usa React Portal (obligatorio por `backdrop-filter` de `.glass-panel`).
@@ -146,7 +148,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 
 - **Dashboard (`/`)**: 4 KPIs (tasa global semanal, balance disponible, ahorro protegido, fondo de proyectos), "Hábitos de Hoy" (toggle instantáneo) y gráfico "Distribución Financiera" con 5 barras: Ingresos, Fijos, Ahorro, Proyectos, Disponible.
 - **Hábitos (`/habitos?view=week|month|quarter|semester`)**: 4 periodos. **Semanal** = editable (marcar días). **Mensual** = solo lectura (refleja lo marcado en semanal, auto-abre la semana actual, muestra las semanas reales del mes). **Trimestral / Semestral** = solo lectura, progreso mes a mes (`PeriodTracker`). Panel de Resumen (más ancho, grid `lg:grid-cols-3`): anillo de tasa global + tarjetas Mejor Hábito, Por Mejorar, y KPIs **Consolidados** (≥80%) y **En Riesgo** (<40%) con conteo `x/total`. Crear hábito disponible en todas las vistas.
-- **Finanzas — edición (`/finanzas`)**: ingreso, ahorro, gastos fijos (con ícono) y proyectos, todos editables. Balance disponible (rojo si negativo). Botón "Guardar Finanza".
+- **Finanzas — edición (`/finanzas`)**: ingreso, ahorro, gastos fijos (con ícono, marcables como "pagado" con doble clic/tap → fondo verde) y proyectos, todos editables. Tip informativo arriba de la sección de gastos fijos. Balance disponible (rojo si negativo). Botón "Guardar Finanza".
 - **Finanzas del Mes (`/finanzas/mes`)**: cierre guardado. KPIs (Ingreso, Gasto Fijo, Ahorro, Balance), "Metas Activas" (barras de progreso desde `projectsSnapshot`) y "Categorías de Gastos" (anillo + tarjetas desde `expensesByCategory`). Si no hay snapshot **o** el usuario ya no tiene datos actuales → `redirect("/finanzas")`. Botón "Editar Finanza" → `/finanzas`.
 
 ## Variables de entorno

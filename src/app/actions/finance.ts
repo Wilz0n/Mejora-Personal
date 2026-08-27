@@ -334,6 +334,25 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Toggle del estado "pagado este mes" de un gasto fijo (doble clic/tap). */
+export async function toggleExpensePaid(expenseId: string): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const expense = await prisma.fixedExpense.findFirst({
+    where: { id: expenseId, userId },
+    select: { paidThisMonth: true },
+  });
+  if (!expense) return { ok: false, error: "Gasto no encontrado" };
+
+  await prisma.fixedExpense.updateMany({
+    where: { id: expenseId, userId },
+    data: { paidThisMonth: !expense.paidThisMonth },
+  });
+
+  revalidateFinance();
+  return { ok: true };
+}
+
 /** Reordena los gastos fijos del usuario. Recibe un array de IDs en el nuevo orden. */
 export async function reorderExpenses(orderedIds: string[]): Promise<ActionResult> {
   const userId = await getUserId();
