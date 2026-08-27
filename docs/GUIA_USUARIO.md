@@ -86,6 +86,8 @@ En Vercel, en **Environment Variables**, agrega estas **tres** variables (botón
 
 > ⚠️ **No agregues `NEXTAUTH_SECRET`** en este modo; no se usa. (Sólo haría falta si quisieras activar inicio de sesión con cuentas, que no es tu caso.)
 
+> 💡 **¿Quieres activar el login (registro con email y contraseña)?** Es posible, pero necesitas configurar variables adicionales. Consulta la **[Guía de Despliegue (DEPLOYMENT.md)](../DEPLOYMENT.md)** → sección **B.4** donde se explica paso a paso cómo hacerlo.
+
 Ahora sí, haz clic en **Deploy** y espera a que termine (verás el estado **Ready** en verde).
 
 ---

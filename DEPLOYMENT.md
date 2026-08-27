@@ -138,18 +138,35 @@ NEXT_PUBLIC_SINGLE_USER_MODE="true"
 ```bash
 DATABASE_URL="postgresql://usuario:password@host/basedatos?sslmode=require"
 
-NEXTAUTH_SECRET="pega-aqui-un-secreto-aleatorio-largo"
+NEXTAUTH_SECRET="pega-aqui-el-secreto-que-generaste"
 NEXTAUTH_URL="http://localhost:3000"
 
 SINGLE_USER_MODE="false"
 NEXT_PUBLIC_SINGLE_USER_MODE="false"
 ```
 
-> 🔐 Para generar `NEXTAUTH_SECRET` ejecuta:
+> ---
+> ⚠️ **IMPORTANTE — Generar `NEXTAUTH_SECRET` (obligatorio para modo con login)**
+>
+> `NEXTAUTH_SECRET` es una clave secreta que la app usa para firmar las sesiones de los usuarios. **Sin ella, el build falla y la app no arranca.** No tiene relación con la base de datos — es independiente de Neon.
+>
+> **Cómo generarlo:**
+>
+> Abre tu terminal y ejecuta:
 > ```bash
 > openssl rand -base64 32
 > ```
-> (En Windows sin `openssl`, usa cualquier cadena larga y aleatoria.)
+>
+> Te dará algo como: `K7x3pQ9mZ2bN8vF1...` — copia ese valor completo y pégalo como valor de `NEXTAUTH_SECRET`.
+>
+> **¿No tienes `openssl`?** (Windows sin Git Bash): usa cualquier cadena larga y aleatoria de al menos 32 caracteres. También puedes generar uno online en https://generate-secret.vercel.app/32
+>
+> **Notas:**
+> - Este secreto **no expira**. Úsalo indefinidamente.
+> - Si lo cambias, todos los usuarios tendrán que iniciar sesión de nuevo.
+> - **Guárdalo en un lugar seguro** — si lo pierdes, genera uno nuevo y redespliega.
+> - En **desarrollo local**, el script `npm run setup` lo genera automáticamente por ti.
+> ---
 
 > 📌 La `DATABASE_URL` es la que copiaste de Neon en el **Paso 0**. Puedes quitarle el `&channel_binding=require` del final para evitar problemas con Prisma.
 
@@ -238,8 +255,8 @@ En la pantalla de importación (o luego en **Project → Settings → Environmen
 | `DATABASE_URL` | La URL **pooled** de Neon del paso 0 (termina en `?sslmode=require`) | Siempre |
 | `SINGLE_USER_MODE` | `true` | Si quieres uso personal sin login |
 | `NEXT_PUBLIC_SINGLE_USER_MODE` | `true` | Igual que la anterior |
-| `NEXTAUTH_SECRET` | Cadena aleatoria (`openssl rand -base64 32`) | **Sólo** si usas login |
-| `NEXTAUTH_URL` | La URL de tu app (ej. `https://tuapp.vercel.app`) | **Sólo** si usas login |
+| `NEXTAUTH_SECRET` | Cadena aleatoria (ver abajo cómo generarla) | ⚠️ **Obligatoria** si usas login |
+| `NEXTAUTH_URL` | La URL de tu app (ej. `https://tuapp.vercel.app`) | ⚠️ **Obligatoria** si usas login |
 
 > Marca cada variable para los entornos **Production, Preview y Development** (o "All Environments").
 
@@ -250,6 +267,26 @@ En la pantalla de importación (o luego en **Project → Settings → Environmen
 > NEXT_PUBLIC_SINGLE_USER_MODE = true
 > ```
 > Con `SINGLE_USER_MODE=true` la app **omite NextAuth**, así que **NO necesitas** `NEXTAUTH_SECRET` ni `NEXTAUTH_URL`.
+
+> ---
+> ⚠️ **¿Vas a usar login? Lee esto primero:**
+>
+> Si pusiste `SINGLE_USER_MODE=false`, la app activa el sistema de registro/login y **necesitas obligatoriamente** agregar `NEXTAUTH_SECRET`. Sin este valor, **el deploy fallará** con el error:
+>
+> ```
+> Error: NEXTAUTH_SECRET no está definido. Es obligatorio en producción con login.
+> ```
+>
+> **Cómo obtener tu `NEXTAUTH_SECRET`:**
+> 1. Abre una terminal en tu computadora.
+> 2. Ejecuta: `openssl rand -base64 32`
+> 3. Copia el resultado (ej: `K7x3pQ9mZ2bN8vF1wR5...`).
+> 4. En Vercel → Environment Variables → agrega `NEXTAUTH_SECRET` con ese valor. Tipo: **Secret**.
+>
+> **¿Qué es esto?** Es una "llave" que la app usa para proteger las sesiones de los usuarios. No tiene relación con la base de datos de Neon — son cosas separadas.
+>
+> **¿No tienes `openssl`?** Genera uno aquí: https://generate-secret.vercel.app/32
+> ---
 
 > ⚠️ **Error común:** si ves en los logs `[next-auth][error][NO_SECRET] Please define a secret in production` (error 500 al abrir la app), significa que la app está intentando usar login pero falta el secret. La causa casi siempre es que **falta `SINGLE_USER_MODE=true`**. Agrégala (junto con `NEXT_PUBLIC_SINGLE_USER_MODE=true`) y vuelve a desplegar.
 
@@ -290,6 +327,7 @@ Abre la URL que te dio Vercel (ej. `https://tuapp.vercel.app`). Con el modo usua
 | Problema | Causa probable | Solución |
 |----------|----------------|----------|
 | `Environment variable not found: DATABASE_URL` | Falta la variable en Vercel | Agrégala en **Settings → Environment Variables** y vuelve a desplegar |
+| `NEXTAUTH_SECRET no está definido` (falla el build) | Tienes `SINGLE_USER_MODE=false` pero no agregaste el secret | Genera uno con `openssl rand -base64 32`, agrégalo como `NEXTAUTH_SECRET` en Vercel y redespliega. Ver [sección B.4](#b4--configurar-variables-de-entorno-en-vercel) |
 | Las páginas cargan pero no guardan datos | El deploy no pudo crear las tablas (¿faltaba `DATABASE_URL` al desplegar?) | Verifica que `DATABASE_URL` esté en Vercel y vuelve a desplegar (**Deployments → Redeploy**); el script `deploy.mjs` crea las tablas solo |
 | Me pide login y no quiero | Modo usuario único desactivado | Pon `SINGLE_USER_MODE=true` y `NEXT_PUBLIC_SINGLE_USER_MODE=true` y redepliega |
 | Error de conexión SSL a la BD | Falta `sslmode=require` | Añádelo al final de la `DATABASE_URL` |
