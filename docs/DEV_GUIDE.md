@@ -1,4 +1,4 @@
-# 🛠️ Guía para Desarrolladores (Junior) — LifeTracker
+# 🛠️ Guía para Desarrolladores — LifeTracker
 
 Bienvenido/a al equipo. Esta guía te deja listo/a para **trabajar en el proyecto en tu computadora** sin miedo a romper producción. Está escrita para perfiles **junior**, así que explica el *por qué* de cada cosa, no sólo el *cómo*.
 
