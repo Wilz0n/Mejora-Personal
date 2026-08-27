@@ -411,6 +411,8 @@ Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono, marcables c
 Server Component `force-dynamic`. Lee el snapshot guardado (`getMonthlyFinance`) **y** los datos actuales (`getFinanceData`). Si no hay snapshot **o** el usuario ya no tiene datos actuales (ingreso 0, sin gastos, sin proyectos) → `redirect("/finanzas")`.
 **Por qué la doble verificación:** evita mostrar un cierre viejo después de que el usuario purga o borra sus datos. Renderiza KPIs, "Metas Activas" (desde `projectsSnapshot`) y "Categorías de Gastos" (anillo + tarjetas desde `expensesByCategory`, con texto responsive `min(200px, 60vw)` para que no se desborde).
 
+**Indicador de pagado en Categorías de Gastos:** las tarjetas de categorías cruzan `finance.expensesByCategory` (snapshot JSON) con `current.fixedExpenses` (datos live de `getFinanceData`) para obtener el estado `paidThisMonth` de cada gasto. El cruce se hace por nombre de categoría (case-insensitive). Cuando `isPaid === true`, la tarjeta muestra: borde/fondo verde (`bg-green-500/10`, `border-green-500/40`), barra lateral `bg-green-500`, texto del nombre en `text-green-400`, monto en `text-green-300 line-through opacity-80`, porcentaje en `text-green-400`, e ícono `check_circle` filled verde. **No modifica el schema del snapshot** (`MonthlyFinance.expensesByCategory` sigue siendo `[{category, amount, percent}]`); usa los datos live para que se refleje en tiempo real sin necesidad de re-guardar la finanza.
+
 ### Flujo de navegación de Finanzas
 - El link "Finanzas" del Sidebar/Topbar apunta a **`/finanzas/mes`**.
 - "Editar Finanza" → `/finanzas`. "Guardar Finanza" → `saveMonthlyFinance` + navega a `/finanzas/mes`.
