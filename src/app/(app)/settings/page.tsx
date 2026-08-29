@@ -2,6 +2,7 @@ import { getUserId } from "@/lib/session";
 import { getUserProfile, getFinanceData } from "@/lib/data";
 import { Icon } from "@/components/comun/Icon";
 import { EditProfileButton } from "@/components/settings/EditProfileButton";
+import { LogoutButton } from "@/components/settings/LogoutButton";
 import { CurrencySelect } from "@/components/settings/CurrencySelect";
 import { TimezoneSelect } from "@/components/settings/TimezoneSelect";
 import { PurgeDataButton } from "@/components/settings/PurgeDataButton";
@@ -59,6 +60,11 @@ export default async function SettingsPage() {
           </div>
           <div className="mt-auto pt-stack-sm">
             <EditProfileButton name={profile.name} image={profile.image} />
+          </div>
+
+          {/* Cerrar sesión (justo debajo de Editar Perfil) */}
+          <div className="pt-stack-sm mt-stack-sm border-t border-surface-variant">
+            <LogoutButton />
           </div>
         </section>
 

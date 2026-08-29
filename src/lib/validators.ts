@@ -89,3 +89,13 @@ export const setCurrencySchema = z.object({
   }),
 });
 export type SetCurrencyInput = z.infer<typeof setCurrencySchema>;
+
+export const confirmMonthlySavingsSchema = z.object({
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Formato de mes inválido (YYYY-MM)"),
+  confirmed: z.boolean(),
+});
+export type ConfirmMonthlySavingsInput = z.infer<
+  typeof confirmMonthlySavingsSchema
+>;

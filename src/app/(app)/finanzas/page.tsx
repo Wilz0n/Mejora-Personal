@@ -1,11 +1,17 @@
-import { getUserId } from "@/lib/session";
-import { getFinanceData, getSavingsHistory } from "@/lib/data";
+import { getUserId, getUserTimezone } from "@/lib/session";
+import {
+  getFinanceData,
+  getSavingsHistory,
+  getMonthlyConfirmStates,
+} from "@/lib/data";
 import {
   computeFinanceSummary,
   computeProjectsProgress,
   formatCurrency,
   suggestedSavings,
+  pendingSavingsConfirmation,
 } from "@/lib/finance-logic";
+import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/dates";
 import { AddProjectButton } from "@/components/finanzas/AddProjectButton";
 import { RemoveProjectButton } from "@/components/finanzas/RemoveProjectButton";
 import { ContributeButton } from "@/components/finanzas/ContributeButton";
@@ -18,6 +24,7 @@ import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
 import { SaveFinanceButton } from "@/components/finanzas/SaveFinanceButton";
 import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
 import { FixedExpenseItem } from "@/components/finanzas/FixedExpenseItem";
+import { SavingsConfirmationModal } from "@/components/finanzas/SavingsConfirmationModal";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -34,13 +41,23 @@ function expenseIcon(category: string): string {
 
 export default async function FinancePage() {
   const userId = await getUserId();
-  const [finance, savingsHistory] = await Promise.all([
+  const timezone = await getUserTimezone(userId);
+  const [finance, savingsHistory, confirmStates] = await Promise.all([
     getFinanceData(userId),
     getSavingsHistory(userId),
+    getMonthlyConfirmStates(userId),
   ]);
   const summary = computeFinanceSummary(finance);
   const projects = computeProjectsProgress(finance.projects);
   const currency = finance.currency;
+
+  // Detecta si hay un mes cuyo ahorro está pendiente de confirmar (ventana de
+  // cierre de mes / inicio del mes siguiente). Timezone-aware.
+  const now = nowInTimezone(timezone);
+  const pendingMonth = pendingSavingsConfirmation(confirmStates, now);
+  const pendingItem = pendingMonth
+    ? savingsHistory.history.find((h) => h.month === pendingMonth)
+    : null;
 
   // Ahorro mensual: el valor guardado por el usuario; si aún no definió uno,
   // se muestra (y descuenta) la sugerencia del 20% del ingreso como referencia.
@@ -76,6 +93,21 @@ export default async function FinancePage() {
 
   return (
     <>
+      {/* Modal de confirmación de ahorro mensual (cierre de mes) */}
+      {pendingMonth && (
+        <SavingsConfirmationModal
+          month={pendingMonth}
+          monthLabel={
+            pendingItem?.monthLabel ?? monthLabelOf(now, timezone)
+          }
+          savingsAmount={
+            pendingItem
+              ? formatCurrency(pendingItem.savings, { currency })
+              : undefined
+          }
+        />
+      )}
+
       {/* Header */}
       <section className="mb-stack-lg flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
