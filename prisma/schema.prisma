@@ -143,6 +143,9 @@ model MonthlyFinance {
   currency            String   @default("USD")
   expensesByCategory  String   @db.Text // JSON: [{category, amount, percent}]
   projectsSnapshot    String   @db.Text // JSON: [{name, tag, targetAmount, allocatedAmount, progress}]
+  // Confirmación del ahorro del mes: null = aún no respondido, true = sí ahorró,
+  // false = no ahorró (el ahorro efectivo del mes cuenta como 0 en el acumulado).
+  savingsConfirmed    Boolean? // null por defecto (pendiente de responder)
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

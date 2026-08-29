@@ -332,6 +332,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 - **Moneda por defecto (USD/PEN):** `src/components/settings/CurrencySelect.tsx` (acción `setCurrency`). Campo BD: `FinancialSummary.currency`. Constantes/formato: `SUPPORTED_CURRENCIES` y `formatCurrency` en `finance-logic.ts`.
 - **Exportar datos (JSON/CSV):** endpoint `src/app/api/export/route.ts` (usa `getUserExportData`).
 - **Purgar datos de cuenta:** `src/components/settings/PurgeDataButton.tsx` (acción `purgeAccountData`, **destructiva**, con confirmación por palabra).
+- **Cerrar sesión:** `src/components/settings/LogoutButton.tsx` — client component debajo de "Editar Perfil" en la sección Identidad. En **multi-usuario** renderiza un botón de peligro (borde/texto rojo, ícono `logout`) que llama `signOut({ callbackUrl: "/login" })` de `next-auth/react`. En **modo usuario único** (`isSingleUserModeClient()`) oculta el botón y muestra el indicador pasivo "Modo Usuario Único activo" (coherente con el Sidebar). Importa `single-user-client.ts` (no `single-user.ts`).
 - Acciones de settings: `src/app/actions/settings.ts`.
 
 **Automatización de BD y despliegue** (ver también `DEPLOYMENT.md`)
@@ -381,7 +382,21 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 - **Gastos fijos:** el catálogo está en `EXPENSE_ICONS` dentro de `src/components/finanzas/FinanceModals.tsx` (16 iconos). Se guarda en `FixedExpense.icon` (default `receipt_long`). La página `/finanzas` muestra el ícono guardado, con fallback a la heurística `expenseIcon(category)` (adivina por el nombre) para gastos antiguos sin ícono explícito.
 - **Nombres válidos:** catálogo en https://fonts.google.com/icons (estilo *Outlined*).
 
-> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push`. Creará la tabla `MonthlyFinance`, el campo `icon` en `FixedExpense` y el campo `paidThisMonth` en `FixedExpense` sin borrar datos existentes. En Vercel, `scripts/deploy.mjs` lo hace automáticamente durante el despliegue.
+> 🗄️ **Nota:** Para sincronizar estos cambios con tu BD de desarrollo, corre `npm run db:push`. Creará la tabla `MonthlyFinance`, el campo `icon` en `FixedExpense`, el campo `paidThisMonth` en `FixedExpense` y el campo `savingsConfirmed` (nullable) en `MonthlyFinance` sin borrar datos existentes. En Vercel, `scripts/deploy.mjs` lo hace automáticamente durante el despliegue.
+
+### Mejoras recientes (tercera iteración)
+
+**Finanzas — Confirmación de Ahorro Mensual**
+- **Modelo BD:** campo `savingsConfirmed Boolean?` en `MonthlyFinance` (`prisma/schema.prisma`). `null`=pendiente, `true`=sí ahorró, `false`=no ahorró. Aditivo y nullable → `npm run db:push` no borra datos.
+- **Lógica pura:** `monthKeyOf()`, `previousMonthKey()`, `pendingSavingsConfirmation(records, now)` y constantes `SAVINGS_CONFIRM_WINDOW_DAYS` (3) / `SAVINGS_CONFIRM_GRACE_DAYS` (7) en `src/lib/finance-logic.ts`. `pendingSavingsConfirmation` es **timezone-aware** (recibe `now`) y testeable: prioriza el mes anterior pendiente (primeros 7 días del mes), si no el mes en curso pendiente (últimos 3 días).
+- **Validación:** `confirmMonthlySavingsSchema` (`{month "YYYY-MM", confirmed bool}`) en `src/lib/validators.ts`.
+- **Server Action:** `confirmMonthlySavings({month, confirmed})` en `src/app/actions/finance.ts` — `getUserId()` → Zod → si existe el cierre lo actualiza, si no lo crea con un snapshot mínimo → `revalidatePath("/", "/finanzas", "/finanzas/mes")`. Funciona igual en multi-usuario y SINGLE_USER_MODE.
+- **Data:** `getSavingsHistory` ahora expone `savingsConfirmed` por mes y el `totalAccumulated` **descuenta** los meses con `savingsConfirmed === false` (cuentan como 0). `getMonthlyFinance` devuelve `savingsConfirmed`. Nuevo `getMonthlyConfirmStates(userId)` para la detección.
+- **Componente:** `src/components/finanzas/SavingsConfirmationModal.tsx` — client, usa `Modal` (portal), abre automático, mensaje "¿Pudiste realizar el ahorro? :D", botón ✓ (`check_circle` verde) / ✕ (`cancel` rojo), `useTransition` + `router.refresh()`.
+- **Montaje:** `src/app/(app)/finanzas/page.tsx` obtiene la timezone (`getUserTimezone`) y los estados (`getMonthlyConfirmStates`), calcula `pendingSavingsConfirmation(now)` y renderiza el modal con el `monthLabel` y el ahorro del mes pendiente.
+
+**Ajustes — Botón de Cerrar Sesión**
+- **Componente:** `src/components/settings/LogoutButton.tsx` (ver detalle en la sección Ajustes/Perfil arriba). Montado en `src/app/(app)/settings/page.tsx` debajo de `EditProfileButton`. Reutiliza el patrón de logout del `Sidebar` (`signOut` + gating por `isSingleUserModeClient()`).
 
 ---
 
@@ -404,7 +419,7 @@ Server Component. El query param `?view=week|month|quarter|semester` decide la v
 **Panel de Resumen** (grid `lg:grid-cols-3`, Resumen ocupa 1/3 del ancho): anillo `ProgressRing(180)` + tarjetas Mejor Hábito / Por Mejorar + **Consolidados** (≥80%) y **En Riesgo** (<40%) con `CountCard` (count/total + barra de progreso). Grid responsive: celdas 26px en móvil / 36px en desktop.
 
 ### Finanzas — edición — `src/app/(app)/finanzas/page.tsx`
-Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono, marcables como pagado vía `FixedExpenseItem`) y proyectos, todos editables (`FinanceModals`, `AddProjectButton`, `RemoveProjectButton` con modal de confirmación, `ContributeButton`). Arriba de la sección de gastos fijos hay un tip informativo verde que explica la interacción de doble clic/tap. El botón `SaveFinanceButton` guarda el cierre del mes.
+Server Component. Muestra ingreso, ahorro, gastos fijos (con ícono, marcables como pagado vía `FixedExpenseItem`) y proyectos, todos editables (`FinanceModals`, `AddProjectButton`, `RemoveProjectButton` con modal de confirmación, `ContributeButton`). Arriba de la sección de gastos fijos hay un tip informativo verde que explica la interacción de doble clic/tap. El botón `SaveFinanceButton` guarda el cierre del mes. Al cierre del mes puede montar `SavingsConfirmationModal` si `pendingSavingsConfirmation(now)` detecta un mes con `savingsConfirmed === null`.
 **Cálculo del balance:** `availableBalance` descuenta el ahorro mostrado (guardado o sugerido 20%), los gastos fijos y lo asignado a proyectos activos. Es la vista donde el usuario *configura* sus finanzas.
 
 ### Finanzas del Mes — `src/app/(app)/finanzas/mes/page.tsx`
@@ -422,7 +437,7 @@ Server Component `force-dynamic`. Lee el snapshot guardado (`getMonthlyFinance`)
 Modelo `MonthlyFinance` (unique `userId` + `month`). Se guarda con `saveMonthlyFinance` (upsert), se lee con `getMonthlyFinance`, y se borra en `purgeAccountData`. Detalle de los campos y JSON en `docs/AI_CONTEXT.md`.
 
 ### Historial de ahorro — `src/components/finanzas/SavingsHistory.tsx`
-- **Data:** `getSavingsHistory(userId)` en `src/lib/data.ts` — lee `monthlySavings` y `updatedAt` de todos los `MonthlyFinance` del usuario, ordenados por mes ASC. Devuelve `{ history: [{month, monthLabel, savings, updatedAt}], totalAccumulated }`.
+- **Data:** `getSavingsHistory(userId)` en `src/lib/data.ts` — lee `monthlySavings`, `savingsConfirmed` y `updatedAt` de todos los `MonthlyFinance` del usuario, ordenados por mes ASC. Devuelve `{ history: [{month, monthLabel, savings, savingsConfirmed, updatedAt}], totalAccumulated }`. El `totalAccumulated` cuenta como **0** los meses con `savingsConfirmed === false`.
 - **Componente:** `SavingsHistory` — server component, recibe `data`, `currency`, `compact?`. Muestra:
   - Total acumulado (suma de todos los meses).
   - Mini-gráfico de barras proporcionales por mes (con tooltip hover).

@@ -127,6 +127,8 @@ export interface MonthlyFinanceData {
     allocatedAmount: number;
     progress: number;
   }[];
+  /** null = pendiente, true = ahorró, false = no ahorró. */
+  savingsConfirmed: boolean | null;
   updatedAt: string;
 }
 
@@ -168,6 +170,7 @@ export async function getMonthlyFinance(
     currency: record.currency,
     expensesByCategory: safeParse(record.expensesByCategory, []),
     projectsSnapshot: safeParse(record.projectsSnapshot, []),
+    savingsConfirmed: record.savingsConfirmed,
     updatedAt: record.updatedAt.toISOString(),
   };
 }
@@ -176,13 +179,19 @@ export interface SavingsHistoryItem {
   month: string;
   monthLabel: string;
   savings: number;
+  /** null = pendiente, true = ahorró, false = no ahorró (cuenta como 0). */
+  savingsConfirmed: boolean | null;
   updatedAt: string;
 }
 
 export interface SavingsHistoryData {
   /** Historial ordenado del más antiguo al más reciente. */
   history: SavingsHistoryItem[];
-  /** Suma total de todos los ahorros mensuales registrados (acumulado). */
+  /**
+   * Suma del ahorro efectivo de todos los meses registrados (acumulado).
+   * Los meses con `savingsConfirmed === false` cuentan como 0; los pendientes
+   * (null) y los confirmados (true) suman su cifra registrada.
+   */
   totalAccumulated: number;
 }
 
@@ -190,6 +199,9 @@ export interface SavingsHistoryData {
  * Obtiene el historial de ahorro mes a mes del usuario (de MonthlyFinance).
  * Devuelve los meses ordenados cronológicamente y el total acumulado.
  * Si no hay cierres guardados, devuelve historial vacío y total 0.
+ *
+ * El acumulado descuenta los meses en que el usuario confirmó que NO ahorró
+ * (`savingsConfirmed === false` → ahorro efectivo 0).
  */
 export async function getSavingsHistory(
   userId: string,
@@ -197,19 +209,43 @@ export async function getSavingsHistory(
   const records = await prisma.monthlyFinance.findMany({
     where: { userId },
     orderBy: { month: "asc" },
-    select: { month: true, monthLabel: true, monthlySavings: true, updatedAt: true },
+    select: {
+      month: true,
+      monthLabel: true,
+      monthlySavings: true,
+      savingsConfirmed: true,
+      updatedAt: true,
+    },
   });
 
   const history: SavingsHistoryItem[] = records.map((r) => ({
     month: r.month,
     monthLabel: r.monthLabel,
     savings: Number(r.monthlySavings),
+    savingsConfirmed: r.savingsConfirmed,
     updatedAt: r.updatedAt.toISOString(),
   }));
 
-  const totalAccumulated = history.reduce((acc, h) => acc + h.savings, 0);
+  const totalAccumulated = history.reduce(
+    (acc, h) => acc + (h.savingsConfirmed === false ? 0 : h.savings),
+    0,
+  );
 
   return { history, totalAccumulated };
+}
+
+/**
+ * Devuelve el estado de confirmación de ahorro por mes (para detectar si hay
+ * un mes pendiente de confirmar). Ordenado del más reciente al más antiguo.
+ */
+export async function getMonthlyConfirmStates(
+  userId: string,
+): Promise<{ month: string; savingsConfirmed: boolean | null }[]> {
+  return prisma.monthlyFinance.findMany({
+    where: { userId },
+    orderBy: { month: "desc" },
+    select: { month: true, savingsConfirmed: true },
+  });
 }
 
 /**

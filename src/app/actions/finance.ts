@@ -8,6 +8,7 @@ import {
   createExpenseSchema,
   setIncomeSchema,
   setSavingsSchema,
+  confirmMonthlySavingsSchema,
 } from "@/lib/validators";
 import {
   computeFinanceSummary,
@@ -379,6 +380,88 @@ export async function reorderExpenses(orderedIds: string[]): Promise<ActionResul
       })
     )
   );
+
+  revalidateFinance();
+  return { ok: true };
+}
+
+/**
+ * Registra si el usuario logró (o no) su ahorro del mes indicado.
+ *
+ * - `confirmed = true`  → `savingsConfirmed = true`. La cifra de ahorro del mes
+ *   se mantiene y sigue sumando al "Ahorro Acumulado".
+ * - `confirmed = false` → `savingsConfirmed = false`. El ahorro efectivo del mes
+ *   cuenta como 0 en el acumulado (ver `getSavingsHistory` en `data.ts`).
+ *
+ * Actualiza el registro MonthlyFinance del mes. Si aún no existe un cierre para
+ * ese mes, lo crea con los datos actuales del usuario antes de fijar la bandera.
+ * Funciona igual en modo multi-usuario y en SINGLE_USER_MODE (usa getUserId()).
+ */
+export async function confirmMonthlySavings(
+  input: unknown,
+): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const parsed = confirmMonthlySavingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Datos inválidos",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { month, confirmed } = parsed.data;
+
+  const existing = await prisma.monthlyFinance.findUnique({
+    where: { userId_month: { userId, month } },
+    select: { id: true },
+  });
+
+  if (existing) {
+    await prisma.monthlyFinance.update({
+      where: { userId_month: { userId, month } },
+      data: { savingsConfirmed: confirmed },
+    });
+  } else {
+    // No hay cierre guardado para ese mes: construye un snapshot mínimo con la
+    // configuración actual y fija la bandera. (Camino defensivo; normalmente el
+    // modal solo aparece cuando ya existe un cierre.)
+    const [summary, fixedExpensesRaw] = await Promise.all([
+      prisma.financialSummary.findUnique({ where: { userId } }),
+      prisma.fixedExpense.findMany({ where: { userId } }),
+    ]);
+
+    const monthlyIncome = summary ? Number(summary.monthlyIncome) : 0;
+    const monthlySavingsRaw = summary ? Number(summary.monthlySavings) : 0;
+    const currency = summary?.currency ?? "USD";
+    const fixedExpenses = fixedExpensesRaw.map((e) => ({
+      category: e.category,
+      amount: Number(e.amount),
+    }));
+    const totalFixedExpenses = fixedExpenses.reduce((a, e) => a + e.amount, 0);
+    const savings =
+      monthlySavingsRaw > 0 ? monthlySavingsRaw : suggestedSavings(monthlyIncome);
+    const availableBalance = monthlyIncome - savings - totalFixedExpenses;
+
+    await prisma.monthlyFinance.create({
+      data: {
+        userId,
+        month,
+        monthLabel: month,
+        monthlyIncome,
+        monthlySavings: savings,
+        totalFixedExpenses,
+        availableBalance,
+        currency,
+        expensesByCategory: JSON.stringify(
+          computeExpenseBreakdown(fixedExpenses),
+        ),
+        projectsSnapshot: JSON.stringify([]),
+        savingsConfirmed: confirmed,
+      },
+    });
+  }
 
   revalidateFinance();
   return { ok: true };

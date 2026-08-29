@@ -31,7 +31,7 @@ Todos los modelos de dominio se aíslan por `userId` (multi-tenancy).
 - **FinancialSummary**: `id, userId (unique), monthlyIncome (Decimal), monthlySavings (Decimal), currency (default "USD")`. Uno por usuario.
 - **FixedExpense**: `id, userId, category, amount (Decimal), icon (default "receipt_long"), order (Int), paidThisMonth (Boolean, default false)`. El campo `icon` permite etiquetar el gasto (Material Symbols). `paidThisMonth` marca si el usuario ya pagó ese gasto en el mes actual (toggle con doble clic/tap).
 - **ProjectGoal**: `id, userId, name, targetAmount (Decimal), allocatedAmount (Decimal), monthlyContribution (Decimal), completedAt (DateTime?), tag (default "General"), createdAt`. `completedAt != null` ⇒ proyecto cumplido (deja de descontar del balance).
-- **MonthlyFinance**: snapshot del cierre mensual. `id, userId, month ("YYYY-MM"), monthLabel ("Agosto 2026"), monthlyIncome, monthlySavings, totalFixedExpenses, availableBalance (Decimals), currency, expensesByCategory (Text JSON: `[{category, amount, percent}]`), projectsSnapshot (Text JSON: `[{name, tag, targetAmount, allocatedAmount, progress}]`), createdAt, updatedAt`. **Unique(`userId`, `month`)** → upsert por mes.
+- **MonthlyFinance**: snapshot del cierre mensual. `id, userId, month ("YYYY-MM"), monthLabel ("Agosto 2026"), monthlyIncome, monthlySavings, totalFixedExpenses, availableBalance (Decimals), currency, expensesByCategory (Text JSON: `[{category, amount, percent}]`), projectsSnapshot (Text JSON: `[{name, tag, targetAmount, allocatedAmount, progress}]`), savingsConfirmed (Boolean? — `null`=pendiente, `true`=ahorró, `false`=no ahorró), createdAt, updatedAt`. **Unique(`userId`, `month`)** → upsert por mes.
 
 > Los `Decimal` de Prisma se convierten a `number` en la capa de datos (`src/lib/data.ts`) antes de llegar a la UI. Los campos JSON de `MonthlyFinance` se serializan con `JSON.stringify` al guardar y se parsean con `JSON.parse` (con fallback seguro) al leer.
 
@@ -70,7 +70,7 @@ src/app/
    ├─ finance.ts                    # createProject, contributeToProject, updateProjectAllocation,
    │                                #   deleteProject, createExpense, deleteExpense,
    │                                #   setMonthlyIncome, setMonthlySavings, saveMonthlyFinance,
-   │                                #   toggleExpensePaid, reorderExpenses
+   │                                #   toggleExpensePaid, reorderExpenses, confirmMonthlySavings
    ├─ settings.ts                   # updateProfile, setCurrency, purgeAccountData
    └─ auth.ts                       # registerUser
 ```
@@ -98,15 +98,19 @@ src/app/
 - `computeExpenseBreakdown(fixedExpenses)`: `[{category, amount, percent}]` (% sobre total).
 - `computeProjectsSnapshot(projects)`: proyectos activos `[{name, tag, targetAmount, allocatedAmount, progress}]`.
 - `currentMonthKey()`: `"YYYY-MM"` actual.
+- `monthKeyOf(date)` / `previousMonthKey(date)`: clave de mes de una fecha / del mes anterior.
+- `pendingSavingsConfirmation(records, now)`: **función pura, timezone-aware** (recibe `now`). Devuelve la clave `"YYYY-MM"` cuyo ahorro está pendiente de confirmar, o `null`. Reglas: prioriza el **mes anterior** con `savingsConfirmed === null` dentro de los primeros `SAVINGS_CONFIRM_GRACE_DAYS` (7) días del mes; si no, el **mes en curso** con `savingsConfirmed === null` en los últimos `SAVINGS_CONFIRM_WINDOW_DAYS` (3) días.
 - `formatCurrency(value, {currency})`: `Intl.NumberFormat`. `SUPPORTED_CURRENCIES` = USD, PEN.
 
 ### Historial de Ahorro — `src/lib/data.ts` → `getSavingsHistory`
-- Lee todos los `MonthlyFinance` del usuario ordenados por mes y devuelve `{ history: [{month, monthLabel, savings, updatedAt}], totalAccumulated }`.
+- Lee todos los `MonthlyFinance` del usuario ordenados por mes y devuelve `{ history: [{month, monthLabel, savings, savingsConfirmed, updatedAt}], totalAccumulated }`.
+- **`totalAccumulated` respeta la confirmación:** los meses con `savingsConfirmed === false` cuentan como **0** en el acumulado; los pendientes (`null`) y confirmados (`true`) suman su cifra.
+- `getMonthlyConfirmStates(userId)` devuelve `[{month, savingsConfirmed}]` (desc) para detectar el mes pendiente de confirmar.
 - Unique `(userId, month)` garantiza un solo registro por mes (upsert). El usuario puede editar y re-guardar durante el mes; al terminar, queda fijo.
 - El componente `SavingsHistory` (`src/components/finanzas/SavingsHistory.tsx`) muestra: total acumulado, mini-gráfico de barras mes a mes, promedio mensual, fecha de última actualización, y **fecha límite de edición** (último día del mes actual + días restantes). Versiones `compact` (para /finanzas) y completa (para /finanzas/mes).
 
 ### Validación — `src/lib/validators.ts`
-Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`, `createExpenseSchema` (incluye `icon`), `setIncomeSchema`, `setSavingsSchema`, `setCurrencySchema`, `updateProfileSchema`, `registerSchema`. Se usan con `.safeParse()` en cada Server Action; errores → `fieldErrors`.
+Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`, `createExpenseSchema` (incluye `icon`), `setIncomeSchema`, `setSavingsSchema`, `setCurrencySchema`, `confirmMonthlySavingsSchema` (`{month "YYYY-MM", confirmed bool}`), `updateProfileSchema`, `registerSchema`. Se usan con `.safeParse()` en cada Server Action; errores → `fieldErrors`.
 
 ## Sistema de iconos (Material Symbols)
 
@@ -142,13 +146,15 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 - **FixedExpenseItem** (`finanzas/`): client component con doble clic (desktop) y doble tap (móvil, timeout 300ms) para toggle `paidThisMonth`. Mutación optimista → `toggleExpensePaid`. Visual: fondo verde + icono `check_circle` filled + line-through + badge `verified` cuando pagado; fondo normal + icono del gasto cuando no pagado.
 - **AddProjectButton / RemoveProjectButton / ContributeButton** (`finanzas/`): crear proyecto; quitar con **modal de confirmación** (check verde / X roja); abonar mensual.
 - **SaveFinanceButton** (`finanzas/`): guarda el cierre (`saveMonthlyFinance`) y navega a `/finanzas/mes`.
+- **SavingsConfirmationModal** (`finanzas/`): client. Modal (portal) que pregunta "¿Pudiste realizar el ahorro? :D" al cierre del mes. Botón ✓ (`check_circle` verde) → `confirmMonthlySavings({month, confirmed:true})`; botón ✕ (`cancel` rojo) → `confirmed:false`. Se monta en `/finanzas` solo cuando `pendingSavingsConfirmation` detecta un mes pendiente. Funciona igual en modo multi-usuario y único.
+- **LogoutButton** (`settings/`): client. Debajo de "Editar Perfil". En multi-usuario muestra un botón de peligro "Cerrar sesión" (`signOut({callbackUrl:"/login"})`); en modo usuario único (`isSingleUserModeClient()`) muestra el indicador pasivo "Modo Usuario Único activo" (coherente con el Sidebar).
 - **Modal, Icon, ProgressRing, ProjectModal, Providers, Skeleton** (`comun/`): primitivos. `Modal` usa React Portal (obligatorio por `backdrop-filter` de `.glass-panel`).
 
 ## Pantallas (comportamiento funcional)
 
 - **Dashboard (`/`)**: 4 KPIs (tasa global semanal, balance disponible, ahorro protegido, fondo de proyectos), "Hábitos de Hoy" (toggle instantáneo) y gráfico "Distribución Financiera" con 5 barras: Ingresos, Fijos, Ahorro, Proyectos, Disponible.
 - **Hábitos (`/habitos?view=week|month|quarter|semester`)**: 4 periodos. **Semanal** = editable (marcar días). **Mensual** = solo lectura (refleja lo marcado en semanal, auto-abre la semana actual, muestra las semanas reales del mes). **Trimestral / Semestral** = solo lectura, progreso mes a mes (`PeriodTracker`). Panel de Resumen (más ancho, grid `lg:grid-cols-3`): anillo de tasa global + tarjetas Mejor Hábito, Por Mejorar, y KPIs **Consolidados** (≥80%) y **En Riesgo** (<40%) con conteo `x/total`. Crear hábito disponible en todas las vistas.
-- **Finanzas — edición (`/finanzas`)**: ingreso, ahorro, gastos fijos (con ícono, marcables como "pagado" con doble clic/tap → fondo verde) y proyectos, todos editables. Tip informativo arriba de la sección de gastos fijos. Balance disponible (rojo si negativo). Botón "Guardar Finanza".
+- **Finanzas — edición (`/finanzas`)**: ingreso, ahorro, gastos fijos (con ícono, marcables como "pagado" con doble clic/tap → fondo verde) y proyectos, todos editables. Tip informativo arriba de la sección de gastos fijos. Balance disponible (rojo si negativo). Botón "Guardar Finanza". Al cierre del mes (o inicio del siguiente) puede aparecer el **modal de confirmación de ahorro** (`SavingsConfirmationModal`) si hay un mes con `savingsConfirmed === null`.
 - **Finanzas del Mes (`/finanzas/mes`)**: cierre guardado. KPIs (Ingreso, Gasto Fijo, Ahorro, Balance), "Metas Activas" (barras de progreso desde `projectsSnapshot`) y "Categorías de Gastos" (anillo + tarjetas desde `expensesByCategory`). Las tarjetas de categorías cruzan el snapshot con `current.fixedExpenses` (datos live) para mostrar el estado `paidThisMonth`: las categorías pagadas se resaltan con borde verde, barra lateral verde, texto verde con line-through, y un ícono `check_circle` filled verde (sincronizado en tiempo real con el toggle de `/finanzas`). Si no hay snapshot **o** el usuario ya no tiene datos actuales → `redirect("/finanzas")`. Botón "Editar Finanza" → `/finanzas`.
 
 ## Variables de entorno

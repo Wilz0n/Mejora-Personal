@@ -180,3 +180,83 @@ export function currentMonthKey(): string {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
+
+// --- Confirmación de Ahorro Mensual ---
+
+/** Clave "YYYY-MM" de una fecha dada. */
+export function monthKeyOf(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+/** Clave "YYYY-MM" del mes anterior a la fecha dada. */
+export function previousMonthKey(date: Date): string {
+  return monthKeyOf(new Date(date.getFullYear(), date.getMonth() - 1, 1));
+}
+
+/** Días que quedan en el mes de `date` (incluye el día actual). */
+function daysLeftInMonth(date: Date): number {
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return lastDay - date.getDate() + 1;
+}
+
+/** Día del mes de `date` (1-based). */
+function dayOfMonthOf(date: Date): number {
+  return date.getDate();
+}
+
+/**
+ * Cuántos días antes del fin de mes se abre la ventana de confirmación del
+ * mes en curso, y cuántos días del inicio del mes siguiente se sigue
+ * permitiendo confirmar el mes anterior.
+ */
+export const SAVINGS_CONFIRM_WINDOW_DAYS = 3;
+export const SAVINGS_CONFIRM_GRACE_DAYS = 7;
+
+export interface MonthlyConfirmState {
+  month: string;
+  savingsConfirmed: boolean | null;
+}
+
+/**
+ * Determina qué mes (si alguno) debe confirmar el usuario según la fecha
+ * actual y los registros MonthlyFinance existentes.
+ *
+ * Reglas:
+ *  - Ventana de cierre del mes actual: en los últimos `SAVINGS_CONFIRM_WINDOW_DAYS`
+ *    días del mes, si existe un cierre del mes actual con `savingsConfirmed === null`,
+ *    se solicita confirmar el mes actual.
+ *  - Inicio del mes siguiente (periodo de gracia `SAVINGS_CONFIRM_GRACE_DAYS`):
+ *    si el mes anterior tiene un cierre con `savingsConfirmed === null`,
+ *    se solicita confirmarlo (tiene prioridad, es un mes ya terminado).
+ *
+ * Función pura: recibe `now` explícito para ser testeable y timezone-aware.
+ * Devuelve la clave "YYYY-MM" a confirmar, o `null` si no hay nada pendiente.
+ */
+export function pendingSavingsConfirmation(
+  records: MonthlyConfirmState[],
+  now: Date,
+): string | null {
+  const byMonth = new Map(records.map((r) => [r.month, r]));
+
+  // 1) Prioridad: el mes anterior sin responder, dentro del periodo de gracia.
+  if (dayOfMonthOf(now) <= SAVINGS_CONFIRM_GRACE_DAYS) {
+    const prev = previousMonthKey(now);
+    const prevRecord = byMonth.get(prev);
+    if (prevRecord && prevRecord.savingsConfirmed === null) {
+      return prev;
+    }
+  }
+
+  // 2) Ventana de cierre del mes en curso.
+  if (daysLeftInMonth(now) <= SAVINGS_CONFIRM_WINDOW_DAYS) {
+    const cur = monthKeyOf(now);
+    const curRecord = byMonth.get(cur);
+    if (curRecord && curRecord.savingsConfirmed === null) {
+      return cur;
+    }
+  }
+
+  return null;
+}

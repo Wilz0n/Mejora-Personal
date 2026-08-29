@@ -122,6 +122,17 @@ Debajo de "Ingreso Mensual" verás la sección **"Ahorro Mensual"** (con el icon
 - Con el botón **"Editar ahorro"** puedes poner el monto que quieras. El modal incluye un atajo para "Usar sugerencia (20%)".
 - El ahorro **se resta automáticamente del Balance Disponible**.
 
+#### 🐷 Confirmar tu ahorro al final del mes
+
+Al **acercarse el fin de mes** (o al **inicio del mes siguiente**), la app te muestra un pequeño recordatorio para saber si de verdad pudiste ahorrar:
+
+> *"¿Pudiste realizar el ahorro? :D"*
+
+- ✅ **Sí (check verde):** tu ahorro de ese mes se **mantiene** y sigue sumando a tu **Ahorro Acumulado**.
+- ❌ **No (X roja):** ese mes cuenta como **0** en tu Ahorro Acumulado (no se infla con dinero que no ahorraste).
+
+Así tu historial de ahorro refleja la realidad. Solo se te pregunta **una vez por mes**; después de responder, el recordatorio no vuelve a aparecer para ese mes.
+
 ### Moneda 💱
 
 Tu moneda por defecto (**USD $** o **PEN S/**) se elige en **Ajustes → Moneda por Defecto** y se aplica a todos los montos de Finanzas.
@@ -195,6 +206,7 @@ Se abre desde **Ajustes** en el menú o con el **icono de perfil** (arriba a la 
 - **Identidad:** tu nombre, correo y foto de perfil. Con **"Editar Perfil"** puedes:
   - **Cambiar tu nombre** → aparece en el saludo del Dashboard ("Hola, tu nombre") y en toda la app.
   - **Subir una foto de perfil** desde tu equipo. La app la **optimiza automáticamente** (la achica y comprime) para que ocupe muy poco. Puedes usar **AVIF (recomendado, más ligero)**, PNG, WebP o JPG. Tu foto se verá en el icono de perfil (arriba a la derecha) y en esta sección.
+  - **Cerrar sesión:** justo debajo de "Editar Perfil" verás el botón **"Cerrar sesión"** (en rojo). Cierra tu sesión y te lleva a la pantalla de inicio de sesión. Si la app está en **Modo Usuario Único** (sin login), en su lugar verás el indicador *"Modo Usuario Único activo"* y no hay botón de cerrar sesión (no hace falta).
 - **Moneda por Defecto:** elige **USD ($)** o **PEN (S/)**. Se aplica a todo Finanzas.
 - **Gestión de Datos:**
   - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos).
@@ -230,6 +242,19 @@ Sí, porque la tasa es días completados sobre días del periodo. Al avanzar el 
 ## ✨ Novedades recientes
 
 Estas son las mejoras más recientes de LifeTracker:
+
+### 🐷 Confirmación de ahorro al cierre del mes
+
+Al final de cada mes (o al empezar el siguiente), la app te pregunta **"¿Pudiste realizar el ahorro? :D"**:
+
+- ✅ **Sí:** tu ahorro del mes se mantiene y suma a tu **Ahorro Acumulado**.
+- ❌ **No:** ese mes cuenta como **$0** en el acumulado, para que tu historial sea real.
+
+Solo se pregunta una vez por mes. Funciona igual con o sin login (Modo Usuario Único).
+
+### 🚪 Cerrar sesión desde Ajustes
+
+Ahora puedes **cerrar sesión** directamente desde **Ajustes → Identidad**, con un botón rojo justo debajo de "Editar Perfil". En Modo Usuario Único aparece un indicador *"Modo Usuario Único activo"* en lugar del botón.
 
 ### ✅ Marcar gastos fijos como pagados
 
