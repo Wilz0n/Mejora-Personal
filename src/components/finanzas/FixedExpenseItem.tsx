@@ -25,11 +25,33 @@ export function FixedExpenseItem({
 }: FixedExpenseItemProps) {
   const [paid, setPaid] = useState(paidThisMonth);
   const [isPending, startTransition] = useTransition();
+  // Feedback visual: indica que el primer tap fue registrado y espera el segundo
+  const [awaitingSecondTap, setAwaitingSecondTap] = useState(false);
 
-  // Para detectar doble tap en móvil
-  const lastTapRef = useRef(0);
+  // Estado del primer tap para detección de doble tap en móvil
+  const lastTapRef = useRef<{ time: number; x: number; y: number }>({
+    time: 0,
+    x: 0,
+    y: 0,
+  });
+  // Posición inicial del toque actual (para detectar scroll/arrastre)
+  const touchStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  // Evita que el onClick sintético post-touch dispare de más
+  const touchHandledRef = useRef(false);
+  // Timer para limpiar el estado "esperando segundo tap"
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearResetTimer = useCallback(() => {
+    if (resetTimerRef.current) {
+      clearTimeout(resetTimerRef.current);
+      resetTimerRef.current = null;
+    }
+  }, []);
 
   const handleToggle = useCallback(() => {
+    clearResetTimer();
+    setAwaitingSecondTap(false);
+    lastTapRef.current = { time: 0, x: 0, y: 0 };
     // Mutación optimista
     setPaid((prev) => !prev);
     startTransition(async () => {
@@ -39,38 +61,90 @@ export function FixedExpenseItem({
         setPaid((prev) => !prev);
       }
     });
-  }, [id]);
+  }, [id, clearResetTimer]);
 
   const handleDoubleClick = useCallback(() => {
+    // Solo desktop: en móvil el toggle lo maneja el flujo táctil.
+    if (touchHandledRef.current) return;
     handleToggle();
   }, [handleToggle]);
+
+  // Guardamos la posición donde empieza el toque
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+  }, []);
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       const now = Date.now();
-      const DOUBLE_TAP_DELAY = 300; // ms
+      const DOUBLE_TAP_DELAY = 450; // ms — ventana más holgada para móvil
+      const MOVE_TOLERANCE = 24; // px — distancia máx. permitida entre taps
 
-      if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      const t = e.changedTouches[0];
+      const x = t.clientX;
+      const y = t.clientY;
+
+      // Si el dedo se movió mucho desde el touchstart, fue scroll/arrastre: ignorar
+      const dragDist = Math.hypot(
+        x - touchStartRef.current.x,
+        y - touchStartRef.current.y,
+      );
+      if (dragDist > MOVE_TOLERANCE) {
+        clearResetTimer();
+        setAwaitingSecondTap(false);
+        lastTapRef.current = { time: 0, x: 0, y: 0 };
+        return;
+      }
+
+      const prev = lastTapRef.current;
+      const withinTime = now - prev.time < DOUBLE_TAP_DELAY;
+      const withinDist =
+        Math.hypot(x - prev.x, y - prev.y) < MOVE_TOLERANCE * 2;
+
+      if (prev.time > 0 && withinTime && withinDist) {
+        // Doble tap válido
         e.preventDefault();
+        touchHandledRef.current = true;
+        // Reset del flag tras el ciclo de eventos sintéticos
+        setTimeout(() => {
+          touchHandledRef.current = false;
+        }, 700);
         handleToggle();
-        lastTapRef.current = 0;
       } else {
-        lastTapRef.current = now;
+        // Primer tap: registrar posición + feedback visual
+        lastTapRef.current = { time: now, x, y };
+        setAwaitingSecondTap(true);
+        clearResetTimer();
+        resetTimerRef.current = setTimeout(() => {
+          setAwaitingSecondTap(false);
+          lastTapRef.current = { time: 0, x: 0, y: 0 };
+        }, DOUBLE_TAP_DELAY);
       }
     },
-    [handleToggle],
+    [handleToggle, clearResetTimer],
   );
 
   return (
     <div
       onDoubleClick={handleDoubleClick}
+      onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      style={{ touchAction: "manipulation" }}
       className={`flex items-center justify-between p-3 rounded-lg border transition-all select-none cursor-pointer group ${
         paid
           ? "bg-green-500/15 border-green-500/40 hover:border-green-400/60"
-          : "bg-surface-container-low border-transparent hover:border-outline-variant"
+          : awaitingSecondTap
+            ? "bg-surface-container-low border-primary/60 ring-1 ring-primary/40"
+            : "bg-surface-container-low border-transparent hover:border-outline-variant"
       } ${isPending ? "opacity-70" : ""}`}
-      title={paid ? "Pagado ✓ — doble clic para desmarcar" : "Doble clic para marcar como pagado"}
+      title={
+        paid
+          ? "Pagado ✓ — doble toque/clic para desmarcar"
+          : awaitingSecondTap
+            ? "Toca otra vez para marcar como pagado"
+            : "Doble toque/clic para marcar como pagado"
+      }
     >
       <div className="flex items-center gap-3">
         <div
