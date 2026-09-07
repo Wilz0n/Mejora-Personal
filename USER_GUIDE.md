@@ -227,7 +227,13 @@ Se abre desde **Ajustes** en el menú o con el **icono de perfil** (arriba a la 
 - **Moneda por Defecto:** elige **USD ($)** o **PEN (S/)**. Se aplica a todo Finanzas.
 - **Gestión de Datos:**
   - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos).
+  - **Ver Análisis / Backup:** abre una página donde puedes **volver a subir** el archivo que exportaste para revisar tu progreso de los meses anteriores.
   - **Purgar Datos de Cuenta:** borra **de forma permanente** tus hábitos, gastos y proyectos. Pide confirmación escribiendo una palabra; **no se puede deshacer**.
+
+- **Al 7º mes de uso (archivar y reiniciar):** para mantener la app rápida, se conservan alrededor de **6 meses** de datos. Al llegar al **séptimo mes** verás un aviso (un popup en Hábitos y un mensaje en Ajustes). El flujo recomendado es:
+  1. **Exporta** tu progreso (JSON o CSV) desde Ajustes.
+  2. Pulsa **Reiniciar ciclo** (marca la casilla de que ya descargaste el archivo). Esto borra los datos actuales y **rehabilita todas las opciones**, empezando un ciclo nuevo — sin usar "Purgar Datos".
+  3. Cuando quieras, entra en **Ver Análisis / Backup** y sube ese archivo para revisar tus mejoras.
 
 ---
 

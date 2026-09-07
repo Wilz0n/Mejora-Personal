@@ -1,6 +1,6 @@
-import { Icon } from "@/components/comun/Icon";
-import { formatCurrency } from "@/lib/finance-logic";
-import type { SavingsHistoryData } from "@/lib/data";
+import { Icon } from "@/components/comun/ui/Icon";
+import { formatCurrency } from "@/lib/logic/finance-logic";
+import type { SavingsHistoryData } from "@/lib/db/data";
 
 interface SavingsHistoryProps {
   data: SavingsHistoryData;

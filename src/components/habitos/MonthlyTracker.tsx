@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { HabitCheckbox } from "@/components/habitos/HabitCheckbox";
-import { Icon } from "@/components/comun/Icon";
+import { Icon } from "@/components/comun/ui/Icon";
 
 export interface MonthlyHabit {
   id: string;

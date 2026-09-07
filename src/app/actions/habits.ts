@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import { getUserId } from "@/lib/session";
+import { prisma } from "@/lib/db/prisma";
+import { getUserId } from "@/lib/db/session";
 import {
   createHabitSchema,
   toggleHabitLogSchema,

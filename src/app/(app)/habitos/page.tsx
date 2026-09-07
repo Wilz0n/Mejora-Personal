@@ -1,27 +1,33 @@
 import Link from "next/link";
-import { getUserId, getUserTimezone } from "@/lib/session";
-import { getHabitsWithLogs } from "@/lib/data";
+import { getUserId, getUserTimezone, getUserTenureStart } from "@/lib/db/session";
+import { getHabitsWithLogs } from "@/lib/db/data";
 import {
   computeHabitRates,
   computeHabitKpis,
   periodDayKeys,
+  isPeriodUnlocked,
+  isArchiveDue,
   PERIOD_MONTHS,
+  PERIOD_MIN_MONTHS,
   type Period,
-} from "@/lib/habits-logic";
+} from "@/lib/logic/habits-logic";
 import {
   shortWeekdayLabel,
   todayKey,
   monthLabel,
   monthWeeks,
   periodMonths,
+  monthsSinceCreation,
   nowInTimezone,
-} from "@/lib/dates";
+} from "@/lib/logic/dates";
 import { HabitCheckbox } from "@/components/habitos/HabitCheckbox";
-import { AddHabitButton } from "@/components/habitos/AddHabitButton";
-import { RemoveHabitButton } from "@/components/habitos/RemoveHabitButton";
+import { AddHabitButton } from "@/components/habitos/botones/AddHabitButton";
+import { RemoveHabitButton } from "@/components/habitos/botones/RemoveHabitButton";
 import { MonthlyTracker } from "@/components/habitos/MonthlyTracker";
-import { ProgressRing } from "@/components/comun/ProgressRing";
-import { Icon } from "@/components/comun/Icon";
+import { LockedPeriodPanel } from "@/components/habitos/LockedPeriodPanel";
+import { ArchiveNoticeModal } from "@/components/habitos/ArchiveNoticeModal";
+import { ProgressRing } from "@/components/comun/ui/ProgressRing";
+import { Icon } from "@/components/comun/ui/Icon";
 
 export const dynamic = "force-dynamic";
 
@@ -44,12 +50,17 @@ export default async function HabitsPage({
   })();
   const userId = await getUserId();
   const timezone = await getUserTimezone(userId);
+  const createdAt = await getUserTenureStart(userId);
+
+  const now = nowInTimezone(timezone);
+  const tenureMonths = monthsSinceCreation(createdAt, now);
+  const unlocked = isPeriodUnlocked(period, tenureMonths);
+  const archiveDue = isArchiveDue(tenureMonths);
 
   const habits = await getHabitsWithLogs(userId, period, undefined, timezone);
-  const now = nowInTimezone(timezone);
-  const rates = computeHabitRates(habits, period, now);
+  const rates = computeHabitRates(habits, period, now, createdAt);
   const kpis = computeHabitKpis(rates);
-  const days = periodDayKeys(period, undefined, timezone);
+  const days = periodDayKeys(period, undefined, timezone, createdAt);
   const today = todayKey(timezone);
   const rateById = new Map(rates.map((r) => [r.id, r]));
 
@@ -71,6 +82,7 @@ export default async function HabitsPage({
 
   return (
     <>
+      {archiveDue && <ArchiveNoticeModal tenureMonths={tenureMonths} />}
       {/* Header + toggle */}
       <section className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-outline-variant/30 pb-4 mb-8">
         <div>
@@ -90,7 +102,16 @@ export default async function HabitsPage({
         </div>
       </section>
 
-      {habits.length === 0 ? (
+      {!unlocked ? (
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <LockedPeriodPanel
+            periodLabel={period === "quarter" ? "Trimestral" : "Semestral"}
+            currentMonths={tenureMonths}
+            requiredMonths={PERIOD_MIN_MONTHS[period]}
+          />
+          <SummaryPanel title={summaryTitle} kpis={kpis} />
+        </section>
+      ) : habits.length === 0 ? (
         <div className="glass-panel rounded-2xl py-16 flex flex-col items-center justify-center text-center gap-3 text-on-surface-variant">
           <Icon name="event_repeat" className="text-[40px] opacity-40" />
           <p className="text-body-md">Aún no tienes hábitos.</p>
@@ -128,6 +149,7 @@ export default async function HabitsPage({
                   : PERIOD_MONTHS.semester,
                 undefined,
                 timezone,
+                createdAt,
               )}
               habits={habits.map((h) => {
                 const r = rateById.get(h.id);

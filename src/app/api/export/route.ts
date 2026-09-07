@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserId } from "@/lib/session";
-import { getUserExportData } from "@/lib/data";
+import { getUserId } from "@/lib/db/session";
+import { getUserExportData } from "@/lib/db/data";
 
 export const dynamic = "force-dynamic";
 

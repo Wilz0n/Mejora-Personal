@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { updateMonthlySavings } from "@/app/actions/finance";
-import { UpdateSavingsModal } from "@/components/finanzas/UpdateSavingsModal";
-import { Icon } from "@/components/comun/Icon";
+import { UpdateSavingsModal } from "@/components/finanzas/modales/UpdateSavingsModal";
+import { Icon } from "@/components/comun/ui/Icon";
 
 /**
  * Banner sutil y cerrable de confirmación de ahorro (modelo híbrido).
