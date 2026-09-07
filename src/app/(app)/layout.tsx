@@ -1,7 +1,7 @@
-import { getUserId } from "@/lib/session";
-import { getUserProfile } from "@/lib/data";
-import { Sidebar } from "@/components/comun/Sidebar";
-import { Topbar } from "@/components/comun/Topbar";
+import { getUserId } from "@/lib/db/session";
+import { getUserProfile } from "@/lib/db/data";
+import { Sidebar } from "@/components/comun/layout/Sidebar";
+import { Topbar } from "@/components/comun/layout/Topbar";
 
 export default async function AppLayout({
   children,

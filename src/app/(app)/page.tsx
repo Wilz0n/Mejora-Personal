@@ -1,18 +1,18 @@
-import { getUserId, getUserTimezone } from "@/lib/session";
-import { getHabitsForToday, getFinanceData, getHabitsWithLogs, getUserProfile } from "@/lib/data";
+import { getUserId, getUserTimezone } from "@/lib/db/session";
+import { getHabitsForToday, getFinanceData, getHabitsWithLogs, getUserProfile } from "@/lib/db/data";
 import {
   computeHabitRates,
   computeHabitKpis,
   habitsForToday,
-} from "@/lib/habits-logic";
+} from "@/lib/logic/habits-logic";
 import {
   computeFinanceSummary,
   formatCurrency,
-} from "@/lib/finance-logic";
-import { todayKey, monthLabel } from "@/lib/dates";
+} from "@/lib/logic/finance-logic";
+import { todayKey, monthLabel } from "@/lib/logic/dates";
 import { HabitCheckbox } from "@/components/habitos/HabitCheckbox";
-import { AddHabitButton } from "@/components/habitos/AddHabitButton";
-import { Icon } from "@/components/comun/Icon";
+import { AddHabitButton } from "@/components/habitos/botones/AddHabitButton";
+import { Icon } from "@/components/comun/ui/Icon";
 
 export const dynamic = "force-dynamic";
 

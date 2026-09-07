@@ -24,7 +24,7 @@ LifeTracker es una app web de **hábitos + finanzas personales** en **Next.js 14
 
 Todos los modelos de dominio se aíslan por `userId` (multi-tenancy).
 
-- **User**: `id, email (unique), name?, passwordHash?, image?, emailVerified?, createdAt`. Relaciones a todo lo demás.
+- **User**: `id, email (unique), name?, passwordHash?, image?, emailVerified?, timezone (default "America/Lima"), createdAt, dataResetAt (DateTime?)`. Relaciones a todo lo demás. `dataResetAt` marca el reinicio del ciclo de datos (feature de archivado del 7º mes): la **antigüedad efectiva** se cuenta desde `max(createdAt, dataResetAt)` (ver `getUserTenureStart`).
 - **Account / Session / VerificationToken**: requeridos por el Prisma Adapter de NextAuth.
 - **Habit**: `id, userId, name, icon (default "check_circle"), createdAt`. Tiene muchos `HabitLog`.
 - **HabitLog**: `id, habitId, date (String "YYYY-MM-DD"), completed (Boolean), createdAt`. **Unique(`habitId`, `date`)**: un registro por hábito por día. La fecha es un *day key* string para evitar problemas de zona horaria.
@@ -34,16 +34,16 @@ Todos los modelos de dominio se aíslan por `userId` (multi-tenancy).
 - **ProjectGoal**: `id, userId, name, targetAmount (Decimal), allocatedAmount (Decimal), monthlyContribution (Decimal), completedAt (DateTime?), tag (default "General"), createdAt`. `completedAt != null` ⇒ proyecto cumplido (deja de descontar del balance).
 - **MonthlyFinance**: snapshot del cierre mensual. `id, userId, month ("YYYY-MM"), monthLabel ("Agosto 2026"), monthlyIncome, monthlySavings, totalFixedExpenses, totalMicroExpenses (Decimal? default 0), availableBalance (Decimals), currency, expensesByCategory (Text JSON: `[{category, amount, percent}]`), microExpensesByCategory (Text? JSON: `[{category, amount, percent, icon}]`), projectsSnapshot (Text JSON: `[{name, tag, targetAmount, allocatedAmount, progress}]`), savingsConfirmed (Boolean? — `null`=pendiente, `true`=ahorró, `false`=no ahorró), createdAt, updatedAt`. **Unique(`userId`, `month`)** → upsert por mes.
 
-> Los `Decimal` de Prisma se convierten a `number` en la capa de datos (`src/lib/data.ts`) antes de llegar a la UI. Los campos JSON de `MonthlyFinance` se serializan con `JSON.stringify` al guardar y se parsean con `JSON.parse` (con fallback seguro) al leer.
+> Los `Decimal` de Prisma se convierten a `number` en la capa de datos (`src/lib/db/data.ts`) antes de llegar a la UI. Los campos JSON de `MonthlyFinance` se serializan con `JSON.stringify` al guardar y se parsean con `JSON.parse` (con fallback seguro) al leer.
 
 ## Autenticación y aislamiento por usuario
 
-- `src/lib/auth.ts`: config de NextAuth (Credentials con bcrypt, JWT, callbacks que inyectan `user.id` en la sesión).
-- `src/lib/session.ts`: **punto central de identidad**.
+- `src/lib/db/auth.ts`: config de NextAuth (Credentials con bcrypt, JWT, callbacks que inyectan `user.id` en la sesión).
+- `src/lib/db/session.ts`: **punto central de identidad**.
   - `getUserId()`: devuelve el `userId` de la sesión; si no hay sesión, redirige a `/login`.
   - `getUserIdOrNull()`: igual pero devuelve `null` sin redirigir.
-  - **Modo Usuario Único:** si `SINGLE_USER_MODE=true`, ambas funciones **omiten NextAuth** y devuelven el id de un usuario por defecto creado on-demand (`src/lib/single-user.ts` → `getOrCreateSingleUserId`, caché en memoria, email `owner@lifetracker.local`).
-- `src/lib/single-user-client.ts`: helper *client-safe* (`isSingleUserModeClient()`) que solo lee `NEXT_PUBLIC_SINGLE_USER_MODE`; se usa en componentes cliente para no importar Prisma al bundle del navegador.
+  - **Modo Usuario Único:** si `SINGLE_USER_MODE=true`, ambas funciones **omiten NextAuth** y devuelven el id de un usuario por defecto creado on-demand (`src/lib/db/single-user.ts` → `getOrCreateSingleUserId`, caché en memoria, email `owner@lifetracker.local`).
+- `src/lib/db/single-user-client.ts`: helper *client-safe* (`isSingleUserModeClient()`) que solo lee `NEXT_PUBLIC_SINGLE_USER_MODE`; se usa en componentes cliente para no importar Prisma al bundle del navegador.
 
 **Regla de oro:** toda lectura/escritura pasa por `getUserId()` y filtra por ese `userId`. Las mutaciones verifican propiedad con `where: { id, userId }` (o `updateMany`/`deleteMany`).
 
@@ -82,19 +82,19 @@ src/app/
 
 ## Lógica de negocio (funciones puras, testeables)
 
-### Fechas — `src/lib/dates.ts`
+### Fechas — `src/lib/logic/dates.ts`
 - `toDayKey(date)` / `todayKey()`: fecha → `"YYYY-MM-DD"`.
 - `weekDayKeys(ref)`: 7 claves de la semana (lunes→domingo, ISO).
 - `monthDayKeys(ref)`: claves del mes. `monthWeeks(ref)`: semanas ISO del mes (con `null` para días fuera del mes; la página filtra semanas 100% vacías).
 - `lastMonthsDayKeys(months, ref)`: claves de día de los últimos N meses (trimestre=3, semestre=6). `periodMonths(months, ref)`: agrupa esos meses en `[{key "YYYY-MM", label "ago 2026", dayKeys}]` (para el progreso mes a mes).
 - Etiquetas: `shortWeekdayLabel`, `dayOfMonth`, `monthLabel` (ej. "Agosto 2026").
 
-### Hábitos — `src/lib/habits-logic.ts`
+### Hábitos — `src/lib/logic/habits-logic.ts`
 - `Period = "week" | "month" | "quarter" | "semester"`. `periodDayKeys(period)` devuelve las claves de día del periodo (semana ISO, mes, últimos 3 meses = trimestre, últimos 6 = semestre). `PERIOD_MONTHS = { quarter: 3, semester: 6 }`.
 - `computeHabitRate(habit, period)`: **Tasa = (días completados ÷ días del periodo) × 100**. Devuelve `completionByDay` (mapa dayKey→bool).
 - `computeHabitRates`, `computeHabitKpis` (`globalRate` promedio, `best`, `worst`, `consistentCount` = hábitos con tasa ≥ 80%, `atRiskCount` = hábitos con tasa < 40%, `totalHabits`), `habitsForToday`.
 
-### Finanzas — `src/lib/finance-logic.ts`
+### Finanzas — `src/lib/logic/finance-logic.ts`
 - `computeFinanceSummary(input)`: `totalFixedExpenses`, `totalMicroExpenses` (suma de gastos hormiga), `totalAllocated` (solo proyectos **activos**, no completados), y **`availableBalance = monthlyIncome − monthlySavings − totalFixedExpenses − totalMicroExpenses − totalAllocated`**.
 - `suggestedSavings(income)`: 20% del ingreso.
 - `computeProjectProgress` / `computeProjectsProgress`: **progreso = (allocated ÷ target) × 100** (cap 100), `remaining`, `completed`.
@@ -106,7 +106,7 @@ src/app/
 - `pendingSavingsConfirmation(records, now)`: **función pura, timezone-aware** (recibe `now`). Devuelve la clave `"YYYY-MM"` cuyo ahorro está pendiente de confirmar, o `null`. Reglas: prioriza el **mes anterior** con `savingsConfirmed === null` dentro de los primeros `SAVINGS_CONFIRM_GRACE_DAYS` (7) días del mes; si no, el **mes en curso** con `savingsConfirmed === null` en los últimos `SAVINGS_CONFIRM_WINDOW_DAYS` (3) días.
 - `formatCurrency(value, {currency})`: `Intl.NumberFormat`. `SUPPORTED_CURRENCIES` = USD, PEN.
 
-### Historial de Ahorro — `src/lib/data.ts` → `getSavingsHistory`
+### Historial de Ahorro — `src/lib/db/data.ts` → `getSavingsHistory`
 - Lee todos los `MonthlyFinance` del usuario ordenados por mes y devuelve `{ history: [{month, monthLabel, savings, savingsConfirmed, updatedAt}], totalAccumulated }`.
 - **`totalAccumulated` respeta la confirmación:** los meses con `savingsConfirmed === false` cuentan como **0** en el acumulado; los pendientes (`null`) y confirmados (`true`) suman su cifra.
 - `getMonthlyConfirmStates(userId)` devuelve `[{month, savingsConfirmed}]` (desc) para detectar el mes pendiente de confirmar.
@@ -128,7 +128,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 
 **Lecturas (render):**
 1. Server Component llama `getUserId()`.
-2. Llama funciones de `src/lib/data.ts` (`getHabitsWithLogs`, `getHabitsForToday`, `getFinanceData`, `getMonthlyFinance`, `getUserProfile`) que consultan Prisma **filtrando por `userId`** y convierten `Decimal → number` (y parsean JSON en `getMonthlyFinance`).
+2. Llama funciones de `src/lib/db/data.ts` (`getHabitsWithLogs`, `getHabitsForToday`, `getFinanceData`, `getMonthlyFinance`, `getUserProfile`) que consultan Prisma **filtrando por `userId`** y convierten `Decimal → number` (y parsean JSON en `getMonthlyFinance`).
 3. Deriva métricas con las funciones puras `compute*`.
 4. Renderiza. Páginas con datos de usuario usan `force-dynamic`.
 
@@ -174,7 +174,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 
 ## Seguridad (medidas implementadas)
 
-- **Secret de NextAuth robusto** (`src/lib/auth.ts` → `resolveSecret()`): usa `NEXTAUTH_SECRET`; en modo usuario único usa un placeholder (NextAuth no se usa); en **producción con login sin secret lanza error** (evita firmar JWT con un secreto público). En dev con login, placeholder.
+- **Secret de NextAuth robusto** (`src/lib/db/auth.ts` → `resolveSecret()`): usa `NEXTAUTH_SECRET`; en modo usuario único usa un placeholder (NextAuth no se usa); en **producción con login sin secret lanza error** (evita firmar JWT con un secreto público). En dev con login, placeholder.
 - **Login en tiempo constante:** `authorize` compara siempre con bcrypt (contra un hash dummy si el usuario no existe) para no revelar por timing si un email está registrado.
 - **Registro:** bloqueado en modo usuario único; mensaje de error **genérico** (no revela si el email existe); captura P2002 de Prisma. Contraseñas ≥ 8 caracteres con letra y número (Zod), hash bcrypt (10 rounds).
 - **Aislamiento por `userId`** en toda query/mutación (multi-tenancy). Prisma parametrizado → sin inyección SQL.

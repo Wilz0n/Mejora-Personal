@@ -1,11 +1,15 @@
-import { getUserId } from "@/lib/session";
-import { getUserProfile, getFinanceData } from "@/lib/data";
-import { Icon } from "@/components/comun/Icon";
-import { EditProfileButton } from "@/components/settings/EditProfileButton";
-import { LogoutButton } from "@/components/settings/LogoutButton";
-import { CurrencySelect } from "@/components/settings/CurrencySelect";
-import { TimezoneSelect } from "@/components/settings/TimezoneSelect";
-import { PurgeDataButton } from "@/components/settings/PurgeDataButton";
+import Link from "next/link";
+import { getUserId, getUserTimezone, getUserTenureStart } from "@/lib/db/session";
+import { getUserProfile, getFinanceData } from "@/lib/db/data";
+import { monthsSinceCreation, nowInTimezone } from "@/lib/logic/dates";
+import { isArchiveDue } from "@/lib/logic/habits-logic";
+import { Icon } from "@/components/comun/ui/Icon";
+import { EditProfileButton } from "@/components/settings/botones/EditProfileButton";
+import { LogoutButton } from "@/components/settings/botones/LogoutButton";
+import { CurrencySelect } from "@/components/settings/selects/CurrencySelect";
+import { TimezoneSelect } from "@/components/settings/selects/TimezoneSelect";
+import { PurgeDataButton } from "@/components/settings/botones/PurgeDataButton";
+import { ArchiveResetButton } from "@/components/settings/botones/ArchiveResetButton";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +20,14 @@ export default async function SettingsPage() {
     getFinanceData(userId),
   ]);
   const timezone = profile.timezone;
+
+  // Antigüedad efectiva del ciclo vigente (para el aviso de archivado del 7º mes).
+  const tenureStart = await getUserTenureStart(userId);
+  const tenureMonths = monthsSinceCreation(
+    tenureStart,
+    nowInTimezone(timezone),
+  );
+  const archiveDue = isArchiveDue(tenureMonths);
 
   return (
     <div className="max-w-container-max mx-auto">
@@ -156,8 +168,44 @@ export default async function SettingsPage() {
           </h3>
           <p className="text-body-md font-body-md text-on-surface-variant mb-stack-md">
             Descarga un archivo con tus hábitos, registros financieros y
-            proyectos. Tus datos te pertenecen.
+            proyectos. Tus datos te pertenecen. Usa{" "}
+            <span className="text-on-surface font-medium">JSON</span> para volver
+            a verlos en la web (en Ver Análisis / Backup) y{" "}
+            <span className="text-on-surface font-medium">CSV</span> para
+            analizarlos con métricas en Excel o Google Sheets.
           </p>
+
+          {/* Aviso de archivado (7º mes): explica el flujo de exportar + reiniciar. */}
+          {archiveDue && (
+            <div className="mb-stack-md flex flex-col gap-3 p-4 rounded-lg bg-primary/10 border border-primary/30">
+              <div className="flex items-start gap-3">
+                <Icon name="archive" className="text-primary mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-body-md font-medium text-on-surface">
+                    Ya estás en el séptimo mes (llevas {tenureMonths} meses de
+                    uso)
+                  </p>
+                  <p className="text-body-sm text-on-surface-variant">
+                    Procede con el flujo mencionado en el popup: exporta tu
+                    progreso (JSON o CSV) y luego pulsa{" "}
+                    <span className="text-on-surface font-medium">
+                      Reiniciar ciclo
+                    </span>{" "}
+                    para tener de nuevo todas las opciones habilitadas. Esos
+                    datos que acabas de exportar puedes volver a traerlos, desde{" "}
+                    <span className="text-on-surface font-medium">
+                      Ver Análisis / Backup
+                    </span>
+                    , para un análisis propio y ver tus mejoras.
+                  </p>
+                </div>
+              </div>
+              <div className="pl-9">
+                <ArchiveResetButton />
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-4 mt-2 items-center">
             <a
               href="/api/export?format=json"
@@ -179,6 +227,16 @@ export default async function SettingsPage() {
               />
               Exportar como CSV
             </a>
+            <Link
+              href="/backup-analisis"
+              className="bg-surface-variant hover:bg-surface-container-high border border-outline-variant text-on-surface font-body-md px-6 py-3 rounded-lg transition-colors flex items-center gap-2 group"
+            >
+              <Icon
+                name="insights"
+                className="text-primary group-hover:scale-110 transition-transform"
+              />
+              Ver Análisis / Backup
+            </Link>
             <div className="ml-auto">
               <PurgeDataButton />
             </div>

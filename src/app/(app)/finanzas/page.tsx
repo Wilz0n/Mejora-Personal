@@ -1,9 +1,9 @@
-import { getUserId, getUserTimezone } from "@/lib/session";
+import { getUserId, getUserTimezone } from "@/lib/db/session";
 import {
   getFinanceData,
   getSavingsHistory,
   getMonthlyConfirmStates,
-} from "@/lib/data";
+} from "@/lib/db/data";
 import {
   computeFinanceSummary,
   computeProjectsProgress,
@@ -11,27 +11,27 @@ import {
   suggestedSavings,
   pendingSavingsConfirmation,
   currentMonthKey,
-} from "@/lib/finance-logic";
-import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/dates";
-import { AddProjectButton } from "@/components/finanzas/AddProjectButton";
-import { RemoveProjectButton } from "@/components/finanzas/RemoveProjectButton";
-import { ContributeButton } from "@/components/finanzas/ContributeButton";
+} from "@/lib/logic/finance-logic";
+import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/logic/dates";
+import { AddProjectButton } from "@/components/finanzas/botones/AddProjectButton";
+import { RemoveProjectButton } from "@/components/finanzas/botones/RemoveProjectButton";
+import { ContributeButton } from "@/components/finanzas/botones/ContributeButton";
 import {
   AddExpenseButton,
   SetIncomeButton,
   SetSavingsButton,
-} from "@/components/finanzas/FinanceModals";
-import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
+} from "@/components/finanzas/modales/FinanceModals";
+import { RemoveExpenseButton } from "@/components/finanzas/botones/RemoveExpenseButton";
 import {
   AddMicroExpenseButton,
   MicroExpenseItem,
-} from "@/components/finanzas/MicroExpenseModals";
-import { SaveFinanceButton } from "@/components/finanzas/SaveFinanceButton";
+} from "@/components/finanzas/modales/MicroExpenseModals";
+import { SaveFinanceButton } from "@/components/finanzas/botones/SaveFinanceButton";
 import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
 import { FixedExpenseItem } from "@/components/finanzas/FixedExpenseItem";
 import { SavingsConfirmationBanner } from "@/components/finanzas/SavingsConfirmationBanner";
-import { AdjustSavingsButton } from "@/components/finanzas/UpdateSavingsModal";
-import { Icon } from "@/components/comun/Icon";
+import { AdjustSavingsButton } from "@/components/finanzas/modales/UpdateSavingsModal";
+import { Icon } from "@/components/comun/ui/Icon";
 
 export const dynamic = "force-dynamic";
 

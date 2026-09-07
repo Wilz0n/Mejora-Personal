@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef, useCallback } from "react";
 import { toggleExpensePaid } from "@/app/actions/finance";
-import { Icon } from "@/components/comun/Icon";
+import { Icon } from "@/components/comun/ui/Icon";
 
 interface FixedExpenseItemProps {
   id: string;

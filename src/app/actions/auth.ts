@@ -1,9 +1,9 @@
 "use server";
 
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { registerSchema } from "@/lib/validators";
-import { isSingleUserMode } from "@/lib/single-user";
+import { isSingleUserMode } from "@/lib/db/single-user";
 import type { ActionResult } from "@/lib/action-result";
 
 export async function registerUser(input: unknown): Promise<ActionResult> {
