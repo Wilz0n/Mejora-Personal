@@ -104,12 +104,13 @@ Controla tu dinero y tus metas de ahorro/compra.
 La métrica central se calcula así:
 
 ```
-Balance Disponible = Ingreso Mensual − Ahorro Mensual − Gastos Fijos − Asignaciones a Proyectos
+Balance Disponible = Ingreso Mensual − Ahorro Mensual − Gastos Fijos − Gastos Hormiga − Asignaciones a Proyectos
 ```
 
 - **Ingreso Mensual:** lo defines con el botón **"Ingreso mensual"**.
 - **Ahorro Mensual:** el dinero que apartas cada mes (ver abajo). **Se descuenta del balance.**
 - **Gastos Fijos:** cada gasto recurrente (renta, servicios, suscripciones…) que agregas con **"Gasto fijo"**.
+- **Gastos Hormiga:** esos pequeños gastos que se te escapan (café, antojos, taxi…). **También se descuentan del balance.**
 - **Asignaciones a Proyectos:** el dinero que has apartado (ahorrado) para tus metas.
 
 > Si el Balance Disponible aparece en **rojo**, significa que asignaste más de lo que tienes disponible: revisa tus gastos, tu ahorro o tus metas.
@@ -119,19 +120,24 @@ Balance Disponible = Ingreso Mensual − Ahorro Mensual − Gastos Fijos − Asi
 Debajo de "Ingreso Mensual" verás la sección **"Ahorro Mensual"** (con el icono del chanchito):
 
 - Por defecto, sugiere y descuenta el **20% de tu ingreso**.
-- Con el botón **"Editar ahorro"** puedes poner el monto que quieras. El modal incluye un atajo para "Usar sugerencia (20%)".
+- Con el botón **"Editar ahorro"** puedes poner el monto que quieras (reemplaza el total). El modal incluye un atajo para "Usar sugerencia (20%)".
+- Con el botón **"Aportar más"** sumas dinero al ahorro del mes en curso las veces que quieras, sin borrar lo anterior. Verás una previsualización de cómo quedará el total.
+- Edites por donde edites, el **ahorro, el gráfico "Ahorro Acumulado" y el balance muestran siempre el mismo valor**.
 - El ahorro **se resta automáticamente del Balance Disponible**.
 
 #### 🐷 Confirmar tu ahorro al final del mes
 
-Al **acercarse el fin de mes** (o al **inicio del mes siguiente**), la app te muestra un pequeño recordatorio para saber si de verdad pudiste ahorrar:
+Al **acercarse el fin de mes** (o al **inicio del mes siguiente**), la app te muestra un **aviso sutil (banner) en la parte superior** —ya no un popup que interrumpa— para saber si de verdad pudiste ahorrar:
 
-> *"¿Pudiste realizar el ahorro? :D"*
+> *"¿Cómo te fue con tu ahorro de [mes]? (Pactado: $XXX)"*
 
-- ✅ **Sí (check verde):** tu ahorro de ese mes se **mantiene** y sigue sumando a tu **Ahorro Acumulado**.
-- ❌ **No (X roja):** ese mes cuenta como **0** en tu Ahorro Acumulado (no se infla con dinero que no ahorraste).
+Con estos botones:
+- ✅ **Sí:** tu ahorro de ese mes se **mantiene** y sigue sumando a tu **Ahorro Acumulado**.
+- ⚙️ **Ajustar / Aportar más:** abre el formulario para sumar un monto distinto antes de confirmar.
+- ❌ **No ahorré:** ese mes cuenta como **0** en tu Ahorro Acumulado (no se infla con dinero que no ahorraste).
+- ✖️ **Cerrar (X):** oculta el aviso por ahora, **sin** decidir nada. Como el mes sigue pendiente, el aviso **volverá a aparecer** la próxima vez que entres (hasta que respondas Sí / No / Aportar).
 
-Así tu historial de ahorro refleja la realidad. Solo se te pregunta **una vez por mes**; después de responder, el recordatorio no vuelve a aparecer para ese mes.
+Así tu historial de ahorro refleja la realidad. Puedes ajustar tu ahorro del mes en curso cuando quieras desde la sección de Finanzas, no solo al cierre.
 
 ### Moneda 💱
 
@@ -186,7 +192,7 @@ En el panel se listan todos tus gastos fijos con su categoría y monto. Su suma 
 Puedes marcar cada gasto fijo como **"pagado"** para saber de un vistazo cuáles ya cubriste este mes:
 
 - **En desktop:** haz **doble clic** sobre el gasto.
-- **En móvil:** haz **doble tap** (dos toques rápidos) sobre el gasto.
+- **En móvil:** haz **doble tap** (dos toques rápidos) sobre el gasto. Al primer toque el gasto se resalta brevemente para indicarte que espera el segundo. Tienes un margen cómodo (~medio segundo) y no pasa nada si mueves un poco el dedo.
 
 Cuando un gasto está marcado como pagado:
 - Su fondo se pone **verde** 🟢.
@@ -196,6 +202,17 @@ Cuando un gasto está marcado como pagado:
 Para **desmarcarlo**, simplemente vuelve a hacer doble clic/tap. El cambio es instantáneo (mutación optimista).
 
 > 💡 Arriba de la sección "Gastos Fijos" verás un tip recordándote cómo funciona esta acción.
+
+### 🐜 Gastos Hormiga
+
+Al lado de "Gastos Fijos" tienes la sección **"Gastos Hormiga"**: esos pequeños gastos que, sumados, hacen una gran fuga de dinero (el café diario, un antojo, el taxi…).
+
+- Regístralos con **"+ Gasto hormiga"**: escribes el **concepto**, el **monto** y eliges un **ícono** (café, galleta, comida rápida, taxi, etc.).
+- En la cabecera del panel verás el **subtotal acumulado** del mes.
+- Elimina cualquiera con el **botón discreto (✕)** a su derecha.
+- Su total **se descuenta del Balance Disponible**, igual que los gastos fijos.
+
+En **Finanzas del Mes** verás un **desglose completo**: el total gastado en hormiga, el **% de impacto** sobre tu ingreso, una **alerta de "Mayor fuga"** (la categoría donde más se te escapó el dinero) y barras de distribución por categoría.
 
 ---
 
@@ -243,14 +260,16 @@ Sí, porque la tasa es días completados sobre días del periodo. Al avanzar el 
 
 Estas son las mejoras más recientes de LifeTracker:
 
-### 🐷 Confirmación de ahorro al cierre del mes
+### 🐷 Confirmación de ahorro al cierre del mes (aviso sutil)
 
-Al final de cada mes (o al empezar el siguiente), la app te pregunta **"¿Pudiste realizar el ahorro? :D"**:
+Al final de cada mes (o al empezar el siguiente), la app te muestra un **aviso sutil arriba** (ya no un popup que interrumpa) preguntando **"¿Cómo te fue con tu ahorro de [mes]?"**:
 
 - ✅ **Sí:** tu ahorro del mes se mantiene y suma a tu **Ahorro Acumulado**.
-- ❌ **No:** ese mes cuenta como **$0** en el acumulado, para que tu historial sea real.
+- ⚙️ **Ajustar / Aportar más:** suma un monto distinto antes de confirmar.
+- ❌ **No ahorré:** ese mes cuenta como **$0** en el acumulado, para que tu historial sea real.
+- ✖️ **Cerrar:** oculta el aviso por ahora; como el mes sigue pendiente, volverá a mostrarse hasta que respondas.
 
-Solo se pregunta una vez por mes. Funciona igual con o sin login (Modo Usuario Único).
+Además puedes **ajustar o aportar más a tu ahorro del mes en curso cuando quieras** desde Finanzas, no solo al cierre. Funciona igual con o sin login (Modo Usuario Único).
 
 ### 🚪 Cerrar sesión desde Ajustes
 

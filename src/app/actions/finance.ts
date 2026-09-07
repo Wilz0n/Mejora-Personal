@@ -6,13 +6,16 @@ import { getUserId } from "@/lib/session";
 import {
   createProjectSchema,
   createExpenseSchema,
+  createMicroExpenseSchema,
   setIncomeSchema,
   setSavingsSchema,
   confirmMonthlySavingsSchema,
+  updateMonthlySavingsSchema,
 } from "@/lib/validators";
 import {
   computeFinanceSummary,
   computeExpenseBreakdown,
+  computeMicroExpenseBreakdown,
   computeProjectsSnapshot,
   suggestedSavings,
   currentMonthKey,
@@ -179,6 +182,46 @@ export async function deleteExpense(expenseId: string): Promise<ActionResult> {
   return { ok: true };
 }
 
+/** Crea un gasto hormiga (micro-gasto). */
+export async function createMicroExpense(
+  input: unknown,
+): Promise<ActionResult<{ id: string }>> {
+  const userId = await getUserId();
+
+  const parsed = createMicroExpenseSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Datos inválidos",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { category, amount, icon } = parsed.data;
+
+  const micro = await prisma.microExpense.create({
+    data: { userId, category, amount, icon },
+    select: { id: true },
+  });
+
+  revalidateFinance();
+  return { ok: true, data: { id: micro.id } };
+}
+
+/** Elimina un gasto hormiga asegurando la propiedad. */
+export async function deleteMicroExpense(
+  microExpenseId: string,
+): Promise<ActionResult> {
+  const userId = await getUserId();
+  const result = await prisma.microExpense.deleteMany({
+    where: { id: microExpenseId, userId },
+  });
+  if (result.count === 0)
+    return { ok: false, error: "Gasto hormiga no encontrado" };
+  revalidateFinance();
+  return { ok: true };
+}
+
 /** Define/actualiza el ingreso mensual (upsert sobre FinancialSummary.userId). */
 export async function setMonthlyIncome(input: unknown): Promise<ActionResult> {
   const userId = await getUserId();
@@ -225,8 +268,52 @@ export async function setMonthlySavings(input: unknown): Promise<ActionResult> {
     update: { monthlySavings },
   });
 
+  // Vincula el cierre del mes en curso (si existe) para que el gráfico, el
+  // acumulado y la vista /finanzas/mes reflejen el mismo ahorro que la tarjeta.
+  await syncCurrentMonthSavings(userId, monthlySavings);
+
   revalidateFinance();
   return { ok: true };
+}
+
+/**
+ * Sincroniza el ahorro del cierre MonthlyFinance del MES EN CURSO con el valor
+ * dado, recalculando su `availableBalance` y marcándolo como confirmado.
+ *
+ * Solo actúa si ya existe un cierre para el mes actual (no crea uno nuevo: el
+ * cierre se materializa con "Guardar Finanza"). Mantiene una única fuente de
+ * verdad entre la tarjeta de ahorro (FinancialSummary) y el snapshot mensual.
+ */
+async function syncCurrentMonthSavings(
+  userId: string,
+  savings: number,
+): Promise<void> {
+  const month = currentMonthKey();
+  const existing = await prisma.monthlyFinance.findUnique({
+    where: { userId_month: { userId, month } },
+    select: {
+      monthlyIncome: true,
+      monthlySavings: true,
+      totalFixedExpenses: true,
+      totalMicroExpenses: true,
+      availableBalance: true,
+    },
+  });
+  if (!existing) return;
+
+  const income = Number(existing.monthlyIncome);
+  const prevSavings = Number(existing.monthlySavings);
+  const fixed = Number(existing.totalFixedExpenses);
+  const micro = Number(existing.totalMicroExpenses);
+  const prevAvailable = Number(existing.availableBalance);
+  // totalAllocated se deriva de los términos guardados y se mantiene constante.
+  const totalAllocated = income - prevSavings - fixed - micro - prevAvailable;
+  const availableBalance = income - savings - fixed - micro - totalAllocated;
+
+  await prisma.monthlyFinance.update({
+    where: { userId_month: { userId, month } },
+    data: { monthlySavings: savings, availableBalance, savingsConfirmed: true },
+  });
 }
 
 /**
@@ -241,17 +328,22 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
   const userId = await getUserId();
 
   // Reúne la configuración financiera actual del usuario.
-  const [summary, fixedExpensesRaw, projectsRaw] = await Promise.all([
-    prisma.financialSummary.findUnique({ where: { userId } }),
-    prisma.fixedExpense.findMany({
-      where: { userId },
-      orderBy: { amount: "desc" },
-    }),
-    prisma.projectGoal.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const [summary, fixedExpensesRaw, microExpensesRaw, projectsRaw] =
+    await Promise.all([
+      prisma.financialSummary.findUnique({ where: { userId } }),
+      prisma.fixedExpense.findMany({
+        where: { userId },
+        orderBy: { amount: "desc" },
+      }),
+      prisma.microExpense.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.projectGoal.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
   const monthlyIncome = summary ? Number(summary.monthlyIncome) : 0;
   const monthlySavingsRaw = summary ? Number(summary.monthlySavings) : 0;
@@ -261,6 +353,12 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
     id: e.id,
     category: e.category,
     amount: Number(e.amount),
+  }));
+  const microExpenses = microExpensesRaw.map((e) => ({
+    id: e.id,
+    category: e.category,
+    amount: Number(e.amount),
+    icon: e.icon,
   }));
   const projects = projectsRaw.map((p) => ({
     id: p.id,
@@ -283,6 +381,7 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
     monthlyIncome,
     monthlySavings: monthlySavingsRaw,
     fixedExpenses,
+    microExpenses,
     projects,
   });
 
@@ -297,9 +396,11 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
     financeSummary.monthlyIncome -
     savings -
     financeSummary.totalFixedExpenses -
+    financeSummary.totalMicroExpenses -
     financeSummary.totalAllocated;
 
   const expensesByCategory = computeExpenseBreakdown(fixedExpenses);
+  const microExpensesByCategory = computeMicroExpenseBreakdown(microExpenses);
   const projectsSnapshot = computeProjectsSnapshot(projects);
 
   const month = currentMonthKey();
@@ -314,9 +415,11 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
       monthlyIncome: financeSummary.monthlyIncome,
       monthlySavings: savings,
       totalFixedExpenses: financeSummary.totalFixedExpenses,
+      totalMicroExpenses: financeSummary.totalMicroExpenses,
       availableBalance,
       currency,
       expensesByCategory: JSON.stringify(expensesByCategory),
+      microExpensesByCategory: JSON.stringify(microExpensesByCategory),
       projectsSnapshot: JSON.stringify(projectsSnapshot),
     },
     update: {
@@ -324,9 +427,11 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
       monthlyIncome: financeSummary.monthlyIncome,
       monthlySavings: savings,
       totalFixedExpenses: financeSummary.totalFixedExpenses,
+      totalMicroExpenses: financeSummary.totalMicroExpenses,
       availableBalance,
       currency,
       expensesByCategory: JSON.stringify(expensesByCategory),
+      microExpensesByCategory: JSON.stringify(microExpensesByCategory),
       projectsSnapshot: JSON.stringify(projectsSnapshot),
     },
   });
@@ -460,6 +565,149 @@ export async function confirmMonthlySavings(
         projectsSnapshot: JSON.stringify([]),
         savingsConfirmed: confirmed,
       },
+    });
+  }
+
+  revalidateFinance();
+  return { ok: true };
+}
+
+/**
+ * Actualiza el ahorro de un mes (modelo híbrido de confirmación continua).
+ *
+ * Firma: `{ month, confirmed, newAmount?, mode? }`.
+ *
+ * - Sin `newAmount`: solo fija `savingsConfirmed = confirmed` (equivalente a las
+ *   acciones "Sí ahorré" / "No ahorré" del banner).
+ * - Con `newAmount` y `mode = "add"`: suma `newAmount` al ahorro del mes.
+ * - Con `newAmount` y `mode = "set"`: fija `newAmount` como el ahorro total del mes.
+ *
+ * Al cambiar el monto se recalcula `availableBalance` del mes:
+ *   availableBalance = monthlyIncome − monthlySavings − totalFixedExpenses
+ *                      − totalMicroExpenses − totalAllocated
+ * (los totales se conservan del cierre existente; el único término que cambia
+ * es `monthlySavings`).
+ *
+ * Si no existe un cierre para ese mes, se construye un snapshot mínimo con la
+ * configuración actual del usuario (camino defensivo). Funciona igual en modo
+ * multi-usuario y en SINGLE_USER_MODE (usa getUserId()).
+ */
+export async function updateMonthlySavings(
+  input: unknown,
+): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const parsed = updateMonthlySavingsSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Datos inválidos",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { month, confirmed, newAmount, mode } = parsed.data;
+
+  // Ahorro final del mes tras el ajuste (para sincronizar FinancialSummary si
+  // el mes objetivo es el mes en curso). Se completa en cada rama.
+  let resolvedSavings: number | null = null;
+
+  const existing = await prisma.monthlyFinance.findUnique({
+    where: { userId_month: { userId, month } },
+    select: {
+      monthlyIncome: true,
+      monthlySavings: true,
+      totalFixedExpenses: true,
+      totalMicroExpenses: true,
+      availableBalance: true,
+    },
+  });
+
+  if (existing) {
+    const data: {
+      savingsConfirmed: boolean;
+      monthlySavings?: number;
+      availableBalance?: number;
+    } = { savingsConfirmed: confirmed };
+
+    // Ajuste de monto (opcional): recalcula ahorro y balance del mes.
+    if (typeof newAmount === "number") {
+      const currentSavings = Number(existing.monthlySavings);
+      const nextSavings =
+        mode === "add" ? currentSavings + newAmount : newAmount;
+
+      // Reconstruye totalAllocated a partir de los términos guardados.
+      const income = Number(existing.monthlyIncome);
+      const fixed = Number(existing.totalFixedExpenses);
+      const micro = Number(existing.totalMicroExpenses);
+      const prevAvailable = Number(existing.availableBalance);
+      // totalAllocated = income − prevSavings − fixed − micro − prevAvailable
+      const totalAllocated = income - currentSavings - fixed - micro - prevAvailable;
+      const nextAvailable = income - nextSavings - fixed - micro - totalAllocated;
+
+      data.monthlySavings = nextSavings;
+      data.availableBalance = nextAvailable;
+      resolvedSavings = nextSavings;
+    }
+
+    await prisma.monthlyFinance.update({
+      where: { userId_month: { userId, month } },
+      data,
+    });
+  } else {
+    // No hay cierre para ese mes: snapshot mínimo con la config actual.
+    const [summary, fixedExpensesRaw] = await Promise.all([
+      prisma.financialSummary.findUnique({ where: { userId } }),
+      prisma.fixedExpense.findMany({ where: { userId } }),
+    ]);
+
+    const monthlyIncome = summary ? Number(summary.monthlyIncome) : 0;
+    const monthlySavingsRaw = summary ? Number(summary.monthlySavings) : 0;
+    const currency = summary?.currency ?? "USD";
+    const fixedExpenses = fixedExpensesRaw.map((e) => ({
+      category: e.category,
+      amount: Number(e.amount),
+    }));
+    const totalFixedExpenses = fixedExpenses.reduce((a, e) => a + e.amount, 0);
+
+    const baseSavings =
+      monthlySavingsRaw > 0 ? monthlySavingsRaw : suggestedSavings(monthlyIncome);
+    const savings =
+      typeof newAmount === "number"
+        ? mode === "add"
+          ? baseSavings + newAmount
+          : newAmount
+        : baseSavings;
+    const availableBalance = monthlyIncome - savings - totalFixedExpenses;
+    if (typeof newAmount === "number") resolvedSavings = savings;
+
+    await prisma.monthlyFinance.create({
+      data: {
+        userId,
+        month,
+        monthLabel: month,
+        monthlyIncome,
+        monthlySavings: savings,
+        totalFixedExpenses,
+        availableBalance,
+        currency,
+        expensesByCategory: JSON.stringify(
+          computeExpenseBreakdown(fixedExpenses),
+        ),
+        projectsSnapshot: JSON.stringify([]),
+        savingsConfirmed: confirmed,
+      },
+    });
+  }
+
+  // Si se ajustó el monto del MES EN CURSO, sincroniza también la configuración
+  // viva (FinancialSummary), que es la que muestra la tarjeta "Ahorro Mensual"
+  // en /finanzas. Así el número visible refleja el ajuste al instante.
+  if (resolvedSavings !== null && month === currentMonthKey()) {
+    await prisma.financialSummary.upsert({
+      where: { userId },
+      create: { userId, monthlySavings: resolvedSavings },
+      update: { monthlySavings: resolvedSavings },
     });
   }
 
