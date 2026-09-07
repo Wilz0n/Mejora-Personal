@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/comun/Skeleton";
+import { Skeleton } from "@/components/comun/ui/Skeleton";
 
 export default function HabitsLoading() {
   return (

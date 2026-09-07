@@ -170,18 +170,33 @@ src/
 │  ├─ api/export/       # endpoint de exportación de datos (JSON/CSV)
 │  └─ actions/          # Server Actions = aquí se GUARDAN los datos
 │     ├─ habits.ts · finance.ts · settings.ts · auth.ts
-├─ components/          # UI, organizada por dominio
-│  ├─ comun/            # compartidos: Icon, Modal, Sidebar, Topbar,
-│  │                    #   ProgressRing, ProjectModal (modal reutilizable)…
-│  ├─ habitos/          # HabitCheckbox, AddHabitButton, MonthlyTracker
-│  ├─ finanzas/         # AddProjectButton, FinanceModals
-│  ├─ settings/         # CurrencySelect, EditProfileButton, PurgeDataButton
+├─ components/          # UI, organizada por dominio y luego por familia
+│  ├─ comun/            # compartidos
+│  │  ├─ layout/        #   Sidebar, Topbar, Providers
+│  │  ├─ ui/            #   Icon, Modal, ProgressRing, Skeleton
+│  │  └─ modales/       #   ProjectModal (modal reutilizable)
+│  ├─ habitos/          # HabitCheckbox, MonthlyTracker, LockedPeriodPanel
+│  │  └─ botones/       #   AddHabitButton, RemoveHabitButton
+│  ├─ finanzas/         # FixedExpenseItem, SavingsHistory, SavingsConfirmationBanner
+│  │  ├─ botones/       #   AddProjectButton, RemoveProjectButton, ContributeButton,
+│  │  │                 #     SaveFinanceButton, RemoveExpenseButton
+│  │  └─ modales/       #   FinanceModals, MicroExpenseModals, UpdateSavingsModal
+│  ├─ settings/         #
+│  │  ├─ botones/       #   EditProfileButton, LogoutButton, PurgeDataButton
+│  │  └─ selects/       #   CurrencySelect, TimezoneSelect
 │  └─ auth/             # LoginForm, RegisterForm
 ├─ lib/                 # el "cerebro": lógica de negocio y acceso a datos
-│  ├─ *-logic.ts        # cálculos puros (tasas, balances) — fáciles de testear
-│  ├─ data.ts           # consultas a la BD (siempre filtran por userId)
-│  ├─ session.ts        # getUserId() — identidad del usuario
-│  └─ validators.ts     # esquemas Zod
+│  ├─ logic/            # cálculos puros — fáciles de testear
+│  │  ├─ *-logic.ts     #   tasas de hábitos, balances de finanzas
+│  │  └─ dates.ts       #   helpers de fechas ("YYYY-MM-DD")
+│  ├─ db/               # acceso a datos e identidad
+│  │  ├─ prisma.ts      #   cliente Prisma
+│  │  ├─ data.ts        #   consultas a la BD (siempre filtran por userId)
+│  │  ├─ session.ts     #   getUserId() — identidad del usuario
+│  │  ├─ auth.ts        #   config NextAuth
+│  │  └─ single-user*.ts#   Modo Usuario Único (server y client-safe)
+│  ├─ validators.ts     # esquemas Zod
+│  └─ action-result.ts  # tipo de retorno de Server Actions
 └─ types/               # tipos TS
 prisma/schema.prisma    # definición de la base de datos
 scripts/setup.mjs       # instalador guiado (local)
@@ -189,13 +204,13 @@ scripts/dev-verify.mjs  # verificación local con BD interna (Docker)
 scripts/deploy.mjs      # build de Vercel (crea tablas + compila, automático)
 ```
 
-> 🗂️ **Nota sobre rutas:** las URLs están en **español** (`/habitos`, `/finanzas`, `/proyectos`, `/settings`). Los componentes se agrupan por la **página/dominio** al que pertenecen; los que se usan en varias páginas viven en `components/comun/`.
+> 🗂️ **Nota sobre rutas:** las URLs están en **español** (`/habitos`, `/finanzas`, `/proyectos`, `/settings`). Los componentes se agrupan por la **página/dominio** y luego por **familia** (`botones/`, `modales/`, `selects/`, `ui/`, `layout/`); los que se usan en varias páginas viven en `components/comun/`.
 
 **Reglas del proyecto (respétalas):**
 1. Toda consulta/guardado **filtra por `userId`** (viene de `getUserId()`). Nunca leas datos "de todos".
-2. La **lógica de cálculo** va en `src/lib/*-logic.ts` como funciones puras. Las Server Actions sólo: autenticar → validar con Zod → guardar → `revalidatePath`.
-3. `HabitLog.date` es un **string `"YYYY-MM-DD"`**. Usa los helpers de `src/lib/dates.ts`.
-4. En componentes de cliente, importa `single-user-client.ts` (no `single-user.ts`, que usa Prisma).
+2. La **lógica de cálculo** va en `src/lib/logic/*-logic.ts` como funciones puras. Las Server Actions sólo: autenticar → validar con Zod → guardar → `revalidatePath`.
+3. `HabitLog.date` es un **string `"YYYY-MM-DD"`**. Usa los helpers de `src/lib/logic/dates.ts`.
+4. En componentes de cliente, importa `db/single-user-client.ts` (no `db/single-user.ts`, que usa Prisma).
 
 ---
 
@@ -280,10 +295,10 @@ Vercel generará una **URL de preview** automáticamente para revisar tus cambio
 **Agregar un campo a un modelo:**
 1. Edita `prisma/schema.prisma`.
 2. `npm run db:push` (contra tu BD de dev).
-3. Ajusta `src/lib/data.ts` y la lógica/UI que lo use.
+3. Ajusta `src/lib/db/data.ts` y la lógica/UI que lo use.
 
 **Agregar una nueva métrica de hábitos:**
-1. Escribe una función pura en `src/lib/habits-logic.ts`.
+1. Escribe una función pura en `src/lib/logic/habits-logic.ts`.
 2. Úsala en la página correspondiente (`src/app/(app)/...`).
 
 **Agregar una acción que guarde datos:**
@@ -311,7 +326,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 
 **Hábitos**
 - **Quitar hábito:** botón rojo "Quitar Hábito" (junto a "Añadir Hábito") → abre modal con la lista de hábitos. Componente: `src/components/habitos/RemoveHabitButton.tsx`. Acción: `deleteHabit` en `src/app/actions/habits.ts`.
-- **Vista mensual (heatmap):** `src/components/habitos/MonthlyTracker.tsx` + helper `monthWeeks()` en `src/lib/dates.ts`.
+- **Vista mensual (heatmap):** `src/components/habitos/MonthlyTracker.tsx` + helper `monthWeeks()` en `src/lib/logic/dates.ts`.
 - **Anillo de progreso:** `src/components/comun/ProgressRing.tsx`.
 
 **Finanzas**
@@ -321,7 +336,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
   - **Detección de doble tap en móvil (robusta):** usa `onTouchStart` + `onTouchEnd` para rastrear posición y tiempo del toque. Constantes: `DOUBLE_TAP_DELAY = 450ms` (ventana entre taps) y `MOVE_TOLERANCE = 24px` (distancia máx.). Si el dedo se mueve más de la tolerancia entre `touchstart` y `touchend` se interpreta como scroll/arrastre y se ignora (no cuenta como tap). El segundo tap además debe caer cerca del primero. `style={{ touchAction: "manipulation" }}` desactiva el zoom nativo por doble tap del navegador. Un flag `touchHandledRef` evita que el `onDoubleClick` sintético post-touch dispare un toggle doble. Feedback visual: tras el primer tap el estado `awaitingSecondTap` resalta el borde con `primary` y cambia el tooltip ("Toca otra vez para marcar como pagado"); se limpia solo con un timer si no llega el segundo tap. Desktop (doble clic) sin cambios.
 - **Abono mensual a proyectos:** botón verde "+" → `src/components/finanzas/ContributeButton.tsx` (acción `contributeToProject`). Suma el `monthlyContribution` (definido al crear el proyecto = monto inicial) a `allocatedAmount`, topado a la meta. Al alcanzar la meta marca `completedAt` → el proyecto queda **cumplido** y **deja de descontar del balance** (`computeFinanceSummary` solo resta proyectos activos). Campos BD: `ProjectGoal.monthlyContribution` y `ProjectGoal.completedAt`.
 - **Modal reutilizable de proyecto:** `src/components/comun/ProjectModal.tsx` (base para otros popups).
-- **Ahorro Mensual:** sección editable con el chanchito. Se **descuenta del balance**. Si no defines un monto, usa el **20% del ingreso** como sugerencia; puedes editarlo. Componentes: `SetSavingsButton` ("Editar ahorro", reemplaza el total) y `AdjustSavingsButton` ("Aportar más", suma) en `FinanceModals.tsx` / `UpdateSavingsModal.tsx`. Acciones: `setMonthlySavings` y `updateMonthlySavings`. Ambas **sincronizan el cierre del mes en curso** (`MonthlyFinance`) si existe, para que tarjeta, gráfico "Ahorro Acumulado" y `/finanzas/mes` muestren el mismo valor. Lógica: `computeFinanceSummary` (resta el ahorro) y `suggestedSavings()` en `src/lib/finance-logic.ts`. Campo BD: `FinancialSummary.monthlySavings` (config viva) + `MonthlyFinance.monthlySavings` (cierre del mes).
+- **Ahorro Mensual:** sección editable con el chanchito. Se **descuenta del balance**. Si no defines un monto, usa el **20% del ingreso** como sugerencia; puedes editarlo. Componentes: `SetSavingsButton` ("Editar ahorro", reemplaza el total) y `AdjustSavingsButton` ("Aportar más", suma) en `FinanceModals.tsx` / `UpdateSavingsModal.tsx`. Acciones: `setMonthlySavings` y `updateMonthlySavings`. Ambas **sincronizan el cierre del mes en curso** (`MonthlyFinance`) si existe, para que tarjeta, gráfico "Ahorro Acumulado" y `/finanzas/mes` muestren el mismo valor. Lógica: `computeFinanceSummary` (resta el ahorro) y `suggestedSavings()` en `src/lib/logic/finance-logic.ts`. Campo BD: `FinancialSummary.monthlySavings` (config viva) + `MonthlyFinance.monthlySavings` (cierre del mes).
 
 **Ajustes / Perfil (`/settings`)**
 - **Editar perfil:** `src/components/settings/EditProfileButton.tsx` (acción `updateProfile`).
@@ -332,7 +347,11 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
   - El avatar se muestra en el **topbar** (`Topbar` recibe `avatar` desde `layout.tsx`) y en **Settings → Identidad**.
 - **Moneda por defecto (USD/PEN):** `src/components/settings/CurrencySelect.tsx` (acción `setCurrency`). Campo BD: `FinancialSummary.currency`. Constantes/formato: `SUPPORTED_CURRENCIES` y `formatCurrency` en `finance-logic.ts`.
 - **Exportar datos (JSON/CSV):** endpoint `src/app/api/export/route.ts` (usa `getUserExportData`).
-- **Purgar datos de cuenta:** `src/components/settings/PurgeDataButton.tsx` (acción `purgeAccountData`, **destructiva**, con confirmación por palabra).
+- **Purgar datos de cuenta:** `src/components/settings/botones/PurgeDataButton.tsx` (acción `purgeAccountData`, **destructiva**, con confirmación por palabra).
+- **Archivado del 7º mes (reinicio de ciclo):** al alcanzar `ARCHIVE_THRESHOLD_MONTHS = 7` de antigüedad efectiva (`isArchiveDue`, calculada desde `getUserTenureStart` = `max(createdAt, dataResetAt)`):
+  - En `/habitos` se auto-abre `src/components/habitos/ArchiveNoticeModal.tsx` con las instrucciones (exportar → reiniciar).
+  - En `/settings` aparece un aviso contextual + `src/components/settings/botones/ArchiveResetButton.tsx` (acción `archiveAndReset`, borra los datos del dominio y setea `dataResetAt = now()` para reiniciar la antigüedad; exige confirmación explícita de que el usuario ya exportó — patrón B1).
+  - Botón **"Ver Análisis / Backup"** (junto a Exportar) → ruta oculta `src/app/backup-analisis/page.tsx` (fuera del grupo `(app)`, sin sidebar). Recibe el JSON exportado, lo parsea y lo deja en estado (estructura funcional; el diseño del análisis se construye encima).
 - **Cerrar sesión:** `src/components/settings/LogoutButton.tsx` — client component debajo de "Editar Perfil" en la sección Identidad. En **multi-usuario** renderiza un botón de peligro (borde/texto rojo, ícono `logout`) que llama `signOut({ callbackUrl: "/login" })` de `next-auth/react`. En **modo usuario único** (`isSingleUserModeClient()`) oculta el botón y muestra el indicador pasivo "Modo Usuario Único activo" (coherente con el Sidebar). Importa `single-user-client.ts` (no `single-user.ts`).
 - Acciones de settings: `src/app/actions/settings.ts`.
 
@@ -353,9 +372,9 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 
 **Finanzas — Guardar Finanza (cierre mensual)**
 - **Modelo BD:** `MonthlyFinance` en `prisma/schema.prisma` — snapshot mensual con unique `(userId, month)`. Campos: `monthlyIncome`, `monthlySavings`, `totalFixedExpenses`, `availableBalance`, `currency`, `expensesByCategory` (JSON text), `projectsSnapshot` (JSON text).
-- **Lógica pura:** `computeExpenseBreakdown()`, `computeProjectsSnapshot()`, `currentMonthKey()` en `src/lib/finance-logic.ts`.
+- **Lógica pura:** `computeExpenseBreakdown()`, `computeProjectsSnapshot()`, `currentMonthKey()` en `src/lib/logic/finance-logic.ts`.
 - **Server Action:** `saveMonthlyFinance()` en `src/app/actions/finance.ts` — lee config actual del usuario, calcula resumen, upsert por `(userId, month)`. No recibe input del cliente.
-- **Data:** `getMonthlyFinance(userId, month?)` en `src/lib/data.ts` — lee el cierre más reciente o por mes específico. Parsea JSON, convierte Decimal→number.
+- **Data:** `getMonthlyFinance(userId, month?)` en `src/lib/db/data.ts` — lee el cierre más reciente o por mes específico. Parsea JSON, convierte Decimal→number.
 - **Componente:** `src/components/finanzas/SaveFinanceButton.tsx` — client component con `useTransition`, guarda y navega a `/finanzas/mes`.
 - **Página:** `src/app/(app)/finanzas/mes/page.tsx` — `force-dynamic`, KPIs, Metas Activas (`projectsSnapshot`), Categorías de Gastos (estilo `ProgressRing` + tarjetas barra vertical). Empty state si no hay cierre.
 
@@ -389,7 +408,7 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 
 **Finanzas — Confirmación de Ahorro (Modelo Híbrido)**
 - **Modelo BD:** campo `savingsConfirmed Boolean?` en `MonthlyFinance` (`prisma/schema.prisma`). `null`=pendiente, `true`=sí ahorró, `false`=no ahorró. Aditivo y nullable → `npm run db:push` no borra datos.
-- **Lógica pura:** `monthKeyOf()`, `previousMonthKey()`, `pendingSavingsConfirmation(records, now)` y constantes `SAVINGS_CONFIRM_WINDOW_DAYS` (3) / `SAVINGS_CONFIRM_GRACE_DAYS` (7) en `src/lib/finance-logic.ts`. `pendingSavingsConfirmation` es **timezone-aware** (recibe `now`) y testeable: prioriza el mes anterior pendiente (primeros 7 días del mes), si no el mes en curso pendiente (últimos 3 días).
+- **Lógica pura:** `monthKeyOf()`, `previousMonthKey()`, `pendingSavingsConfirmation(records, now)` y constantes `SAVINGS_CONFIRM_WINDOW_DAYS` (3) / `SAVINGS_CONFIRM_GRACE_DAYS` (7) en `src/lib/logic/finance-logic.ts`. `pendingSavingsConfirmation` es **timezone-aware** (recibe `now`) y testeable: prioriza el mes anterior pendiente (primeros 7 días del mes), si no el mes en curso pendiente (últimos 3 días).
 - **Validación:** `updateMonthlySavingsSchema` (`{month "YYYY-MM", confirmed bool, newAmount? ≥0, mode? "add"|"set"}`) en `src/lib/validators.ts`. Se conserva `confirmMonthlySavingsSchema` (`{month, confirmed}`) por compatibilidad de la acción legada `confirmMonthlySavings`.
 - **Server Action principal:** `updateMonthlySavings({month, confirmed, newAmount?, mode?})` en `src/app/actions/finance.ts` — `getUserId()` → Zod → actualiza (o crea, camino defensivo) el cierre `MonthlyFinance`. Sin `newAmount` solo fija `savingsConfirmed`. Con `newAmount`: `mode "add"` suma, `"set"` reemplaza; **recalcula `availableBalance`** derivando `totalAllocated` de los términos guardados. Si el mes afectado es el **mes en curso**, además **sincroniza `FinancialSummary.monthlySavings`** (fuente única con la tarjeta de ahorro). `revalidatePath("/", "/finanzas", "/finanzas/mes")`.
 - **Sincronización inversa:** `setMonthlySavings` (el modal "Editar ahorro") ahora llama al helper `syncCurrentMonthSavings(userId, savings)` que, si existe un cierre del mes en curso, actualiza su `monthlySavings`, recalcula `availableBalance` y lo marca `savingsConfirmed=true`. Así "Editar ahorro" y "Aportar más" muestran el mismo resultado en tarjeta, gráfico y `/finanzas/mes`.
@@ -441,7 +460,7 @@ Server Component `force-dynamic`. Lee el snapshot guardado (`getMonthlyFinance`)
 Modelo `MonthlyFinance` (unique `userId` + `month`). Se guarda con `saveMonthlyFinance` (upsert), se lee con `getMonthlyFinance`, y se borra en `purgeAccountData`. Detalle de los campos y JSON en `docs/AI_CONTEXT.md`.
 
 ### Historial de ahorro — `src/components/finanzas/SavingsHistory.tsx`
-- **Data:** `getSavingsHistory(userId)` en `src/lib/data.ts` — lee `monthlySavings`, `savingsConfirmed` y `updatedAt` de todos los `MonthlyFinance` del usuario, ordenados por mes ASC. Devuelve `{ history: [{month, monthLabel, savings, savingsConfirmed, updatedAt}], totalAccumulated }`. El `totalAccumulated` cuenta como **0** los meses con `savingsConfirmed === false`.
+- **Data:** `getSavingsHistory(userId)` en `src/lib/db/data.ts` — lee `monthlySavings`, `savingsConfirmed` y `updatedAt` de todos los `MonthlyFinance` del usuario, ordenados por mes ASC. Devuelve `{ history: [{month, monthLabel, savings, savingsConfirmed, updatedAt}], totalAccumulated }`. El `totalAccumulated` cuenta como **0** los meses con `savingsConfirmed === false`.
 - **Componente:** `SavingsHistory` — server component, recibe `data`, `currency`, `compact?`. Muestra:
   - Total acumulado (suma de todos los meses).
   - Mini-gráfico de barras proporcionales por mes (con tooltip hover).
@@ -460,7 +479,7 @@ Modelo `MonthlyFinance` (unique `userId` + `month`). Se guarda con `saveMonthlyF
 El proyecto sigue prácticas de seguridad por defecto. Cosas que **no debes romper**:
 
 **Autenticación**
-- `src/lib/auth.ts` → `resolveSecret()`: si `NEXTAUTH_SECRET` falta **en producción con login**, lanza error (fail-closed). En modo usuario único usa un placeholder inofensivo (NextAuth no se usa). Nunca pongas un secret estático en código.
+- `src/lib/db/auth.ts` → `resolveSecret()`: si `NEXTAUTH_SECRET` falta **en producción con login**, lanza error (fail-closed). En modo usuario único usa un placeholder inofensivo (NextAuth no se usa). Nunca pongas un secret estático en código.
 - Login en **tiempo constante**: `authorize` hace `bcrypt.compare` contra un hash dummy si el usuario no existe (evita revelar por timing si un email está registrado).
 - `registerUser` **bloqueado** en modo usuario único (no se pueden crear cuentas en despliegues personales).
 - Mensaje de error de registro **genérico** ("No se pudo completar el registro") — no revela si el email ya existe.

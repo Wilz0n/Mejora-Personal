@@ -16,6 +16,11 @@ model User {
   emailVerified DateTime?
   timezone      String    @default("America/Lima")
   createdAt     DateTime  @default(now())
+  // Marca de reinicio del ciclo de datos (feature de archivado al 7º mes).
+  // La antigüedad "efectiva" del usuario se cuenta desde max(createdAt, dataResetAt),
+  // de modo que tras archivar/reiniciar el ciclo de 6 meses vuelve a empezar
+  // sin perder la fecha real de registro (createdAt).
+  dataResetAt   DateTime?
 
   accounts         Account[]
   sessions         Session[]

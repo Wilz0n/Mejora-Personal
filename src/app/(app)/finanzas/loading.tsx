@@ -1,4 +1,4 @@
-import { Skeleton, KpiSkeletonRow } from "@/components/comun/Skeleton";
+import { Skeleton, KpiSkeletonRow } from "@/components/comun/ui/Skeleton";
 
 export default function FinanceLoading() {
   return (

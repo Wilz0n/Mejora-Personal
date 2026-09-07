@@ -1,4 +1,4 @@
-import { Icon } from "@/components/comun/Icon";
+import { Icon } from "@/components/comun/ui/Icon";
 
 export const dynamic = "force-dynamic";
 

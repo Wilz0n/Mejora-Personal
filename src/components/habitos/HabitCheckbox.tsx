@@ -2,7 +2,7 @@
 
 import { useTransition, useState } from "react";
 import { toggleHabitLog } from "@/app/actions/habits";
-import { Icon } from "@/components/comun/Icon";
+import { Icon } from "@/components/comun/ui/Icon";
 
 interface HabitCheckboxProps {
   habitId: string;

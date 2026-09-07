@@ -19,11 +19,11 @@ Para entender cómo funciona la app desde la perspectiva del usuario:
 ## Reglas clave (resumen rápido)
 
 1. **Aislamiento por `userId`** en toda consulta/mutación (multi-tenancy).
-2. `HabitLog.date` es **string `"YYYY-MM-DD"`** — usar helpers de `src/lib/dates.ts`.
-3. Lógica de negocio en `src/lib/*-logic.ts` como **funciones puras**.
+2. `HabitLog.date` es **string `"YYYY-MM-DD"`** — usar helpers de `src/lib/logic/dates.ts`.
+3. Lógica de negocio en `src/lib/logic/*-logic.ts` como **funciones puras**.
 4. Server Actions: `getUserId()` → Zod parse → verificar propiedad → Prisma → `revalidatePath`.
 5. Modales siempre con `src/components/comun/Modal.tsx` (React Portal).
-6. En componentes cliente, importar `single-user-client.ts` (no `single-user.ts`).
+6. En componentes cliente, importar `db/single-user-client.ts` (no `db/single-user.ts`).
 7. Ramas: feature → dev → main. Nunca push directo a main.
 8. Documentar cambios en: `USER_GUIDE.md` (usuario), `docs/AI_CONTEXT.md` (IA), `docs/DEV_GUIDE.md` (dev).
 

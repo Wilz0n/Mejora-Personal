@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
-import { getUserId } from "@/lib/session";
+import { prisma } from "@/lib/db/prisma";
+import { getUserId } from "@/lib/db/session";
 import {
   createProjectSchema,
   createExpenseSchema,
@@ -19,8 +19,8 @@ import {
   computeProjectsSnapshot,
   suggestedSavings,
   currentMonthKey,
-} from "@/lib/finance-logic";
-import { monthLabel } from "@/lib/dates";
+} from "@/lib/logic/finance-logic";
+import { monthLabel } from "@/lib/logic/dates";
 import type { ActionResult } from "@/lib/action-result";
 
 function revalidateFinance() {

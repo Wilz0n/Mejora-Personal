@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getUserId, getUserTimezone } from "@/lib/session";
+import { getUserId, getUserTimezone } from "@/lib/db/session";
 import {
   getMonthlyFinance,
   getFinanceData,
   getSavingsHistory,
   getMonthlyConfirmStates,
-} from "@/lib/data";
+} from "@/lib/db/data";
 import {
   formatCurrency,
   pendingSavingsConfirmation,
-} from "@/lib/finance-logic";
-import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/dates";
+} from "@/lib/logic/finance-logic";
+import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/logic/dates";
 import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
 import { SavingsConfirmationBanner } from "@/components/finanzas/SavingsConfirmationBanner";
-import { Icon } from "@/components/comun/Icon";
+import { Icon } from "@/components/comun/ui/Icon";
 
 export const dynamic = "force-dynamic";
 
