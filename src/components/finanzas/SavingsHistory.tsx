@@ -67,7 +67,17 @@ export function SavingsHistory({ data, currency, compact = false }: SavingsHisto
     );
   }
 
-  const maxSavings = Math.max(...history.map((h) => h.savings), 1);
+  /**
+   * Ahorro efectivo por mes: los meses no confirmados (`savingsConfirmed === false`)
+   * cuentan como 0 para el gráfico, igual que en el acumulado (ver `getSavingsHistory`).
+   */
+  const effectiveSavings = (h: SavingsHistoryData["history"][number]) =>
+    h.savingsConfirmed === false ? 0 : h.savings;
+
+  // Máximo real entre los valores efectivos (para escalar las barras).
+  const maxSavings = Math.max(...history.map(effectiveSavings), 0);
+  // Si no hay ningún ahorro efectivo en el historial, no se pintan barras.
+  const hasAnySavings = maxSavings > 0;
   const lastEntry = history[history.length - 1];
 
   return (
@@ -105,22 +115,41 @@ export function SavingsHistory({ data, currency, compact = false }: SavingsHisto
       </div>
 
       {/* Mini-gráfico de barras */}
-      <div className={`flex items-end gap-1 sm:gap-2 ${compact ? "h-[70px] sm:h-[80px]" : "h-[90px] sm:h-[120px]"}`}>
+      <div className={`relative flex items-end gap-1 sm:gap-2 ${compact ? "h-[70px] sm:h-[80px]" : "h-[90px] sm:h-[120px]"}`}>
+        {/* Indicador sutil cuando no hay ningún ahorro efectivo registrado */}
+        {!hasAnySavings && (
+          <div className="absolute inset-x-0 top-1 flex items-center justify-center pointer-events-none">
+            <span className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-on-surface-variant/50 font-label-caps">
+              <Icon name="savings" className="text-[14px] opacity-60" />
+              Sin ahorros registrados
+            </span>
+          </div>
+        )}
         {history.map((h) => {
-          const pct = Math.max(6, Math.round((h.savings / maxSavings) * 100));
+          const value = effectiveSavings(h);
+          // Altura proporcional al valor. Los meses con ahorro efectivo 0
+          // muestran una barra mínima (base sutil), no una barra vacía.
+          const proportional = hasAnySavings
+            ? Math.round((value / maxSavings) * 100)
+            : 0;
+          const pct = value > 0 ? Math.max(6, proportional) : 4;
           return (
             <div
               key={h.month}
               className="flex-1 flex flex-col items-center gap-1 h-full justify-end min-w-0"
             >
               <div
-                className="w-full bg-primary/80 rounded-t-md transition-all hover:bg-primary group relative"
+                className={`w-full rounded-t-md transition-all group relative ${
+                  value > 0
+                    ? "bg-primary/80 hover:bg-primary"
+                    : "bg-on-surface-variant/15 hover:bg-on-surface-variant/25"
+                }`}
                 style={{ height: `${pct}%` }}
-                title={`${h.monthLabel}: ${formatCurrency(h.savings, { currency })}`}
+                title={`${h.monthLabel}: ${formatCurrency(value, { currency })}`}
               >
                 {/* Tooltip on hover (desktop) */}
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-surface-container px-2 py-1 rounded text-[10px] text-on-surface whitespace-nowrap pointer-events-none z-10">
-                  {formatCurrency(h.savings, { currency })}
+                  {formatCurrency(value, { currency })}
                 </div>
               </div>
               <span className="text-[8px] sm:text-[10px] text-on-surface-variant/70 font-label-caps text-center leading-tight truncate w-full">
@@ -134,16 +163,6 @@ export function SavingsHistory({ data, currency, compact = false }: SavingsHisto
       {/* Resumen + nota informativa debajo del gráfico */}
       {!compact && (
         <div className="mt-4 pt-3 border-t border-outline-variant/30 space-y-3">
-          {history.length >= 2 && (
-            <div className="flex items-center justify-between text-body-sm">
-              <span className="text-on-surface-variant">
-                Promedio mensual
-              </span>
-              <span className="text-on-surface font-mono font-medium">
-                {formatCurrency(totalAccumulated / history.length, { currency })}
-              </span>
-            </div>
-          )}
           {/* Fecha límite de edición */}
           <div className="flex items-start gap-2 p-2.5 sm:p-3 rounded-lg bg-primary/5 border border-primary/20">
             <Icon name="schedule" className="text-[16px] text-primary mt-0.5 shrink-0" />

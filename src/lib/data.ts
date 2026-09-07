@@ -58,11 +58,15 @@ export async function getHabitsForToday(
 
 /** Datos financieros del usuario, con Decimals convertidos a number. */
 export async function getFinanceData(userId: string) {
-  const [summary, fixedExpenses, projects] = await Promise.all([
+  const [summary, fixedExpenses, microExpenses, projects] = await Promise.all([
     prisma.financialSummary.findUnique({ where: { userId } }),
     prisma.fixedExpense.findMany({
       where: { userId },
       orderBy: [{ order: "asc" }, { amount: "desc" }],
+    }),
+    prisma.microExpense.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
     }),
     prisma.projectGoal.findMany({
       where: { userId },
@@ -80,6 +84,13 @@ export async function getFinanceData(userId: string) {
       amount: Number(e.amount),
       icon: e.icon,
       paidThisMonth: e.paidThisMonth,
+    })),
+    microExpenses: microExpenses.map((e) => ({
+      id: e.id,
+      category: e.category,
+      amount: Number(e.amount),
+      icon: e.icon,
+      createdAt: e.createdAt.toISOString(),
     })),
     projects: projects.map((p) => ({
       id: p.id,
@@ -113,12 +124,19 @@ export interface MonthlyFinanceData {
   monthlyIncome: number;
   monthlySavings: number;
   totalFixedExpenses: number;
+  totalMicroExpenses: number;
   availableBalance: number;
   currency: string;
   expensesByCategory: {
     category: string;
     amount: number;
     percent: number;
+  }[];
+  microExpensesByCategory: {
+    category: string;
+    amount: number;
+    percent: number;
+    icon: string;
   }[];
   projectsSnapshot: {
     name: string;
@@ -166,9 +184,14 @@ export async function getMonthlyFinance(
     monthlyIncome: Number(record.monthlyIncome),
     monthlySavings: Number(record.monthlySavings),
     totalFixedExpenses: Number(record.totalFixedExpenses),
+    totalMicroExpenses: Number(record.totalMicroExpenses ?? 0),
     availableBalance: Number(record.availableBalance),
     currency: record.currency,
     expensesByCategory: safeParse(record.expensesByCategory, []),
+    microExpensesByCategory: safeParse(
+      record.microExpensesByCategory ?? "[]",
+      [],
+    ),
     projectsSnapshot: safeParse(record.projectsSnapshot, []),
     savingsConfirmed: record.savingsConfirmed,
     updatedAt: record.updatedAt.toISOString(),

@@ -39,6 +39,13 @@ export const createExpenseSchema = z.object({
 });
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
 
+export const createMicroExpenseSchema = z.object({
+  category: z.string().trim().min(1, "La categoría es obligatoria").max(40),
+  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  icon: z.string().trim().min(1).max(40).default("local_cafe"),
+});
+export type CreateMicroExpenseInput = z.infer<typeof createMicroExpenseSchema>;
+
 export const setIncomeSchema = z.object({
   monthlyIncome: z.coerce
     .number()
@@ -98,4 +105,29 @@ export const confirmMonthlySavingsSchema = z.object({
 });
 export type ConfirmMonthlySavingsInput = z.infer<
   typeof confirmMonthlySavingsSchema
+>;
+
+/**
+ * Actualización del ahorro de un mes (modelo híbrido).
+ *
+ * - `confirmed`: fija la bandera `savingsConfirmed` del mes. `false` → el mes
+ *   cuenta como 0 en el acumulado.
+ * - `newAmount` + `mode`: opcional. Permite ajustar la cifra del mes:
+ *     · `mode = "add"` → suma `newAmount` al ahorro actual del mes.
+ *     · `mode = "set"` → fija `newAmount` como nuevo monto total del mes.
+ *   Si no se envía `newAmount`, solo se aplica la bandera `confirmed`.
+ */
+export const updateMonthlySavingsSchema = z.object({
+  month: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Formato de mes inválido (YYYY-MM)"),
+  confirmed: z.boolean(),
+  newAmount: z.coerce
+    .number()
+    .min(0, "El monto no puede ser negativo")
+    .optional(),
+  mode: z.enum(["add", "set"]).optional(),
+});
+export type UpdateMonthlySavingsInput = z.infer<
+  typeof updateMonthlySavingsSchema
 >;

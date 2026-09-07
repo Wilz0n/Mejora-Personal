@@ -23,12 +23,12 @@ export function TimezoneSelect({ current }: { current: string }) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       <select
         value={value}
         onChange={handleChange}
         disabled={isPending}
-        className="appearance-none bg-background border border-outline-variant text-on-surface font-body-md py-2 pl-4 pr-10 rounded-md focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer outline-none transition-all disabled:opacity-60"
+        className="w-full sm:w-auto appearance-none bg-background border border-outline-variant text-on-surface font-body-md py-2 pl-4 pr-10 rounded-md focus:border-primary focus:ring-1 focus:ring-primary/20 cursor-pointer outline-none transition-all disabled:opacity-60"
       >
         {TIMEZONE_OPTIONS.map((tz) => (
           <option key={tz.value} value={tz.value}>

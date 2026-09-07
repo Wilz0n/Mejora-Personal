@@ -22,6 +22,7 @@ model User {
   habits           Habit[]
   financialSummary FinancialSummary?
   fixedExpenses    FixedExpense[]
+  microExpenses    MicroExpense[]
   projectGoals     ProjectGoal[]
   monthlyFinances  MonthlyFinance[]
 }
@@ -115,6 +116,19 @@ model FixedExpense {
   @@index([userId])
 }
 
+model MicroExpense {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String
+  amount    Decimal  @db.Decimal(10, 2)
+  icon      String   @default("local_cafe")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model ProjectGoal {
   id                 String    @id @default(cuid())
   userId             String
@@ -139,9 +153,11 @@ model MonthlyFinance {
   monthlyIncome       Decimal  @db.Decimal(12, 2)
   monthlySavings      Decimal  @db.Decimal(12, 2)
   totalFixedExpenses  Decimal  @db.Decimal(12, 2)
+  totalMicroExpenses  Decimal? @default(0) @db.Decimal(10, 2)
   availableBalance    Decimal  @db.Decimal(12, 2)
   currency            String   @default("USD")
   expensesByCategory  String   @db.Text // JSON: [{category, amount, percent}]
+  microExpensesByCategory String? @db.Text // JSON: [{category, amount, percent, icon}]
   projectsSnapshot    String   @db.Text // JSON: [{name, tag, targetAmount, allocatedAmount, progress}]
   // Confirmación del ahorro del mes: null = aún no respondido, true = sí ahorró,
   // false = no ahorró (el ahorro efectivo del mes cuenta como 0 en el acumulado).

@@ -75,8 +75,8 @@ export default async function SettingsPage() {
           </h3>
           <div className="flex flex-col gap-stack-md mt-stack-sm">
             {/* Moneda */}
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-surface-variant">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant">
+              <div className="min-w-0">
                 <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
                   Moneda por Defecto
                 </h4>
@@ -84,12 +84,14 @@ export default async function SettingsPage() {
                   Se usa en las métricas de Finanzas.
                 </p>
               </div>
-              <CurrencySelect current={finance.currency} />
+              <div className="w-full sm:w-auto shrink-0">
+                <CurrencySelect current={finance.currency} />
+              </div>
             </div>
 
             {/* Zona Horaria */}
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-surface-variant">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant">
+              <div className="min-w-0">
                 <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
                   Zona Horaria
                 </h4>
@@ -97,12 +99,14 @@ export default async function SettingsPage() {
                   Define qué día es &quot;hoy&quot; en tus hábitos.
                 </p>
               </div>
-              <TimezoneSelect current={timezone} />
+              <div className="w-full sm:w-auto shrink-0">
+                <TimezoneSelect current={timezone} />
+              </div>
             </div>
 
             {/* Tema (placeholder: app dark-only) */}
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-surface-variant">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant">
+              <div className="min-w-0">
                 <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
                   Tema de la Interfaz
                 </h4>
@@ -110,15 +114,15 @@ export default async function SettingsPage() {
                   Modo oscuro para un enfoque óptimo.
                 </p>
               </div>
-              <div className="flex bg-background border border-outline-variant rounded-lg p-1">
+              <div className="flex w-full sm:w-auto shrink-0 bg-background border border-outline-variant rounded-lg p-1">
                 <button
                   disabled
-                  className="px-3 py-1 rounded-md text-on-surface-variant font-label-caps text-label-caps flex items-center gap-1 opacity-50 cursor-not-allowed"
+                  className="flex-1 sm:flex-none justify-center px-3 py-1 rounded-md text-on-surface-variant font-label-caps text-label-caps flex items-center gap-1 opacity-50 cursor-not-allowed"
                 >
                   <Icon name="light_mode" className="text-[16px]" />
                   Claro
                 </button>
-                <button className="px-3 py-1 rounded-md bg-surface-variant text-primary font-label-caps text-label-caps flex items-center gap-1 shadow-sm border border-outline-variant">
+                <button className="flex-1 sm:flex-none justify-center px-3 py-1 rounded-md bg-surface-variant text-primary font-label-caps text-label-caps flex items-center gap-1 shadow-sm border border-outline-variant">
                   <Icon name="dark_mode" className="text-[16px]" filled />
                   Oscuro
                 </button>
@@ -126,8 +130,8 @@ export default async function SettingsPage() {
             </div>
 
             {/* Persistencia */}
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-surface-variant">
-              <div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant">
+              <div className="min-w-0">
                 <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
                   Persistencia de Datos
                 </h4>
@@ -135,7 +139,7 @@ export default async function SettingsPage() {
                   Estado de sincronización en la nube.
                 </p>
               </div>
-              <div className="flex items-center gap-2 bg-background px-3 py-1.5 rounded-full border border-surface-variant">
+              <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 bg-background px-3 py-1.5 rounded-full border border-surface-variant">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span className="text-label-caps font-label-caps text-on-surface">
                   Neon Connected

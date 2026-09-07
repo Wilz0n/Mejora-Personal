@@ -2,6 +2,12 @@ export interface FinanceInput {
   monthlyIncome: number;
   monthlySavings?: number;
   fixedExpenses: { id: string; category: string; amount: number }[];
+  microExpenses?: {
+    id: string;
+    category: string;
+    amount: number;
+    icon?: string;
+  }[];
   projects: {
     id: string;
     name: string;
@@ -17,8 +23,9 @@ export interface FinanceSummary {
   monthlyIncome: number;
   monthlySavings: number;
   totalFixedExpenses: number;
+  totalMicroExpenses: number;
   totalAllocated: number;
-  /** Balance Disponible = Ingreso - Ahorro - Gastos Fijos - Asignado a proyectos ACTIVOS (no cumplidos). */
+  /** Balance Disponible = Ingreso - Ahorro - Gastos Fijos - Gastos Hormiga - Asignado a proyectos ACTIVOS (no cumplidos). */
   availableBalance: number;
 }
 
@@ -40,6 +47,10 @@ export function computeFinanceSummary(input: FinanceInput): FinanceSummary {
     (acc, e) => acc + e.amount,
     0,
   );
+  const totalMicroExpenses = (input.microExpenses ?? []).reduce(
+    (acc, e) => acc + e.amount,
+    0,
+  );
   // Solo los proyectos ACTIVOS (no cumplidos) descuentan del balance.
   // Al completarse un proyecto, su monto deja de restar (Opción A).
   const totalAllocated = input.projects
@@ -47,12 +58,17 @@ export function computeFinanceSummary(input: FinanceInput): FinanceSummary {
     .reduce((acc, p) => acc + p.allocatedAmount, 0);
   const monthlySavings = input.monthlySavings ?? 0;
   const availableBalance =
-    input.monthlyIncome - monthlySavings - totalFixedExpenses - totalAllocated;
+    input.monthlyIncome -
+    monthlySavings -
+    totalFixedExpenses -
+    totalMicroExpenses -
+    totalAllocated;
 
   return {
     monthlyIncome: input.monthlyIncome,
     monthlySavings,
     totalFixedExpenses,
+    totalMicroExpenses,
     totalAllocated,
     availableBalance,
   };
@@ -130,6 +146,13 @@ export interface ExpenseCategoryBreakdown {
   percent: number;
 }
 
+export interface MicroExpenseCategoryBreakdown {
+  category: string;
+  amount: number;
+  percent: number;
+  icon: string;
+}
+
 export interface ProjectSnapshotItem {
   name: string;
   tag: string;
@@ -152,6 +175,41 @@ export function computeExpenseBreakdown(
     amount: e.amount,
     percent: Math.round((e.amount / total) * 100),
   }));
+}
+
+/**
+ * Calcula el desglose de gastos hormiga agrupados por categoría.
+ * Para cada categoría devuelve el subtotal acumulado, un ícono representativo
+ * (el del primer gasto registrado de esa categoría) y el porcentaje que
+ * representa sobre el total de gastos hormiga. Ordenado de mayor a menor monto.
+ */
+export function computeMicroExpenseBreakdown(
+  microExpenses: { category: string; amount: number; icon?: string }[],
+): MicroExpenseCategoryBreakdown[] {
+  const total = microExpenses.reduce((acc, e) => acc + e.amount, 0);
+  if (total === 0) return [];
+
+  const groups = new Map<string, { amount: number; icon: string }>();
+  for (const e of microExpenses) {
+    const existing = groups.get(e.category);
+    if (existing) {
+      existing.amount += e.amount;
+    } else {
+      groups.set(e.category, {
+        amount: e.amount,
+        icon: e.icon ?? "local_cafe",
+      });
+    }
+  }
+
+  return Array.from(groups.entries())
+    .map(([category, { amount, icon }]) => ({
+      category,
+      amount,
+      icon,
+      percent: Math.round((amount / total) * 100),
+    }))
+    .sort((a, b) => b.amount - a.amount);
 }
 
 /**

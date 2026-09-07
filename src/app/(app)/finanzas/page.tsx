@@ -10,6 +10,7 @@ import {
   formatCurrency,
   suggestedSavings,
   pendingSavingsConfirmation,
+  currentMonthKey,
 } from "@/lib/finance-logic";
 import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/dates";
 import { AddProjectButton } from "@/components/finanzas/AddProjectButton";
@@ -21,10 +22,15 @@ import {
   SetSavingsButton,
 } from "@/components/finanzas/FinanceModals";
 import { RemoveExpenseButton } from "@/components/finanzas/RemoveExpenseButton";
+import {
+  AddMicroExpenseButton,
+  MicroExpenseItem,
+} from "@/components/finanzas/MicroExpenseModals";
 import { SaveFinanceButton } from "@/components/finanzas/SaveFinanceButton";
 import { SavingsHistory } from "@/components/finanzas/SavingsHistory";
 import { FixedExpenseItem } from "@/components/finanzas/FixedExpenseItem";
-import { SavingsConfirmationModal } from "@/components/finanzas/SavingsConfirmationModal";
+import { SavingsConfirmationBanner } from "@/components/finanzas/SavingsConfirmationBanner";
+import { AdjustSavingsButton } from "@/components/finanzas/UpdateSavingsModal";
 import { Icon } from "@/components/comun/Icon";
 
 export const dynamic = "force-dynamic";
@@ -71,12 +77,13 @@ export default async function FinancePage() {
       : 0;
 
   // Balance efectivo: descuenta el ahorro MOSTRADO (guardado o sugerido),
-  // los gastos fijos y lo asignado a proyectos. Así el balance siempre
-  // refleja lo que el usuario ve como ahorro en pantalla.
+  // los gastos fijos, los gastos hormiga y lo asignado a proyectos. Así el
+  // balance siempre refleja lo que el usuario ve como ahorro en pantalla.
   const availableBalance =
     summary.monthlyIncome -
     savings -
     summary.totalFixedExpenses -
+    summary.totalMicroExpenses -
     summary.totalAllocated;
 
   // % disponible respecto al ingreso, para la barra del "Balance Restante".
@@ -93,19 +100,16 @@ export default async function FinancePage() {
 
   return (
     <>
-      {/* Modal de confirmación de ahorro mensual (cierre de mes) */}
+      {/* Banner sutil de confirmación de ahorro mensual (reemplaza el modal) */}
       {pendingMonth && (
-        <SavingsConfirmationModal
-          month={pendingMonth}
-          monthLabel={
-            pendingItem?.monthLabel ?? monthLabelOf(now, timezone)
-          }
-          savingsAmount={
-            pendingItem
-              ? formatCurrency(pendingItem.savings, { currency })
-              : undefined
-          }
-        />
+        <div className="mb-stack-lg">
+          <SavingsConfirmationBanner
+            month={pendingMonth}
+            monthLabel={pendingItem?.monthLabel ?? monthLabelOf(now, timezone)}
+            savingsAmount={pendingItem ? pendingItem.savings : 0}
+            currency={currency}
+          />
+        </div>
       )}
 
       {/* Header */}
@@ -168,6 +172,15 @@ export default async function FinancePage() {
                   monthlyIncome={summary.monthlyIncome}
                 />
               </div>
+              {/* Ajuste continuo del ahorro del mes en curso (modelo híbrido) */}
+              <div className="mt-2 flex justify-end">
+                <AdjustSavingsButton
+                  month={currentMonthKey()}
+                  monthLabel={monthLabelOf(now, timezone)}
+                  currency={currency}
+                  currentAmount={savings}
+                />
+              </div>
             </div>
           </div>
 
@@ -183,61 +196,123 @@ export default async function FinancePage() {
             </p>
           </div>
 
-          {/* Gastos fijos */}
-          <div className="glass-panel rounded-xl p-stack-md flex flex-col h-full">
-            <div className="flex items-center justify-between mb-stack-md pb-stack-sm border-b border-outline-variant/30">
-              <h3 className="text-headline-md font-headline-md text-on-background text-lg">
-                Gastos Fijos
-              </h3>
-              <div className="flex items-center gap-3">
-                {finance.fixedExpenses.length > 0 && (
-                  <RemoveExpenseButton
-                    expenses={finance.fixedExpenses}
-                    currency={currency}
-                  />
-                )}
-                <AddExpenseButton />
+          {/* Gastos fijos + Gastos hormiga (grid 2 columnas en desktop) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Gastos fijos */}
+            <div className="glass-panel rounded-xl p-stack-md flex flex-col h-full min-w-0">
+              <div className="flex items-center justify-between mb-stack-md pb-stack-sm border-b border-outline-variant/30 gap-2">
+                <h3 className="text-headline-md font-headline-md text-on-background text-lg">
+                  Gastos Fijos
+                </h3>
+                <div className="flex items-center gap-3">
+                  {finance.fixedExpenses.length > 0 && (
+                    <RemoveExpenseButton
+                      expenses={finance.fixedExpenses}
+                      currency={currency}
+                    />
+                  )}
+                  <AddExpenseButton />
+                </div>
+              </div>
+
+              {finance.fixedExpenses.length === 0 ? (
+                <div className="py-8 flex flex-col items-center justify-center text-center gap-3 text-on-surface-variant">
+                  <Icon name="receipt_long" className="text-[36px] opacity-40" />
+                  <p className="text-body-sm">Sin gastos fijos.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {finance.fixedExpenses.map((e) => (
+                    <FixedExpenseItem
+                      key={e.id}
+                      id={e.id}
+                      category={e.category}
+                      amount={formatCurrency(e.amount, { currency })}
+                      icon={e.icon && e.icon !== "receipt_long" ? e.icon : expenseIcon(e.category)}
+                      paidThisMonth={e.paidThisMonth}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Ahorro automático (20%) */}
+              <div className="mt-stack-md pt-stack-sm border-t border-outline-variant/30">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                      <Icon name="savings" className="text-[18px]" />
+                    </div>
+                    <div>
+                      <span className="block text-body-md font-body-md text-on-background font-medium">
+                        Ahorro Automático
+                      </span>
+                      <span className="block text-label-caps font-label-caps text-on-surface-variant">
+                        {savingsPctOfIncome}% del ingreso
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-body-lg font-body-lg text-primary font-mono font-semibold">
+                    {formatCurrency(savings, { currency })}
+                  </div>
+                </div>
               </div>
             </div>
 
-            {finance.fixedExpenses.length === 0 ? (
-              <div className="py-8 flex flex-col items-center justify-center text-center gap-3 text-on-surface-variant">
-                <Icon name="receipt_long" className="text-[36px] opacity-40" />
-                <p className="text-body-sm">Sin gastos fijos.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {finance.fixedExpenses.map((e) => (
-                  <FixedExpenseItem
-                    key={e.id}
-                    id={e.id}
-                    category={e.category}
-                    amount={formatCurrency(e.amount, { currency })}
-                    icon={e.icon && e.icon !== "receipt_long" ? e.icon : expenseIcon(e.category)}
-                    paidThisMonth={e.paidThisMonth}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Ahorro automático (20%) */}
-            <div className="mt-stack-md pt-stack-sm border-t border-outline-variant/30">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                    <Icon name="savings" className="text-[18px]" />
-                  </div>
-                  <div>
-                    <span className="block text-body-md font-body-md text-on-background font-medium">
-                      Ahorro Automático
-                    </span>
-                    <span className="block text-label-caps font-label-caps text-on-surface-variant">
-                      {savingsPctOfIncome}% del ingreso
-                    </span>
-                  </div>
+            {/* Gastos hormiga */}
+            <div className="glass-panel rounded-xl p-stack-md flex flex-col h-full min-w-0">
+              <div className="flex items-center justify-between mb-stack-md pb-stack-sm border-b border-outline-variant/30 gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-headline-md font-headline-md text-on-background text-lg">
+                    Gastos Hormiga
+                  </h3>
+                  <span className="block text-label-caps font-label-caps text-on-surface-variant font-mono">
+                    Subtotal: {formatCurrency(summary.totalMicroExpenses, { currency })}
+                  </span>
                 </div>
-                <div className="text-body-lg font-body-lg text-primary font-mono font-semibold">
-                  {formatCurrency(savings, { currency })}
+                <AddMicroExpenseButton />
+              </div>
+
+              {finance.microExpenses.length === 0 ? (
+                <div className="py-8 flex flex-col items-center justify-center text-center gap-3 text-on-surface-variant">
+                  <Icon name="local_cafe" className="text-[36px] opacity-40" />
+                  <p className="text-body-sm">
+                    Sin gastos hormiga. Registra esos pequeños gastos que se
+                    escapan.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {finance.microExpenses.map((e) => (
+                    <MicroExpenseItem
+                      key={e.id}
+                      id={e.id}
+                      category={e.category}
+                      amount={formatCurrency(e.amount, { currency })}
+                      icon={e.icon}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Total de gastos hormiga */}
+              <div className="mt-stack-md pt-stack-sm border-t border-outline-variant/30">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/5 border border-secondary/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary">
+                      <Icon name="filter_drama" className="text-[18px]" />
+                    </div>
+                    <div>
+                      <span className="block text-body-md font-body-md text-on-background font-medium">
+                        Total Gastos Hormiga
+                      </span>
+                      <span className="block text-label-caps font-label-caps text-on-surface-variant">
+                        Fuga del mes
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-body-lg font-body-lg text-secondary font-mono font-semibold">
+                    {formatCurrency(summary.totalMicroExpenses, { currency })}
+                  </div>
                 </div>
               </div>
             </div>
