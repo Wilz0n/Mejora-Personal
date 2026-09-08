@@ -85,5 +85,32 @@ function buildCsv(data: Awaited<ReturnType<typeof getUserExportData>>): string {
     [esc(data.finance.monthlyIncome), esc(data.finance.currency)].join(","),
   );
 
+  lines.push("");
+  lines.push("# FINANZAS MENSUALES");
+  lines.push(
+    "mes,etiqueta,ingreso,ahorro,gastos_fijos,gastos_hormiga,balance,moneda",
+  );
+  for (const m of data.monthlyFinances) {
+    lines.push(
+      [
+        esc(m.month),
+        esc(m.monthLabel),
+        esc(m.monthlyIncome),
+        esc(m.monthlySavings),
+        esc(m.totalFixedExpenses),
+        esc(m.totalMicroExpenses),
+        esc(m.availableBalance),
+        esc(m.currency),
+      ].join(","),
+    );
+  }
+
+  lines.push("");
+  lines.push("# GASTOS HORMIGA");
+  lines.push("categoria,monto,fecha");
+  for (const e of data.microExpenses) {
+    lines.push([esc(e.category), esc(e.amount), esc(e.date)].join(","));
+  }
+
   return lines.join("\n");
 }

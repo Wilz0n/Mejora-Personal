@@ -226,8 +226,12 @@ Se abre desde **Ajustes** en el menú o con el **icono de perfil** (arriba a la 
   - **Cerrar sesión:** justo debajo de "Editar Perfil" verás el botón **"Cerrar sesión"** (en rojo). Cierra tu sesión y te lleva a la pantalla de inicio de sesión. Si la app está en **Modo Usuario Único** (sin login), en su lugar verás el indicador *"Modo Usuario Único activo"* y no hay botón de cerrar sesión (no hace falta).
 - **Moneda por Defecto:** elige **USD ($)** o **PEN (S/)**. Se aplica a todo Finanzas.
 - **Gestión de Datos:**
-  - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos).
-  - **Ver Análisis / Backup:** abre una página donde puedes **volver a subir** el archivo que exportaste para revisar tu progreso de los meses anteriores.
+  - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos, cierres mensuales y gastos hormiga). Usa **JSON** para volver a verlos dentro de la web (en *Ver Análisis / Backup*) y **CSV** para analizarlos con métricas en Excel o Google Sheets.
+  - **Ver Análisis / Backup:** abre una página donde puedes **volver a subir tu archivo JSON** para revisar el consolidado de tus meses de uso. Muestra:
+    - **KPIs generales:** tasa de éxito de hábitos, ingreso total, gasto fijo total y ahorro neto.
+    - **Seguimiento de Hábitos:** cómo evolucionó cada hábito mes a mes (colores según cumplimiento) y su tasa global.
+    - **Distribución de Pagos Mensuales** y **Categorías de Gastos.**
+    - **Ahorro Histórico** por mes y **Gastos Hormiga** (cuánto gastaste, en qué más y en qué menos, y el mes de mayor gasto).
   - **Purgar Datos de Cuenta:** borra **de forma permanente** tus hábitos, gastos y proyectos. Pide confirmación escribiendo una palabra; **no se puede deshacer**.
 
 - **Al 7º mes de uso (archivar y reiniciar):** para mantener la app rápida, se conservan alrededor de **6 meses** de datos. Al llegar al **séptimo mes** verás un aviso (un popup en Hábitos y un mensaje en Ajustes). El flujo recomendado es:

@@ -276,7 +276,7 @@ export async function getMonthlyConfirmStates(
  * para exportarlos. Devuelve un objeto serializable a JSON.
  */
 export async function getUserExportData(userId: string) {
-  const [profile, habits, summary, fixedExpenses, projects] =
+  const [profile, habits, summary, fixedExpenses, projects, monthly, micro] =
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -295,7 +295,25 @@ export async function getUserExportData(userId: string) {
       prisma.financialSummary.findUnique({ where: { userId } }),
       prisma.fixedExpense.findMany({ where: { userId } }),
       prisma.projectGoal.findMany({ where: { userId } }),
+      prisma.monthlyFinance.findMany({
+        where: { userId },
+        orderBy: { month: "asc" },
+      }),
+      prisma.microExpense.findMany({
+        where: { userId },
+        orderBy: { createdAt: "asc" },
+      }),
     ]);
+
+  // Parseo seguro de los campos JSON de MonthlyFinance (mismo patrón que getMonthlyFinance).
+  const safeParse = <T>(raw: string | null | undefined, fallback: T): T => {
+    if (!raw) return fallback;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
+  };
 
   return {
     exportedAt: new Date().toISOString(),
@@ -323,5 +341,31 @@ export async function getUserExportData(userId: string) {
         tag: p.tag,
       })),
     },
+    // Histórico financiero mes a mes (cierres guardados). Base del análisis
+    // de distribución de pagos y ahorro histórico en /backup-analisis.
+    monthlyFinances: monthly.map((m) => ({
+      month: m.month,
+      monthLabel: m.monthLabel,
+      monthlyIncome: Number(m.monthlyIncome),
+      monthlySavings: Number(m.monthlySavings),
+      totalFixedExpenses: Number(m.totalFixedExpenses),
+      totalMicroExpenses: Number(m.totalMicroExpenses ?? 0),
+      availableBalance: Number(m.availableBalance),
+      currency: m.currency,
+      expensesByCategory: safeParse<
+        { category: string; amount: number; percent: number }[]
+      >(m.expensesByCategory, []),
+      microExpensesByCategory: safeParse<
+        { category: string; amount: number; percent: number; icon: string }[]
+      >(m.microExpensesByCategory, []),
+      savingsConfirmed: m.savingsConfirmed,
+    })),
+    // Gastos hormiga individuales (para el consolidado de "Gastos Hormiga").
+    microExpenses: micro.map((e) => ({
+      category: e.category,
+      amount: Number(e.amount),
+      icon: e.icon,
+      date: e.createdAt.toISOString(),
+    })),
   };
 }
