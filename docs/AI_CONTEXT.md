@@ -64,8 +64,10 @@ src/app/
 │  ├─ proyectos, support            # (en construcción)
 │  └─ loading.tsx por subruta       # skeletons
 ├─ login/, register/                # force-dynamic
+├─ backup-analisis/page.tsx         # RUTA OCULTA (fuera de (app), sin sidebar): sube el JSON exportado y
+│                                   #   muestra el análisis consolidado (usa analyzeBackup)
 ├─ api/auth/[...nextauth]/route.ts  # handler NextAuth
-├─ api/export/route.ts              # exportación JSON/CSV
+├─ api/export/route.ts              # exportación JSON/CSV (incluye monthlyFinances[] y microExpenses[])
 └─ actions/                         # Server Actions
    ├─ habits.ts                     # toggleHabitLog, createHabit, deleteHabit
    ├─ finance.ts                    # createProject, contributeToProject, updateProjectAllocation,
@@ -74,7 +76,7 @@ src/app/
    │                                #   setMonthlyIncome, setMonthlySavings, saveMonthlyFinance,
    │                                #   toggleExpensePaid, reorderExpenses,
    │                                #   confirmMonthlySavings (legada), updateMonthlySavings
-   ├─ settings.ts                   # updateProfile, setCurrency, purgeAccountData
+   ├─ settings.ts                   # updateProfile, setCurrency, purgeAccountData, archiveAndReset
    └─ auth.ts                       # registerUser
 ```
 
@@ -108,6 +110,19 @@ src/app/
 
 ### Historial de Ahorro — `src/lib/db/data.ts` → `getSavingsHistory`
 - Lee todos los `MonthlyFinance` del usuario ordenados por mes y devuelve `{ history: [{month, monthLabel, savings, savingsConfirmed, updatedAt}], totalAccumulated }`.
+
+### Análisis de Backup — `src/lib/logic/backup-analysis.ts`
+- **Función pura del cliente** que alimenta la página oculta `/backup-analisis`. No accede a BD ni a `Date.now`: opera sobre el JSON que el usuario **sube** (el que exportó desde Ajustes).
+- `analyzeBackup(data: ExportedData | null): BackupAnalysis`. Si `data` es `null` o inválido → `{ hasData: false, ... }`.
+- `ExportedData` refleja la salida de `getUserExportData` (perfil, hábitos con logs, finanzas, `monthlyFinances[]`, `microExpenses[]`).
+- `BackupAnalysis` incluye:
+  - `rangeLabel` (ej. "mar 2024 – ago 2024"), `monthCount`, `currency`.
+  - `kpis`: `habitSuccessRate`, `totalIncome`, `totalFixedExpenses`, `netSavings`, `savingsRatePct`.
+  - `habits`: `globalRate`, `best`, `worst`, `recent`, y `series[]` con el **% de cada hábito mes a mes** (los meses salen de `monthlyFinances`; si no hay, de las fechas de los logs). Cada mes lleva `level` (`good ≥80` / `mid 40–79` / `low <40`).
+  - `finance`: `incomeByMonth[]` (barras con `heightPct` relativo al máximo), `peakIncome`, `expensesByCategory[]` (acumulado de los meses o, si no hay, gastos fijos actuales), `totalExpenses`.
+  - `savings`: `byMonth[]` (el ahorro con `savingsConfirmed === false` cuenta como 0), `peak`, `total`.
+  - `microExpenses`: `total`, `most` / `least` (categoría de mayor/menor gasto), `topMonth`.
+- `levelOf(rate)` y `type Level` se exportan para reusar el criterio de color.
 - **`totalAccumulated` respeta la confirmación:** los meses con `savingsConfirmed === false` cuentan como **0** en el acumulado; los pendientes (`null`) y confirmados (`true`) suman su cifra.
 - `getMonthlyConfirmStates(userId)` devuelve `[{month, savingsConfirmed}]` (desc) para detectar el mes pendiente de confirmar.
 - **Render del gráfico (`SavingsHistory.tsx`):** la altura de cada barra es proporcional al **ahorro efectivo** (`savingsConfirmed === false` ⇒ 0). Meses en 0 muestran una barra mínima tenue (no una barra azul llena); si todo el historial es 0, se muestra "Sin ahorros registrados". Las etiquetas de mes quedan alineadas abajo aunque la barra tenga altura 0.
@@ -153,7 +168,10 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 - **SaveFinanceButton** (`finanzas/`): guarda el cierre (`saveMonthlyFinance`) y navega a `/finanzas/mes`.
 - **SavingsConfirmationBanner** (`finanzas/`): client. **Banner sutil y cerrable** (reemplaza al modal invasivo `SavingsConfirmationModal`, eliminado). Aparece arriba de `/finanzas` y `/finanzas/mes` cuando `pendingSavingsConfirmation` detecta un mes con `savingsConfirmed === null`. Mensaje "¿Cómo te fue con tu ahorro de [Mes]? · Pactado: $XXX". Acciones: **Sí** → `updateMonthlySavings({month, confirmed:true})`; **Ajustar/Aportar** → abre `UpdateSavingsModal`; **No ahorré** → `confirmed:false`; **X descartar** → oculta solo en la sesión (no altera el registro). No bloquea la navegación. Funciona igual en multi-usuario y único.
 - **UpdateSavingsModal / AdjustSavingsButton** (`finanzas/`): client. Modal ligero de **suma** ("Aportar más") con previsualización → `updateMonthlySavings({newAmount, mode:"add", confirmed:true})`. Reemplazar el monto total se hace con `SetSavingsButton` ("Editar ahorro"). Ambos escriben el mismo ahorro.
-- **LogoutButton** (`settings/`): client. Debajo de "Editar Perfil". En multi-usuario muestra un botón de peligro "Cerrar sesión" (`signOut({callbackUrl:"/login"})`); en modo usuario único (`isSingleUserModeClient()`) muestra el indicador pasivo "Modo Usuario Único activo" (coherente con el Sidebar).
+- **LogoutButton** (`settings/botones/`): client. Debajo de "Editar Perfil". En multi-usuario muestra un botón de peligro "Cerrar sesión" (`signOut({callbackUrl:"/login"})`); en modo usuario único (`isSingleUserModeClient()`) muestra el indicador pasivo "Modo Usuario Único activo" (coherente con el Sidebar).
+- **ArchiveNoticeModal** (`habitos/`): client. Popup que se auto-abre en `/habitos` cuando `isArchiveDue(tenureMonths)`; explica el flujo del 7º mes y enlaza a Ajustes.
+- **ArchiveResetButton** (`settings/botones/`): client. "Reiniciar ciclo" con checkbox de confirmación (el usuario declara que ya exportó) → `archiveAndReset`.
+- **Backup / Análisis** (`app/backup-analisis/page.tsx`): client. Sube el JSON, lo parsea y lo pasa a `analyzeBackup`. Subcomponentes locales: `KpiCard`, `Gauge` (fuente interior adaptativa a la longitud del monto), `StatCard`, `StatText`, `BarChart`, `LegendDot`, `EmptyHint`.
 - **Modal, Icon, ProgressRing, ProjectModal, Providers, Skeleton** (`comun/`): primitivos. `Modal` usa React Portal (obligatorio por `backdrop-filter` de `.glass-panel`).
 
 ## Pantallas (comportamiento funcional)
@@ -162,6 +180,9 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 - **Hábitos (`/habitos?view=week|month|quarter|semester`)**: 4 periodos. **Semanal** = editable (marcar días). **Mensual** = solo lectura (refleja lo marcado en semanal, auto-abre la semana actual, muestra las semanas reales del mes). **Trimestral / Semestral** = solo lectura, progreso mes a mes (`PeriodTracker`). Panel de Resumen (más ancho, grid `lg:grid-cols-3`): anillo de tasa global + tarjetas Mejor Hábito, Por Mejorar, y KPIs **Consolidados** (≥80%) y **En Riesgo** (<40%) con conteo `x/total`. Crear hábito disponible en todas las vistas.
 - **Finanzas — edición (`/finanzas`)**: ingreso, ahorro, gastos fijos (con ícono, marcables como "pagado" con doble clic/tap → fondo verde) y proyectos, todos editables. Los **Gastos Fijos** y los **Gastos Hormiga** se muestran lado a lado en un grid de 2 columnas igualitarias en desktop (`grid-cols-1 lg:grid-cols-2`) y apilados en móvil. Los Gastos Hormiga (`AddMicroExpenseButton` + `MicroExpenseItem` en `MicroExpenseModals.tsx`) se registran con concepto, monto e ícono (catálogo `MICRO_EXPENSE_ICONS`, default `local_cafe`), muestran el subtotal en la cabecera y se eliminan con un botón discreto. Se descuentan del balance disponible. Tip informativo arriba de la sección de gastos fijos. Balance disponible (rojo si negativo). Botón "Guardar Finanza". La tarjeta de Ahorro Mensual ofrece "Editar ahorro" (reemplaza total) y "Aportar más" (suma). Al cierre del mes (o inicio del siguiente) puede aparecer el **banner sutil de confirmación de ahorro** (`SavingsConfirmationBanner`) si hay un mes con `savingsConfirmed === null`.
 - **Finanzas del Mes (`/finanzas/mes`)**: cierre guardado. KPIs (Ingreso, Gasto Fijo, Ahorro, Balance), "Metas Activas" (barras de progreso desde `projectsSnapshot`) y un grid de 2 columnas con "Categorías de Gastos Fijos" (anillo + tarjetas desde `expensesByCategory`) y "Desglose de Gastos Hormiga" (KPI del total gastado + % de impacto sobre el ingreso, alerta de "Mayor fuga" con la categoría de mayor gasto, y barras de distribución por categoría desde `microExpensesByCategory`). Las tarjetas de categorías cruzan el snapshot con `current.fixedExpenses` (datos live) para mostrar el estado `paidThisMonth`: las categorías pagadas se resaltan con borde verde, barra lateral verde, texto verde con line-through, y un ícono `check_circle` filled verde (sincronizado en tiempo real con el toggle de `/finanzas`). Si no hay snapshot **o** el usuario ya no tiene datos actuales → `redirect("/finanzas")`. Botón "Editar Finanza" → `/finanzas`.
+- **Ajustes (`/settings`)**: identidad (avatar, nombre, email), preferencias (moneda, zona horaria) y "Gestión de Datos": exportar JSON (para reimportar en la web) / CSV (para métricas en Excel), enlace **"Ver Análisis / Backup"** → `/backup-analisis`, y "Purgar Datos". Cuando la antigüedad efectiva alcanza el **7º mes** (`isArchiveDue`, desde `getUserTenureStart`), aparece un aviso contextual con el botón **"Reiniciar ciclo"** (`ArchiveResetButton` → `archiveAndReset`, con confirmación explícita de que el usuario ya exportó).
+- **Archivado del 7º mes (flujo)**: al entrar a `/habitos` con ≥7 meses de uso se auto-abre `ArchiveNoticeModal` con las instrucciones (exportar → reiniciar → reimportar). `archiveAndReset` borra los datos del dominio y marca `dataResetAt = now()`, reiniciando la antigüedad efectiva (rehabilita vistas y quita el aviso) sin borrar la cuenta.
+- **Backup / Análisis (`/backup-analisis`, ruta oculta)**: el usuario sube el JSON exportado; se parsea y se analiza con `analyzeBackup` (cliente). Muestra el consolidado histórico: fila de KPIs, "Seguimiento de Hábitos" (progreso mes a mes con barras segmentadas por hábito + gauge de tasa global y destacados), "Distribución de Pagos Mensuales" (barras de ingreso por mes) + "Categorías de Gastos" (gauge de total + lista), y "Ahorro Histórico" (barras) + "Gastos Hormiga" (gauge de total + más/menos/mes pico). El texto interior de los gauges escala según la longitud del monto para no desbordar. Estado vacío si no hay archivo. Diseño en design system "Nocturne", responsive (móvil incluido).
 
 ## Variables de entorno
 
