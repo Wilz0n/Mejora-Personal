@@ -103,6 +103,10 @@ model FinancialSummary {
   monthlyIncome  Decimal @default(0) @db.Decimal(12, 2)
   monthlySavings Decimal @default(0) @db.Decimal(12, 2)
   currency       String  @default("USD")
+  // Último mes ("YYYY-MM") en el que se ejecutó el reinicio mensual lazy.
+  // Permite archivar el cierre del mes anterior y resetear ahorro + gastos
+  // hormiga + paidThisMonth una sola vez al cambiar de mes (sin cron).
+  lastFinanceResetMonth String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

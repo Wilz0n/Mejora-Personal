@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { periodDayKeys, type Period } from "@/lib/logic/habits-logic";
 import type { HabitWithLogs } from "@/lib/logic/habits-logic";
+import type { FinanceHistoryEntry } from "@/lib/logic/finance-logic";
 
 /**
  * Todas las funciones aquí reciben `userId` explícito y filtran por él,
@@ -269,6 +270,46 @@ export async function getMonthlyConfirmStates(
     orderBy: { month: "desc" },
     select: { month: true, savingsConfirmed: true },
   });
+}
+
+/**
+ * Obtiene el historial financiero completo del usuario (de MonthlyFinance),
+ * en orden cronológico ASCENDENTE, listo para agrupar con `groupFinanceHistory`
+ * (mensual / trimestral / semestral). Incluye moneda del último cierre.
+ */
+export async function getFinanceHistory(userId: string): Promise<{
+  entries: FinanceHistoryEntry[];
+  currency: string;
+}> {
+  const records = await prisma.monthlyFinance.findMany({
+    where: { userId },
+    orderBy: { month: "asc" },
+    select: {
+      month: true,
+      monthLabel: true,
+      monthlyIncome: true,
+      monthlySavings: true,
+      totalFixedExpenses: true,
+      totalMicroExpenses: true,
+      availableBalance: true,
+      savingsConfirmed: true,
+      currency: true,
+    },
+  });
+
+  const entries: FinanceHistoryEntry[] = records.map((r) => ({
+    month: r.month,
+    monthLabel: r.monthLabel,
+    monthlyIncome: Number(r.monthlyIncome),
+    monthlySavings: Number(r.monthlySavings),
+    totalFixedExpenses: Number(r.totalFixedExpenses),
+    totalMicroExpenses: Number(r.totalMicroExpenses ?? 0),
+    availableBalance: Number(r.availableBalance),
+    savingsConfirmed: r.savingsConfirmed,
+  }));
+
+  const currency = records.length > 0 ? records[records.length - 1].currency : "USD";
+  return { entries, currency };
 }
 
 /**
