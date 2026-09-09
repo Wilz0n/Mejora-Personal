@@ -318,3 +318,145 @@ export function pendingSavingsConfirmation(
 
   return null;
 }
+
+// --- Historial Financiero (mensual / trimestral / semestral) ---
+
+/**
+ * Modo de agrupación del historial financiero:
+ *  - "monthly"     → cada mes de forma independiente.
+ *  - "quarterly"   → grupos de 3 meses.
+ *  - "semiannual"  → grupos de 6 meses.
+ */
+export type FinanceHistoryPeriod = "monthly" | "quarterly" | "semiannual";
+
+/** Número de meses que abarca cada grupo del historial. */
+export const FINANCE_HISTORY_GROUP_SIZE: Record<FinanceHistoryPeriod, number> = {
+  monthly: 1,
+  quarterly: 3,
+  semiannual: 6,
+};
+
+/** Registro mensual de entrada para el historial (derivado de MonthlyFinance). */
+export interface FinanceHistoryEntry {
+  month: string; // "YYYY-MM"
+  monthLabel: string; // "Agosto 2026"
+  monthlyIncome: number;
+  monthlySavings: number;
+  totalFixedExpenses: number;
+  totalMicroExpenses: number;
+  availableBalance: number;
+  /** null = pendiente, true = ahorró, false = no ahorró (ahorro efectivo 0). */
+  savingsConfirmed: boolean | null;
+}
+
+/** Un grupo del historial (1 mes en "monthly", hasta 3 o 6 en los otros modos). */
+export interface FinanceHistoryGroup {
+  /** Clave del grupo: el mes del primer elemento (más antiguo) del grupo. */
+  key: string;
+  /** Etiqueta legible: un mes ("Agosto 2026") o un rango ("Jun – Ago 2026"). */
+  label: string;
+  /** Meses incluidos en el grupo (orden cronológico ascendente). */
+  months: FinanceHistoryEntry[];
+  /** Suma de ingresos del grupo. */
+  totalIncome: number;
+  /** Ahorro EFECTIVO del grupo (los meses con savingsConfirmed === false = 0). */
+  totalSavings: number;
+  /** Suma de gastos fijos del grupo. */
+  totalFixedExpenses: number;
+  /** Suma de gastos hormiga del grupo. */
+  totalMicroExpenses: number;
+  /** Suma de balances disponibles del grupo. */
+  totalAvailable: number;
+  /** Promedios mensuales dentro del grupo (para métricas comparables). */
+  avgIncome: number;
+  avgSavings: number;
+}
+
+/** Ahorro efectivo de un mes: 0 si el usuario declaró que no ahorró. */
+export function effectiveMonthlySavings(entry: FinanceHistoryEntry): number {
+  return entry.savingsConfirmed === false ? 0 : entry.monthlySavings;
+}
+
+/**
+ * Abrevia una etiqueta de mes "Agosto 2026" → { month: "Ago", year: "2026" }.
+ * Robusto ante etiquetas que solo traigan la clave ("2026-08").
+ */
+function splitMonthLabel(label: string): { month: string; year: string } {
+  const parts = label.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const month = parts[0].slice(0, 3);
+    const cap = month.charAt(0).toUpperCase() + month.slice(1);
+    return { month: cap, year: parts[parts.length - 1] };
+  }
+  return { month: label, year: "" };
+}
+
+/** Etiqueta de un grupo: un mes, o un rango "Jun – Ago 2026". */
+function groupLabel(months: FinanceHistoryEntry[]): string {
+  if (months.length === 0) return "";
+  if (months.length === 1) return months[0].monthLabel;
+  const first = splitMonthLabel(months[0].monthLabel);
+  const last = splitMonthLabel(months[months.length - 1].monthLabel);
+  if (first.year === last.year) {
+    return `${first.month} – ${last.month} ${last.year}`.trim();
+  }
+  return `${first.month} ${first.year} – ${last.month} ${last.year}`.trim();
+}
+
+/**
+ * Agrupa el historial financiero según el periodo elegido.
+ *
+ * Entrada: `entries` en orden cronológico ASCENDENTE (mes más antiguo primero).
+ * En "monthly" cada mes es su propio grupo. En "quarterly"/"semiannual" se
+ * agrupan desde el más reciente hacia atrás en bloques de 3 / 6 meses (de modo
+ * que el grupo más reciente siempre esté "completo" y el más antiguo pueda ser
+ * parcial). El resultado se devuelve en orden ascendente.
+ *
+ * Función pura y testeable (no depende de `Date.now`).
+ */
+export function groupFinanceHistory(
+  entries: FinanceHistoryEntry[],
+  period: FinanceHistoryPeriod,
+): FinanceHistoryGroup[] {
+  const size = FINANCE_HISTORY_GROUP_SIZE[period];
+  if (entries.length === 0) return [];
+
+  // Ordena ascendente por clave de mes (defensivo).
+  const sorted = [...entries].sort((a, b) => a.month.localeCompare(b.month));
+
+  if (size === 1) {
+    return sorted.map((m) => buildGroup([m]));
+  }
+
+  // Agrupa desde el más reciente hacia atrás para que el bloque reciente quede
+  // completo; luego se invierte para devolver en orden ascendente.
+  const chunks: FinanceHistoryEntry[][] = [];
+  for (let i = sorted.length; i > 0; i -= size) {
+    const start = Math.max(0, i - size);
+    chunks.push(sorted.slice(start, i));
+  }
+  chunks.reverse();
+  return chunks.map(buildGroup);
+}
+
+/** Construye un grupo con sus totales y promedios a partir de sus meses. */
+function buildGroup(months: FinanceHistoryEntry[]): FinanceHistoryGroup {
+  const totalIncome = months.reduce((a, m) => a + m.monthlyIncome, 0);
+  const totalSavings = months.reduce((a, m) => a + effectiveMonthlySavings(m), 0);
+  const totalFixedExpenses = months.reduce((a, m) => a + m.totalFixedExpenses, 0);
+  const totalMicroExpenses = months.reduce((a, m) => a + m.totalMicroExpenses, 0);
+  const totalAvailable = months.reduce((a, m) => a + m.availableBalance, 0);
+  const n = months.length || 1;
+  return {
+    key: months[0].month,
+    label: groupLabel(months),
+    months,
+    totalIncome,
+    totalSavings,
+    totalFixedExpenses,
+    totalMicroExpenses,
+    totalAvailable,
+    avgIncome: Math.round((totalIncome / n) * 100) / 100,
+    avgSavings: Math.round((totalSavings / n) * 100) / 100,
+  };
+}

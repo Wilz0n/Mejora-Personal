@@ -318,7 +318,29 @@ En la página de Finanzas ahora tienes un botón **"Guardar Finanza"**. Al pulsa
 - **Metas Activas:** tus proyectos con barras de progreso.
 - **Categorías de Gastos:** anillo visual + tarjetas con el desglose por categoría.
 
-Desde esa vista puedes volver a modificar datos con el botón **"Editar Finanza"**.
+Desde esa vista puedes volver a modificar datos con el botón **"Editar Finanza"** o consultar tu evolución con **"Ver Historial"**.
+
+### 🔄 Actualización mensual automática
+
+Cada mes tus finanzas **empiezan de cero** para que registres el mes nuevo desde limpio:
+
+- Cuando entras a **Finanzas** en un mes nuevo, la app guarda automáticamente un **registro del mes anterior** (queda en tu historial) y luego:
+  - El **ahorro mensual** vuelve a **0**.
+  - Los **gastos hormiga** se borran (empiezas a registrarlos de nuevo).
+  - Los gastos fijos se marcan como **no pagados** otra vez.
+- Se **conservan**: tu **ingreso**, tus **gastos fijos** (los montos) y tus **proyectos/metas** (siguen acumulando progreso).
+
+Verás un aviso recordándote esto debajo del título "Distribución Financiera". No tienes que hacer nada: ocurre solo al entrar cada mes.
+
+### 📈 Ver Historial (mensual / trimestral / semestral)
+
+Desde **"Finanzas del Mes"**, el botón **"Ver Historial"** te lleva a un registro de tus cierres guardados. Puedes verlo en **3 modos**:
+
+- **Mensual:** cada mes por separado.
+- **Trimestral:** agrupado de 3 en 3 meses.
+- **Semestral:** agrupado de 6 en 6 meses.
+
+En cada modo verás totales de ingreso, gastos fijos, gastos hormiga, balance y ahorro. En los modos trimestral y semestral, además puedes abrir el **desglose mes a mes** de cada grupo. Los meses en que declaraste que **no ahorraste** cuentan como 0 en el ahorro, igual que en tu Ahorro Acumulado.
 
 ### 🗑️ Confirmación al borrar proyecto
 

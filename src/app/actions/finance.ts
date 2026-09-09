@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { getUserId } from "@/lib/db/session";
+import { getUserId, getUserTimezone } from "@/lib/db/session";
 import {
   createProjectSchema,
   createExpenseSchema,
@@ -19,8 +19,9 @@ import {
   computeProjectsSnapshot,
   suggestedSavings,
   currentMonthKey,
+  monthKeyOf,
 } from "@/lib/logic/finance-logic";
-import { monthLabel } from "@/lib/logic/dates";
+import { monthLabel, nowInTimezone } from "@/lib/logic/dates";
 import type { ActionResult } from "@/lib/action-result";
 
 function revalidateFinance() {
@@ -326,7 +327,26 @@ async function syncCurrentMonthSavings(
  */
 export async function saveMonthlyFinance(): Promise<ActionResult> {
   const userId = await getUserId();
+  const result = await writeMonthlySnapshot(userId, currentMonthKey(), monthLabel());
+  if (!result.ok) return result;
+  revalidateFinance();
+  return { ok: true };
+}
 
+/**
+ * Construye y persiste (upsert) el snapshot MonthlyFinance del `month` indicado
+ * a partir de la configuración financiera ACTUAL del usuario (ingreso, ahorro,
+ * gastos fijos, gastos hormiga y proyectos).
+ *
+ * Se usa tanto en "Guardar Finanza" (mes en curso) como en el reinicio mensual
+ * lazy (para archivar el mes que termina con los datos que aún están vivos).
+ * No revalida rutas: el llamador decide cuándo hacerlo.
+ */
+async function writeMonthlySnapshot(
+  userId: string,
+  month: string,
+  label: string,
+): Promise<ActionResult> {
   // Reúne la configuración financiera actual del usuario.
   const [summary, fixedExpensesRaw, microExpensesRaw, projectsRaw] =
     await Promise.all([
@@ -403,9 +423,6 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
   const microExpensesByCategory = computeMicroExpenseBreakdown(microExpenses);
   const projectsSnapshot = computeProjectsSnapshot(projects);
 
-  const month = currentMonthKey();
-  const label = monthLabel();
-
   await prisma.monthlyFinance.upsert({
     where: { userId_month: { userId, month } },
     create: {
@@ -436,8 +453,76 @@ export async function saveMonthlyFinance(): Promise<ActionResult> {
     },
   });
 
-  revalidateFinance();
   return { ok: true };
+}
+
+/**
+ * Reinicio mensual LAZY (sin cron). Se invoca al renderizar /finanzas.
+ *
+ * Cuando el mes en curso (según la timezone del usuario) es distinto del último
+ * mes en que se ejecutó el reinicio (`FinancialSummary.lastFinanceResetMonth`):
+ *  1. Archiva el cierre del mes ANTERIOR con los datos que aún están vivos
+ *     (snapshot en MonthlyFinance), si el usuario tiene configuración.
+ *  2. Resetea para empezar el nuevo mes desde cero:
+ *       - `monthlySavings = 0`
+ *       - borra todos los `MicroExpense` (gastos hormiga)
+ *       - pone `paidThisMonth = false` en los gastos fijos
+ *     Se CONSERVAN: ingreso mensual, montos de gastos fijos y proyectos/metas.
+ *  3. Marca `lastFinanceResetMonth = mes actual` (idempotente).
+ *
+ * Es idempotente: si ya se procesó el mes actual, no hace nada. Si el usuario
+ * es nuevo (sin marca previa), solo fija la marca al mes actual sin resetear.
+ */
+export async function ensureMonthlyRollover(userId: string): Promise<void> {
+  const timezone = await getUserTimezone(userId);
+  const now = nowInTimezone(timezone);
+  const thisMonth = monthKeyOf(now);
+
+  const summary = await prisma.financialSummary.findUnique({
+    where: { userId },
+    select: { lastFinanceResetMonth: true },
+  });
+
+  const last = summary?.lastFinanceResetMonth ?? null;
+
+  // Ya procesado este mes → nada que hacer.
+  if (last === thisMonth) return;
+
+  // Usuario sin marca previa (nuevo o primer render tras la migración): solo
+  // fija la marca al mes actual. No reseteamos porque los datos vivos son del
+  // mes en curso; el archivado empezará el próximo cambio de mes.
+  if (last === null) {
+    await prisma.financialSummary.upsert({
+      where: { userId },
+      create: { userId, lastFinanceResetMonth: thisMonth },
+      update: { lastFinanceResetMonth: thisMonth },
+    });
+    return;
+  }
+
+  // Cambió el mes respecto al último reinicio → archivar el mes anterior y
+  // resetear. El mes a archivar es `last` (el último mes activo del usuario).
+  const prevLabel = monthLabel(
+    new Date(Number(last.slice(0, 4)), Number(last.slice(5, 7)) - 1, 1),
+  );
+
+  // 1) Archiva el cierre del mes anterior con los datos vivos (best-effort:
+  //    si no hay configuración suficiente, writeMonthlySnapshot devuelve ok:false
+  //    y simplemente no se archiva).
+  await writeMonthlySnapshot(userId, last, prevLabel);
+
+  // 2) Reset del nuevo mes.
+  await prisma.$transaction([
+    prisma.financialSummary.update({
+      where: { userId },
+      data: { monthlySavings: 0, lastFinanceResetMonth: thisMonth },
+    }),
+    prisma.microExpense.deleteMany({ where: { userId } }),
+    prisma.fixedExpense.updateMany({
+      where: { userId },
+      data: { paidThisMonth: false },
+    }),
+  ]);
 }
 
 /** Toggle del estado "pagado este mes" de un gasto fijo (doble clic/tap). */

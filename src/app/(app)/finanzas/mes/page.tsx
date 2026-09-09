@@ -95,13 +95,22 @@ export default async function MonthlyFinancePage() {
             {finance.monthLabel}
           </p>
         </div>
-        <Link
-          href="/finanzas"
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-background hover:bg-surface-variant transition-colors text-body-sm font-body-sm whitespace-nowrap"
-        >
-          <Icon name="edit" className="text-[18px]" />
-          Editar Finanza
-        </Link>
+        <div className="flex flex-col sm:items-end gap-2">
+          <Link
+            href="/finanzas"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-surface-container-high border border-outline-variant text-on-background hover:bg-surface-variant transition-colors text-body-sm font-body-sm whitespace-nowrap"
+          >
+            <Icon name="edit" className="text-[18px]" />
+            Editar Finanza
+          </Link>
+          <Link
+            href="/finanzas/historial"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors text-body-sm font-body-sm whitespace-nowrap"
+          >
+            <Icon name="history" className="text-[18px]" />
+            Ver Historial
+          </Link>
+        </div>
       </section>
 
       {/* KPIs */}
