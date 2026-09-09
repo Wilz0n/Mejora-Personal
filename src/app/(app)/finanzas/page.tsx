@@ -16,6 +16,7 @@ import { nowInTimezone, monthLabel as monthLabelOf } from "@/lib/logic/dates";
 import { AddProjectButton } from "@/components/finanzas/botones/AddProjectButton";
 import { RemoveProjectButton } from "@/components/finanzas/botones/RemoveProjectButton";
 import { ContributeButton } from "@/components/finanzas/botones/ContributeButton";
+import { ensureMonthlyRollover } from "@/app/actions/finance";
 import {
   AddExpenseButton,
   SetIncomeButton,
@@ -48,6 +49,9 @@ function expenseIcon(category: string): string {
 export default async function FinancePage() {
   const userId = await getUserId();
   const timezone = await getUserTimezone(userId);
+  // Reinicio mensual lazy: al entrar en un mes nuevo, archiva el cierre del mes
+  // anterior y resetea ahorro + gastos hormiga + estado "pagado" (idempotente).
+  await ensureMonthlyRollover(userId);
   const [finance, savingsHistory, confirmStates] = await Promise.all([
     getFinanceData(userId),
     getSavingsHistory(userId),
@@ -121,6 +125,22 @@ export default async function FinancePage() {
           <p className="text-body-md font-body-md text-on-surface-variant">
             Gestiona tus asignaciones mensuales y metas activas.
           </p>
+          {/* Aviso de actualización mensual automática */}
+          <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 max-w-2xl">
+            <Icon
+              name="autorenew"
+              className="text-primary text-[18px] mt-0.5 flex-shrink-0"
+            />
+            <p className="text-body-sm font-body-sm text-on-surface-variant leading-relaxed">
+              <span className="text-primary font-medium">Actualización mensual:</span>{" "}
+              cada mes se guarda un registro de tu cierre y el{" "}
+              <span className="text-on-background font-medium">ahorro</span> y los{" "}
+              <span className="text-on-background font-medium">gastos hormiga</span>{" "}
+              vuelven a cero para empezar de nuevo. Tu ingreso, gastos fijos y
+              proyectos se conservan. Consulta tu evolución en{" "}
+              <span className="text-primary font-medium">Ver Historial</span>.
+            </p>
+          </div>
         </div>
         <SaveFinanceButton />
       </section>
@@ -352,7 +372,7 @@ export default async function FinancePage() {
           </div>
 
           {/* Proyectos activos */}
-          <div className="glass-panel rounded-xl p-stack-md flex-1">
+          <div className="glass-panel rounded-xl p-stack-md">
             <div className="flex items-center justify-between mb-stack-md pb-stack-sm border-b border-outline-variant/30">
               <h3 className="text-headline-md font-headline-md text-on-background text-lg">
                 Proyectos Activos
