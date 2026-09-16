@@ -21,9 +21,6 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "LifeTracker",
   description: "Seguimiento de hábitos y finanzas para tu mejora personal.",
-  icons: {
-    icon: "/favicon.svg",
-  },
 };
 
 export default function RootLayout({
@@ -38,6 +35,10 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
+        {/* Favicon por defecto (la hoja). FaviconSetter solo actualiza su href;
+            nunca elimina este nodo, para no romper la reconciliación de React. */}
+        {/* eslint-disable-next-line @next/next/no-head-element */}
+        <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body className="font-body-md antialiased bg-background text-on-surface">
         {/* Inyecta el QuickCSS del usuario antes de la hidratación (sin FOUC).
