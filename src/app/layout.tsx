@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/comun/layout/Providers";
+import { QuickCSSInjector } from "@/components/comun/QuickCSSInjector";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -20,6 +21,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "LifeTracker",
   description: "Seguimiento de hábitos y finanzas para tu mejora personal.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
@@ -34,6 +38,9 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
+        {/* Inyecta el QuickCSS del usuario antes del primer paint (sin FOUC).
+            Debe ir al final del <head> para poder sobreescribir globals.css. */}
+        <QuickCSSInjector />
       </head>
       <body className="font-body-md antialiased bg-background text-on-surface">
         <Providers>{children}</Providers>
