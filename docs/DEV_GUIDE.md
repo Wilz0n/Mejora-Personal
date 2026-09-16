@@ -424,6 +424,13 @@ Estas son las features agregadas en el rediseño. Útil para saber qué archivo 
 **Ajustes — Botón de Cerrar Sesión**
 - **Componente:** `src/components/settings/LogoutButton.tsx` (ver detalle en la sección Ajustes/Perfil arriba). Montado en `src/app/(app)/settings/page.tsx` debajo de `EditProfileButton`. Reutiliza el patrón de logout del `Sidebar` (`signOut` + gating por `isSingleUserModeClient()`).
 
+**Personalización — QuickCSS, Icono de la App y Colapso de la Sidebar** (detalle completo en **`docs/PERSONALIZACION.md`**)
+- **QuickCSS (temas):** `src/lib/constants/default-css.ts` (plantilla + claves), `src/lib/quick-css.ts` (helpers de aplicar/guardar/reset), `src/components/settings/QuickCSSEditor.tsx` (editor, overlay propio con Portal, responsive `100dvh`), `src/components/comun/QuickCSSInjector.tsx` (inyección **sin FOUC** vía script inline bloqueante al final del `<head>` del layout root). Persiste en `localStorage`. Hooks por página con `[data-page]` vía `src/components/comun/layout/PageScope.tsx`.
+- **Icono de la app (favicon + logo sidebar):** campo `User.appIcon` (`prisma/schema.prisma`, aditivo/nullable → `npm run db:push` no borra datos). `updateAppIconSchema` en `validators.ts`, Server Action `setAppIcon` en `actions/settings.ts`, `getUserProfile` devuelve `appIcon`. UI: `src/components/settings/botones/AppIconButton.tsx` (comprime en navegador a 64×64, botones Subir/Restablecer/Guardar). Favicon: `src/components/comun/FaviconSetter.tsx` + `public/favicon.svg` (hoja por defecto; se restaura al quitar el icono).
+- **Colapso de la sidebar (solo Desktop):** carpeta `src/components/animacion/` — `SidebarCollapseContext.tsx` (provider + hook), `MainContent.tsx` (anima el margen del contenido), `SidebarReopenButton.tsx` (botón flotante de reapertura con el mismo icono). El logo del `Sidebar` actúa como toggle; la barra desliza con `-translate-x-full`. Montado en `src/app/(app)/layout.tsx`.
+- **Iconos de navegación locales:** `src/components/comun/ui/NavIcon.tsx` usa `lucide-react` (dependencia nueva) para los 6 items de navegación + logout; el resto de la app sigue con Material Symbols.
+- **Nota:** se retiró el selector "Tema de la Interfaz" (Claro/Oscuro); el diseño por defecto es **Oscuro (Nocturne)** y la personalización de tema se hace por QuickCSS.
+
 ---
 
 ## 11. Cómo funciona cada página (y por qué)
@@ -499,8 +506,8 @@ El proyecto sigue prácticas de seguridad por defecto. Cosas que **no debes romp
 **Inyección y XSS**
 - Prisma parametrizado en todas las queries → sin inyección SQL.
 - Validación Zod en todas las Server Actions con tipos estrictos.
-- No hay `dangerouslySetInnerHTML` ni `eval` en el código.
-- Avatar validado por regex (solo `data:image/...` o URLs http).
+- No hay `eval` en el código. El único `dangerouslySetInnerHTML` es el de `QuickCSSInjector` (inyección del QuickCSS sin FOUC): su contenido es **100% estático** (constantes del proyecto), no interpola datos de usuario, por lo que no es superficie de inyección.
+- Avatar e icono de la app validados por Zod/regex (solo `data:image/...` o URLs http) y comprimidos en el navegador antes de persistir.
 - Export CSV: celdas que empiezan con `=`, `+`, `-`, `@` se neutralizan con `'` (anti-formula injection).
 
 **Secretos**
@@ -514,6 +521,7 @@ El proyecto sigue prácticas de seguridad por defecto. Cosas que **no debes romp
 ## 📚 Documentos relacionados
 
 - **Arquitectura y funcionamiento interno** → `docs/AI_CONTEXT.md`
+- **Personalización (QuickCSS, icono de la app, colapso de sidebar)** → `docs/PERSONALIZACION.md`
 - **Instalación y despliegue completo** → `DEPLOYMENT.md`
 - **Manual de uso de la app** → `USER_GUIDE.md`
 - **Guía para usuario final (no técnico)** → `docs/GUIA_USUARIO.md`

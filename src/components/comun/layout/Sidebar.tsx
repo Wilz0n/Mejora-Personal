@@ -4,29 +4,53 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Icon } from "@/components/comun/ui/Icon";
+import { NavIcon, type NavIconKey } from "@/components/comun/ui/NavIcon";
 import { isSingleUserModeClient } from "@/lib/db/single-user-client";
+import { useSidebarCollapse } from "@/components/animacion/SidebarCollapseContext";
 
-const NAV = [
+const NAV: { href: string; label: string; icon: NavIconKey }[] = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
-  { href: "/habitos", label: "Hábitos", icon: "event_repeat" },
-  { href: "/finanzas/mes", label: "Finanzas", icon: "payments" },
-  { href: "/proyectos", label: "Proyectos", icon: "account_tree" },
+  { href: "/habitos", label: "Hábitos", icon: "habitos" },
+  { href: "/finanzas/mes", label: "Finanzas", icon: "finanzas" },
+  { href: "/proyectos", label: "Proyectos", icon: "proyectos" },
 ];
 
-const FOOTER_NAV = [
-  { href: "/settings", label: "Ajustes", icon: "settings" },
-  { href: "/support", label: "Soporte", icon: "help" },
+const FOOTER_NAV: { href: string; label: string; icon: NavIconKey }[] = [
+  { href: "/settings", label: "Ajustes", icon: "ajustes" },
+  { href: "/support", label: "Soporte", icon: "soporte" },
 ];
 
-export function Sidebar() {
+export function Sidebar({ appIcon }: { appIcon: string | null }) {
   const pathname = usePathname();
+  const { collapsed, toggle } = useSidebarCollapse();
 
   return (
-    <nav className="hidden md:flex flex-col h-full py-stack-md px-gutter bg-surface-container-lowest border-r border-outline-variant fixed h-screen w-60 left-0 top-0 z-50">
+    <nav
+      className={`hidden md:flex flex-col h-full py-stack-md px-gutter bg-surface-container-lowest border-r border-outline-variant fixed h-screen w-60 left-0 top-0 z-50 transition-transform duration-300 ease-in-out ${
+        collapsed ? "-translate-x-full" : "translate-x-0"
+      }`}
+    >
       <div className="flex items-center gap-3 mb-10">
-        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
-          <Icon name="eco" className="text-primary" filled />
-        </div>
+        {/* Logo = botón para colapsar/expandir la barra (solo Desktop).
+            Mantiene el mismo icono; muestra el icono personalizado si existe. */}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label="Ocultar menú lateral"
+          aria-expanded={!collapsed}
+          className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 overflow-hidden hover:bg-primary/30 transition-colors"
+        >
+          {appIcon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={appIcon}
+              alt="Logo"
+              className="w-7 h-7 object-contain rounded"
+            />
+          ) : (
+            <Icon name="eco" className="text-primary" filled />
+          )}
+        </button>
         <div>
           <h1 className="text-headline-md font-headline-md font-bold text-primary leading-tight">
             LifeTracker
@@ -55,7 +79,7 @@ export function Sidebar() {
                   : "flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-variant transition-colors"
               }
             >
-              <Icon name={item.icon} filled={active} />
+              <NavIcon name={item.icon} filled={active} />
               <span className="text-body-md font-body-md">{item.label}</span>
             </Link>
           );
@@ -75,7 +99,7 @@ export function Sidebar() {
                   : "flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-variant transition-colors"
               }
             >
-              <Icon name={item.icon} filled={active} />
+              <NavIcon name={item.icon} filled={active} />
               <span className="text-body-md font-body-md">{item.label}</span>
             </Link>
           );
@@ -85,7 +109,7 @@ export function Sidebar() {
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-surface-variant transition-colors"
           >
-            <Icon name="logout" />
+            <NavIcon name="logout" />
             <span className="text-body-md font-body-md">Cerrar sesión</span>
           </button>
         )}
