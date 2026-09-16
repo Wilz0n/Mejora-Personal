@@ -2,6 +2,11 @@ import { getUserId } from "@/lib/db/session";
 import { getUserProfile } from "@/lib/db/data";
 import { Sidebar } from "@/components/comun/layout/Sidebar";
 import { Topbar } from "@/components/comun/layout/Topbar";
+import { PageScope } from "@/components/comun/layout/PageScope";
+import { FaviconSetter } from "@/components/comun/FaviconSetter";
+import { SidebarCollapseProvider } from "@/components/animacion/SidebarCollapseContext";
+import { MainContent } from "@/components/animacion/MainContent";
+import { SidebarReopenButton } from "@/components/animacion/SidebarReopenButton";
 
 export default async function AppLayout({
   children,
@@ -13,14 +18,20 @@ export default async function AppLayout({
   const profile = await getUserProfile(userId);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar />
-      <main className="flex-1 flex flex-col md:ml-60 h-screen overflow-y-auto bg-background no-scrollbar">
-        <Topbar avatar={profile.image} />
-        <div className="p-gutter max-w-container-max mx-auto w-full min-w-0 overflow-x-hidden pb-24 md:pb-12">
-          {children}
-        </div>
-      </main>
-    </div>
+    <SidebarCollapseProvider>
+      {/* Favicon dinámico: usa el icono personalizado del usuario si existe. */}
+      <FaviconSetter appIcon={profile.appIcon} />
+      <div className="flex h-screen overflow-hidden bg-background">
+        <Sidebar appIcon={profile.appIcon} />
+        {/* Botón flotante (Desktop) para reabrir la barra cuando está colapsada. */}
+        <SidebarReopenButton appIcon={profile.appIcon} />
+        <MainContent>
+          <Topbar avatar={profile.image} />
+          <div className="p-gutter max-w-container-max mx-auto w-full min-w-0 overflow-x-hidden pb-24 md:pb-12">
+            <PageScope>{children}</PageScope>
+          </div>
+        </MainContent>
+      </div>
+    </SidebarCollapseProvider>
   );
 }

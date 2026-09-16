@@ -5,11 +5,13 @@ import { monthsSinceCreation, nowInTimezone } from "@/lib/logic/dates";
 import { isArchiveDue } from "@/lib/logic/habits-logic";
 import { Icon } from "@/components/comun/ui/Icon";
 import { EditProfileButton } from "@/components/settings/botones/EditProfileButton";
+import { AppIconButton } from "@/components/settings/botones/AppIconButton";
 import { LogoutButton } from "@/components/settings/botones/LogoutButton";
 import { CurrencySelect } from "@/components/settings/selects/CurrencySelect";
 import { TimezoneSelect } from "@/components/settings/selects/TimezoneSelect";
 import { PurgeDataButton } from "@/components/settings/botones/PurgeDataButton";
 import { ArchiveResetButton } from "@/components/settings/botones/ArchiveResetButton";
+import { QuickCSSEditor } from "@/components/settings/QuickCSSEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +48,7 @@ export default async function SettingsPage() {
         <section className="lg:col-span-4 glass-panel rounded-xl p-stack-md flex flex-col relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
           <h3 className="text-headline-md font-headline-md text-on-surface mb-stack-md border-b border-surface-variant pb-2">
-            Identidad
+            Identidad e Icono
           </h3>
           <div className="flex flex-col items-center mt-stack-sm mb-stack-md">
             <div className="relative mb-4">
@@ -72,6 +74,11 @@ export default async function SettingsPage() {
           </div>
           <div className="mt-auto pt-stack-sm">
             <EditProfileButton name={profile.name} image={profile.image} />
+          </div>
+
+          {/* Icono de la app (favicon + logo sidebar), justo debajo de Editar Perfil */}
+          <div className="pt-stack-sm">
+            <AppIconButton appIcon={profile.appIcon} />
           </div>
 
           {/* Cerrar sesión (justo debajo de Editar Perfil) */}
@@ -116,29 +123,21 @@ export default async function SettingsPage() {
               </div>
             </div>
 
-            {/* Tema (placeholder: app dark-only) */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant">
-              <div className="min-w-0">
+            {/* Personalización (QuickCSS) — ocupa el lugar del antiguo selector de tema */}
+            <div className="p-4 bg-surface-container-low rounded-lg border border-surface-variant">
+              <div className="min-w-0 mb-3">
                 <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
-                  Tema de la Interfaz
+                  Personalización
                 </h4>
                 <p className="text-body-sm font-body-sm text-on-surface-variant">
-                  Modo oscuro para un enfoque óptimo.
+                  Cambia el aspecto de LifeTracker con{" "}
+                  <span className="text-on-surface font-medium">QuickCSS</span>:
+                  edita las variables del diseño &quot;Nocturne&quot; a mano o
+                  pega un tema. Se guarda en tu navegador y persiste entre
+                  páginas.
                 </p>
               </div>
-              <div className="flex w-full sm:w-auto shrink-0 bg-background border border-outline-variant rounded-lg p-1">
-                <button
-                  disabled
-                  className="flex-1 sm:flex-none justify-center px-3 py-1 rounded-md text-on-surface-variant font-label-caps text-label-caps flex items-center gap-1 opacity-50 cursor-not-allowed"
-                >
-                  <Icon name="light_mode" className="text-[16px]" />
-                  Claro
-                </button>
-                <button className="flex-1 sm:flex-none justify-center px-3 py-1 rounded-md bg-surface-variant text-primary font-label-caps text-label-caps flex items-center gap-1 shadow-sm border border-outline-variant">
-                  <Icon name="dark_mode" className="text-[16px]" filled />
-                  Oscuro
-                </button>
-              </div>
+              <QuickCSSEditor />
             </div>
 
             {/* Persistencia */}

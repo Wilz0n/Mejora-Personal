@@ -90,6 +90,26 @@ export const updateProfileSchema = z.object({
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
+/**
+ * Icono de la app (favicon + logo de la sidebar). Data URL de imagen comprimida
+ * o cadena vacía para restablecer el icono por defecto. Se admite un tope mayor
+ * que el avatar porque el icono puede requerir algo más de detalle (~64px).
+ */
+export const updateAppIconSchema = z.object({
+  appIcon: z
+    .string()
+    .trim()
+    .max(120_000)
+    .refine(
+      (v) =>
+        v === "" ||
+        /^https?:\/\//i.test(v) ||
+        /^data:image\/(avif|webp|png|jpe?g);base64,/i.test(v),
+      { message: "Icono inválido (sube una imagen .png/.avif/.webp/.jpg)" },
+    ),
+});
+export type UpdateAppIconInput = z.infer<typeof updateAppIconSchema>;
+
 export const setCurrencySchema = z.object({
   currency: z.enum(["USD", "PEN"], {
     errorMap: () => ({ message: "Moneda no soportada" }),

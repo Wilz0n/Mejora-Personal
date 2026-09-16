@@ -13,6 +13,10 @@ model User {
   name          String?
   passwordHash  String?
   image         String?
+  // Icono personalizado de la app (favicon + logo de la sidebar). Data URL de
+  // imagen comprimida (.png/.avif/.webp/.jpg) o null para usar el icono por
+  // defecto. Persistente por usuario (multi-dispositivo).
+  appIcon       String?   @db.Text
   emailVerified DateTime?
   timezone      String    @default("America/Lima")
   createdAt     DateTime  @default(now())

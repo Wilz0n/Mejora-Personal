@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/comun/ui/Icon";
+import { NavIcon, type NavIconKey } from "@/components/comun/ui/NavIcon";
 
-const NAV = [
+const NAV: { href: string; label: string; icon: NavIconKey }[] = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
-  { href: "/habitos", label: "Hábitos", icon: "event_repeat" },
-  { href: "/finanzas/mes", label: "Finanzas", icon: "payments" },
+  { href: "/habitos", label: "Hábitos", icon: "habitos" },
+  { href: "/finanzas/mes", label: "Finanzas", icon: "finanzas" },
 ];
 
 export function Topbar({ avatar }: { avatar?: string | null }) {
@@ -59,7 +60,7 @@ export function Topbar({ avatar }: { avatar?: string | null }) {
                 active ? "text-primary" : "text-on-surface-variant"
               }`}
             >
-              <Icon name={item.icon} filled={active} className="text-[22px]" />
+              <NavIcon name={item.icon} filled={active} size={22} />
               {item.label}
             </Link>
           );

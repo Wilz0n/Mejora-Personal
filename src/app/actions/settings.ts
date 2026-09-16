@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { getUserId } from "@/lib/db/session";
-import { updateProfileSchema, setCurrencySchema } from "@/lib/validators";
+import { updateProfileSchema, setCurrencySchema, updateAppIconSchema } from "@/lib/validators";
 import type { ActionResult } from "@/lib/action-result";
 
 /** Actualiza el nombre (y opcionalmente el avatar por URL) del usuario. */
@@ -33,6 +33,35 @@ export async function updateProfile(
 
   revalidatePath("/settings");
   revalidatePath("/", "layout"); // refresca topbar (avatar) y dashboard (nombre)
+  return { ok: true };
+}
+
+/**
+ * Define el icono de la app (favicon + logo de la sidebar). Cadena vacía →
+ * restablece el icono por defecto. Persistente por usuario.
+ */
+export async function setAppIcon(input: unknown): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const parsed = updateAppIconSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "Icono inválido",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const { appIcon } = parsed.data;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { appIcon: appIcon === "" ? null : appIcon },
+  });
+
+  // El icono afecta a todo el layout (sidebar) y al favicon del <head>.
+  revalidatePath("/", "layout");
+  revalidatePath("/settings");
   return { ok: true };
 }
 

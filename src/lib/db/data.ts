@@ -109,13 +109,14 @@ export async function getFinanceData(userId: string) {
 export async function getUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { name: true, email: true, image: true, timezone: true },
+    select: { name: true, email: true, image: true, timezone: true, appIcon: true },
   });
   return {
     name: user?.name ?? "Usuario",
     email: user?.email ?? "",
     image: user?.image ?? null,
     timezone: user?.timezone ?? "America/Lima",
+    appIcon: user?.appIcon ?? null,
   };
 }
 
