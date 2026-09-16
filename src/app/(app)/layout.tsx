@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/comun/layout/Sidebar";
 import { Topbar } from "@/components/comun/layout/Topbar";
 import { PageScope } from "@/components/comun/layout/PageScope";
 import { FaviconSetter } from "@/components/comun/FaviconSetter";
+import { QuickCssStyle } from "@/components/comun/QuickCssStyle";
 import { SidebarCollapseProvider } from "@/components/animacion/SidebarCollapseContext";
 import { MainContent } from "@/components/animacion/MainContent";
 import { SidebarReopenButton } from "@/components/animacion/SidebarReopenButton";
@@ -19,6 +20,9 @@ export default async function AppLayout({
 
   return (
     <SidebarCollapseProvider>
+      {/* Tema personalizado (QuickCSS) desde la BD: se aplica en todos los
+          dispositivos, sin FOUC (server-side). */}
+      <QuickCssStyle quickCss={profile.quickCss} />
       {/* Favicon dinámico: usa el icono personalizado del usuario si existe. */}
       <FaviconSetter appIcon={profile.appIcon} />
       <div className="flex h-screen overflow-hidden bg-background">

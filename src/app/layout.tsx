@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/comun/layout/Providers";
-import { QuickCSSInjector } from "@/components/comun/QuickCSSInjector";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -41,9 +40,6 @@ export default function RootLayout({
         <link id="app-favicon" rel="icon" type="image/svg+xml" href="/favicon.svg" />
       </head>
       <body className="font-body-md antialiased bg-background text-on-surface">
-        {/* Inyecta el QuickCSS del usuario antes de la hidratación (sin FOUC).
-            next/script beforeInteractive: Next lo posiciona correctamente. */}
-        <QuickCSSInjector />
         <Providers>{children}</Providers>
       </body>
     </html>

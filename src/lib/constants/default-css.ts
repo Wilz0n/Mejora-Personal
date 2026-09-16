@@ -1,23 +1,29 @@
 /**
  * Constantes del sistema QuickCSS (personalización de temas tipo Vencord).
  *
- * - `QUICK_CSS_STORAGE_KEY`: clave en `localStorage` donde se guarda el CSS
- *   personalizado del usuario.
- * - `QUICK_CSS_STYLE_ID`: id del <style> inyectado en <head> con el CSS custom.
+ * - `QUICK_CSS_STYLE_ID`: id del <style> (server-side) que inyecta el tema del
+ *   usuario leído de la BD (`User.quickCss`). Ver `QuickCssStyle`.
+ * - `QUICK_CSS_PREVIEW_STYLE_ID`: id del <style> de vista previa en vivo del
+ *   editor (nodo propio del cliente; no lo controla React).
  * - `DEFAULT_QUICK_CSS`: plantilla comentada precargada en el editor. Expone las
  *   variables clave del design system "Nocturne" para que el usuario (o una IA)
  *   pueda re-tematizar la app sin tocar el código fuente.
  *
- * Estas variables NO se usan en `globals.css` por defecto; la plantilla las
- * declara en `:root` para que, al aplicarse, sobreescriban los valores mediante
- * reglas CSS concretas (ver el bloque "APLICACIÓN" al final de la plantilla).
+ * El tema se **persiste en la base de datos** (`User.quickCss`), de modo que se
+ * aplica en todos los dispositivos del usuario. Al restablecer, se borra (null).
  */
 
-/** Clave de `localStorage` para el CSS personalizado. */
-export const QUICK_CSS_STORAGE_KEY = "lifetracker:quick-css";
-
-/** Id del tag <style> inyectado en el <head>. */
+/** Id del tag <style> (server-side) con el tema persistido en la BD. */
 export const QUICK_CSS_STYLE_ID = "custom-lifetracker-css";
+
+/**
+ * Id del <style> de **vista previa en vivo** del editor. Es un nodo que el
+ * editor crea/actualiza/elimina por su cuenta (nunca lo controla React), para
+ * previsualizar cambios sin recargar. La fuente de verdad es la BD (`User.quickCss`),
+ * que se inyecta server-side con `QUICK_CSS_STYLE_ID`; este preview va después
+ * para prevalecer mientras el usuario edita. Al guardar/restablecer se elimina.
+ */
+export const QUICK_CSS_PREVIEW_STYLE_ID = "quickcss-live-preview";
 
 /**
  * Plantilla inicial precargada en el editor QuickCSS.

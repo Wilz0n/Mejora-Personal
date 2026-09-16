@@ -17,6 +17,10 @@ model User {
   // imagen comprimida (.png/.avif/.webp/.jpg) o null para usar el icono por
   // defecto. Persistente por usuario (multi-dispositivo).
   appIcon       String?   @db.Text
+  // Tema personalizado (QuickCSS). CSS que el usuario aplica desde Ajustes →
+  // Personalización. null = tema por defecto (Nocturne). Persistente por usuario
+  // para que el mismo tema se vea en todos sus dispositivos.
+  quickCss      String?   @db.Text
   emailVerified DateTime?
   timezone      String    @default("America/Lima")
   createdAt     DateTime  @default(now())

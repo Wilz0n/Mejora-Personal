@@ -8,7 +8,7 @@
 
 | Función | Qué permite | Persistencia |
 |---------|-------------|--------------|
-| **QuickCSS** | Re-tematizar toda la app (colores, fondo, fuentes, glass, efectos) editando CSS o pegando un tema | `localStorage` (por navegador) |
+| **QuickCSS** | Re-tematizar toda la app (colores, fondo, fuentes, glass, efectos) editando CSS o pegando un tema | **Base de datos** (`User.quickCss`, por usuario → se sincroniza a todos sus dispositivos) |
 | **Icono de la App** | Cambiar el favicon (pestaña) y el logo de la barra lateral | Base de datos (`User.appIcon`, por usuario) |
 | **Colapso de la barra lateral** | Ocultar/mostrar la barra lateral con animación (solo Desktop) | Estado en memoria (no persiste) |
 
@@ -19,20 +19,24 @@ Todo se gestiona desde **Ajustes** (`/settings`).
 ## 2. QuickCSS (editor de temas tipo Vencord)
 
 ### 2.1 Qué es
-Un editor de código donde el usuario escribe CSS que se **inyecta en el `<head>`** y sobreescribe el diseño por defecto ("Nocturne"). La plantilla precargada expone variables `--lt-*` y reglas conectadas a las clases reales del design system, de modo que editar valores re-tematiza la app de forma coherente. Pensado para editar a mano **o** pegar un tema generado por una IA.
+Un editor de código donde el usuario escribe CSS que sobreescribe el diseño por defecto ("Nocturne"). El tema se **persiste en la base de datos** (`User.quickCss`), por lo que se aplica **igual en todos los dispositivos** del usuario (desktop, móvil, etc.). La plantilla precargada expone variables `--lt-*` y reglas conectadas a las clases reales del design system, de modo que editar valores re-tematiza la app de forma coherente. Pensado para editar a mano **o** pegar un tema generado por una IA.
 
 ### 2.2 Archivos
 | Archivo | Rol |
 |---------|-----|
-| `src/lib/constants/default-css.ts` | Plantilla `DEFAULT_QUICK_CSS`, claves `QUICK_CSS_STORAGE_KEY` (`lifetracker:quick-css`) y `QUICK_CSS_STYLE_ID` (`custom-lifetracker-css`) |
-| `src/lib/quick-css.ts` | Helpers cliente: `readQuickCSS`, `applyQuickCSSToDom`, `saveAndApplyQuickCSS`, `resetQuickCSS` |
+| `prisma/schema.prisma` | Campo `User.quickCss String? @db.Text` (tema persistido; `null` = por defecto) |
+| `src/lib/validators.ts` | `updateQuickCssSchema` (`quickCss` string, máx. 200 KB) |
+| `src/app/actions/settings.ts` | Server Actions `setQuickCss` (guardar; vacío → `null`) y `clearQuickCss` (restablecer → `null`) |
+| `src/lib/db/data.ts` | `getUserProfile` devuelve `quickCss` |
+| `src/lib/constants/default-css.ts` | Plantilla `DEFAULT_QUICK_CSS`, `QUICK_CSS_STYLE_ID` (server), `QUICK_CSS_PREVIEW_STYLE_ID` (preview del editor) |
+| `src/lib/quick-css.ts` | Helpers de **vista previa en vivo** del editor: `applyQuickCssPreview`, `clearQuickCssPreview` (nodo propio, NO tocan el de React) |
+| `src/components/comun/QuickCssStyle.tsx` | Server Component que inyecta el `<style>` del tema **desde la BD** (sin FOUC) |
 | `src/components/settings/QuickCSSEditor.tsx` | Tarjeta + editor (overlay grande vía React Portal) |
-| `src/components/comun/QuickCSSInjector.tsx` | Inyección **sin FOUC** (script inline bloqueante en `<head>`) |
 
-### 2.3 Cómo funciona la inyección (sin FOUC)
-- `QuickCSSInjector` es un **Server Component** que emite un `<script>` inline y **bloqueante** (sin `defer`/`async`) al final del `<head>` del layout root. Lee `localStorage` y crea el `<style id="custom-lifetracker-css">` **antes del primer paint**, por lo que el tema persiste entre páginas sin destellos.
-- El contenido del script es 100% estático (constantes del proyecto); no interpola datos de usuario → no es superficie de inyección.
-- El editor aplica los cambios en caliente con `saveAndApplyQuickCSS` (crea/actualiza el mismo `<style>`), sin recargar.
+### 2.3 Cómo funciona la inyección (sin FOUC) y la persistencia
+- El tema vive en `User.quickCss`. En `src/app/(app)/layout.tsx` (server) se lee vía `getUserProfile` y se pasa a **`QuickCssStyle`**, que renderiza `<style id="custom-lifetracker-css">` directamente en el HTML del servidor → **sin FOUC** y **en cualquier dispositivo** (no depende del navegador local).
+- **Vista previa en vivo:** mientras el usuario edita, el editor aplica los cambios con `applyQuickCssPreview`, que crea/actualiza un `<style id="quickcss-live-preview">` **propio** (nodo que React NO controla). Al Guardar/Restablecer/cerrar, ese preview se elimina y manda el `<style>` server-side.
+- ⚠️ **Importante (bug histórico):** NO usar `<script>` crudo ni manipular nodos `<link>`/`<style>` que renderiza React. Hacerlo provocó `Cannot read properties of null (reading 'removeChild')` al navegar (React perdía la referencia del nodo). Por eso el tema se inyecta server-side y el preview usa un nodo separado propio del cliente.
 
 ### 2.4 Estructura de la plantilla `DEFAULT_QUICK_CSS`
 Organizada por secciones comentadas:
@@ -50,9 +54,9 @@ Organizada por secciones comentadas:
 Para que el fondo cubra toda la pantalla, los contenedores del área principal (`.bg-background`, `.bg-surface`) se ponen **transparentes** y el fondo vive en `html, body`.
 
 ### 2.5 Acciones del editor
-- **Guardar y Aplicar** → `saveAndApplyQuickCSS` (localStorage + `<style>`).
+- **Guardar y Aplicar** → `setQuickCss` (persiste en BD; `router.refresh()` para que el `<style>` server-side refleje lo guardado). Muestra estado "Guardando…"/"Aplicado".
 - **Copiar** → copia todo el CSS al portapapeles (para llevarlo a una IA).
-- **Restablecer** → `resetQuickCSS` (borra la clave y el `<style>`; vuelve a Nocturne).
+- **Restablecer** → `clearQuickCss`: **BORRA el registro en la BD (`null`)** para no acumular contenido innecesario ni malgastar almacenamiento; vuelve al tema Nocturne.
 
 ### 2.6 Responsive (móvil)
 - Overlay a **pantalla completa** en móvil (`w-full h-full`), panel centrado grande en Desktop (`sm:max-w-6xl sm:h-[92vh]`).
@@ -139,8 +143,9 @@ Los iconos de los 6 items de navegación (Dashboard, Hábitos, Finanzas, Proyect
 ## 7. Invariantes a respetar
 
 1. QuickCSS y el icono de la app son **capas separadas**; ninguno depende del otro.
-2. El QuickCSS se inyecta **sin FOUC** (script bloqueante al final del `<head>`); mantener ese patrón.
-3. Nombres de variables `--lt-*` y selectores de la plantilla son el "contrato" con la IA: si se renombran, romper temas guardados.
-4. El colapso de la barra lateral es **solo Desktop** (`md:`); no debe afectar la navegación móvil.
-5. La subida de imágenes (avatar e icono) **comprime en el navegador** antes de persistir; no subir imágenes crudas a la BD.
-6. `FaviconSetter` debe **restaurar** el favicon por defecto cuando no hay `appIcon` (no dejar uno obsoleto).
+2. El QuickCSS se persiste en la **BD** (`User.quickCss`) y se inyecta **server-side sin FOUC** (`QuickCssStyle`). La vista previa del editor usa un `<style>` propio (`quickcss-live-preview`); nunca manipular el `<style>`/`<link>` que controla React (causa el bug `removeChild`).
+3. **Restablecer BORRA el registro en la BD** (`null`), no guarda cadena vacía ni basura.
+4. Nombres de variables `--lt-*` y selectores de la plantilla son el "contrato" con la IA: si se renombran, romper temas guardados.
+5. El colapso de la barra lateral es **solo Desktop** (`md:`); no debe afectar la navegación móvil.
+6. La subida de imágenes (avatar e icono) **comprime en el navegador** antes de persistir; no subir imágenes crudas a la BD.
+7. `FaviconSetter` gestiona **solo su propio nodo** (`app-favicon-custom`); el favicon por defecto es un `<link id="app-favicon">` estático en el layout. Nunca borrar nodos de React.

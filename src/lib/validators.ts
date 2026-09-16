@@ -110,6 +110,16 @@ export const updateAppIconSchema = z.object({
 });
 export type UpdateAppIconInput = z.infer<typeof updateAppIconSchema>;
 
+/**
+ * Tema personalizado (QuickCSS). Texto CSS del usuario. Cadena vacía = borrar
+ * el tema (volver al por defecto). Se acota el tamaño para no inflar la BD ni
+ * abusar del almacenamiento (200 KB es holgado para CSS a mano o de IA).
+ */
+export const updateQuickCssSchema = z.object({
+  quickCss: z.string().max(200_000, "El CSS es demasiado largo"),
+});
+export type UpdateQuickCssInput = z.infer<typeof updateQuickCssSchema>;
+
 export const setCurrencySchema = z.object({
   currency: z.enum(["USD", "PEN"], {
     errorMap: () => ({ message: "Moneda no soportada" }),
