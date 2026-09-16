@@ -38,11 +38,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
-        {/* Inyecta el QuickCSS del usuario antes del primer paint (sin FOUC).
-            Debe ir al final del <head> para poder sobreescribir globals.css. */}
-        <QuickCSSInjector />
       </head>
       <body className="font-body-md antialiased bg-background text-on-surface">
+        {/* Inyecta el QuickCSS del usuario antes de la hidratación (sin FOUC).
+            next/script beforeInteractive: Next lo posiciona correctamente. */}
+        <QuickCSSInjector />
         <Providers>{children}</Providers>
       </body>
     </html>

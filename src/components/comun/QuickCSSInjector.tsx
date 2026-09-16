@@ -1,21 +1,21 @@
+import Script from "next/script";
 import { QUICK_CSS_STORAGE_KEY, QUICK_CSS_STYLE_ID } from "@/lib/constants/default-css";
 
 /**
  * Inyección del CSS personalizado (QuickCSS) SIN destellos (FOUC).
  *
- * Se renderiza dentro del <head> del layout root. Es un Server Component que
- * emite un <script> **inline y bloqueante** (sin defer/async): el navegador lo
- * ejecuta antes de pintar el <body>, por lo que el <style> con el tema del
- * usuario ya está presente en el primer frame. Así el tema persiste entre
- * páginas sin que se vea primero el diseño por defecto.
+ * Usa `next/script` con `strategy="beforeInteractive"`: Next lo coloca en el
+ * documento inicial y lo ejecuta antes de la hidratación, por lo que el
+ * <style> con el tema del usuario ya está presente en el primer frame.
  *
- * El script lee `localStorage`, y si hay CSS guardado, crea/actualiza un
- * <style id="custom-lifetracker-css"> en el <head>.
+ * IMPORTANTE: NO usar un `<script>` crudo con `dangerouslySetInnerHTML` dentro
+ * del árbol de React del App Router. Aunque funciona en el render inicial,
+ * durante la navegación del lado del cliente React intenta reconciliar ese nodo
+ * y lanza una "client-side exception". `next/script` evita ese problema porque
+ * Next gestiona el ciclo de vida del script fuera de la reconciliación normal.
  *
- * Nota sobre `dangerouslySetInnerHTML`: es la única forma soportada por React
- * para incrustar un script inline que debe correr en el arranque. El contenido
- * es 100% estático (constantes del proyecto), no interpola datos del usuario,
- * por lo que no introduce una superficie de inyección.
+ * El contenido es 100% estático (constantes del proyecto); no interpola datos
+ * del usuario, por lo que no introduce superficie de inyección.
  */
 export function QuickCSSInjector() {
   const script = `
@@ -35,5 +35,9 @@ export function QuickCSSInjector() {
 })();
 `.trim();
 
-  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+  return (
+    <Script id="lifetracker-quickcss" strategy="beforeInteractive">
+      {script}
+    </Script>
+  );
 }
