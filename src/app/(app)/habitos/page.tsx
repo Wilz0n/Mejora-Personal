@@ -95,7 +95,7 @@ export default async function HabitsPage({
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
           <ViewToggle current={period} />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {habits.length > 0 && <RemoveHabitButton habits={habits} />}
             <AddHabitButton variant="primary" />
           </div>
