@@ -45,7 +45,7 @@ export function Topbar({ avatar }: { avatar?: string | null }) {
       </header>
 
       {/* Bottom nav móvil */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-16 bg-surface-container-lowest border-t border-outline-variant">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex justify-around items-center h-16 pb-[env(safe-area-inset-bottom)] box-content bg-surface-container-lowest border-t border-outline-variant">
         {NAV.map((item) => {
           const active =
             item.href === "/"
