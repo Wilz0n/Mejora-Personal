@@ -24,7 +24,7 @@ LifeTracker es una app web de **hábitos + finanzas personales** en **Next.js 14
 
 Todos los modelos de dominio se aíslan por `userId` (multi-tenancy).
 
-- **User**: `id, email (unique), name?, passwordHash?, image?, appIcon? (Text), emailVerified?, timezone (default "America/Lima"), createdAt, dataResetAt (DateTime?)`. Relaciones a todo lo demás. `appIcon` es un Data URL (imagen comprimida) del **icono personalizado de la app** (favicon + logo de la sidebar), o `null` = icono por defecto. `dataResetAt` marca el reinicio del ciclo de datos (feature de archivado del 7º mes): la **antigüedad efectiva** se cuenta desde `max(createdAt, dataResetAt)` (ver `getUserTenureStart`).
+- **User**: `id, email (unique), name?, passwordHash?, image?, appIcon? (Text), quickCss? (Text), emailVerified?, timezone (default "America/Lima"), createdAt, dataResetAt (DateTime?)`. Relaciones a todo lo demás. `appIcon` es un Data URL (imagen comprimida) del **icono personalizado de la app** (favicon + logo de la sidebar), o `null` = icono por defecto. `quickCss` es el **tema personalizado (QuickCSS)** del usuario (CSS), o `null` = tema por defecto; persistente para aplicarse en todos sus dispositivos. `dataResetAt` marca el reinicio del ciclo de datos (feature de archivado del 7º mes): la **antigüedad efectiva** se cuenta desde `max(createdAt, dataResetAt)` (ver `getUserTenureStart`).
 - **Account / Session / VerificationToken**: requeridos por el Prisma Adapter de NextAuth.
 - **Habit**: `id, userId, name, icon (default "check_circle"), createdAt`. Tiene muchos `HabitLog`.
 - **HabitLog**: `id, habitId, date (String "YYYY-MM-DD"), completed (Boolean), createdAt`. **Unique(`habitId`, `date`)**: un registro por hábito por día. La fecha es un *day key* string para evitar problemas de zona horaria.
@@ -158,7 +158,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 
 > Detalle completo en **`docs/PERSONALIZACION.md`**.
 
-- **QuickCSS** (`src/lib/constants/default-css.ts`, `src/lib/quick-css.ts`, `src/components/settings/QuickCSSEditor.tsx`, `src/components/comun/QuickCSSInjector.tsx`): editor tipo Vencord que inyecta CSS del usuario en el `<head>` **sin FOUC** (script inline bloqueante). Se guarda en `localStorage` (`lifetracker:quick-css`). La plantilla expone variables `--lt-*` (paleta, **fondo** vía `--lt-bg-image`, glass, tipografía, glow), hooks por página `[data-page="..."]` (expuesto por `PageScope` en el layout de `(app)`) y recetas de tema. Editor responsive (pantalla completa en móvil, `100dvh`).
+- **QuickCSS** (`User.quickCss`; `setQuickCss`/`clearQuickCss` en `actions/settings.ts`; `updateQuickCssSchema`; `QuickCssStyle.tsx`, `QuickCSSEditor.tsx`, `default-css.ts`, `quick-css.ts`): editor tipo Vencord. El tema se **persiste en la BD** (`User.quickCss`) y se aplica en **todos los dispositivos** del usuario. Inyección **server-side sin FOUC**: `QuickCssStyle` renderiza `<style id="custom-lifetracker-css">` desde la BD en `(app)/layout.tsx`. El editor usa **vista previa en vivo** con un `<style>` propio (`quickcss-live-preview`) que NO toca el nodo de React (evita el bug `removeChild` en navegación). **Restablecer BORRA el registro** (`null`). La plantilla expone variables `--lt-*` (paleta, **fondo** vía `--lt-bg-image`, glass, tipografía, glow), hooks por página `[data-page="..."]` (via `PageScope`) y recetas. Editor responsive (pantalla completa en móvil, `100dvh`).
 - **Icono de la app** (`User.appIcon`, `setAppIcon` en `actions/settings.ts`, `updateAppIconSchema`, `AppIconButton.tsx`, `FaviconSetter.tsx`, `public/favicon.svg`): imagen comprimida en el navegador (64×64) usada como favicon + logo de la sidebar. Favicon por defecto = la hoja `public/favicon.svg`; `FaviconSetter` lo restaura al quitar el icono.
 - **Colapso de la barra lateral** (`src/components/animacion/`): solo Desktop. El logo actúa como toggle; la barra desliza con `-translate-x-full` y el contenido ajusta margen (`MainContent`), con un botón flotante de reapertura (`SidebarReopenButton`) usando el mismo icono. Estado en `SidebarCollapseProvider`.
 
@@ -225,7 +225,7 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 - **Aislamiento por `userId`** en toda query/mutación (multi-tenancy). Prisma parametrizado → sin inyección SQL.
 - **Headers de seguridad** (`next.config.js`): `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security`; `poweredByHeader: false`.
 - **Export CSV:** neutraliza *CSV/formula injection* (celdas que empiezan con `= + - @` se prefijan con `'`).
-- **Avatar / Icono de la app:** validados por Zod (solo `data:image/...` o URLs http) y comprimidos en el navegador antes de persistir. Sin `eval` en el código. El único `dangerouslySetInnerHTML` es el de `QuickCSSInjector` (inyección del QuickCSS sin FOUC) y su contenido es estático (no interpola datos de usuario).
+- **Avatar / Icono de la app:** validados por Zod (solo `data:image/...` o URLs http) y comprimidos en el navegador antes de persistir. Sin `eval` en el código. El único `dangerouslySetInnerHTML` es el de `QuickCssStyle` (tema QuickCSS del usuario dentro de un `<style>`, no ejecuta JS; acotado por Zod a ≤200 KB en `updateQuickCssSchema`).
 - **Secretos:** `.env.local` en `.gitignore`; solo `.env.example` (plantilla) versionado.
 
 ## Invariantes y decisiones de diseño (para no romper)
@@ -240,6 +240,6 @@ Esquemas Zod: `createHabitSchema`, `toggleHabitLogSchema`, `createProjectSchema`
 8. En componentes cliente, importar `single-user-client.ts` (no `single-user.ts`) para no arrastrar Prisma al navegador.
 9. La vista **mensual de hábitos es solo lectura**; el marcado ocurre solo en la vista semanal.
 10. Modales siempre con `comun/Modal.tsx` (React Portal) por el `backdrop-filter` de `.glass-panel`.
-11. El **QuickCSS** se inyecta **sin FOUC** (script inline bloqueante al final del `<head>`); mantener ese patrón. Las variables `--lt-*` y los selectores de la plantilla son el "contrato" con la IA: no renombrarlos sin romper temas guardados.
+11. El **QuickCSS** se persiste en la BD (`User.quickCss`) y se inyecta **server-side sin FOUC** (`QuickCssStyle`); la vista previa del editor usa un `<style>` propio (`quickcss-live-preview`). Nunca manipular nodos `<style>`/`<link>` que controla React (causa `removeChild` al navegar). **Restablecer borra el registro (`null`)**. Las variables `--lt-*` y selectores de la plantilla son el "contrato" con la IA: no renombrarlos sin romper temas guardados.
 12. El **colapso de la barra lateral** es **solo Desktop** (`md:`); no debe afectar la navegación móvil (bottom-nav).
 13. Avatar e **icono de la app** se **comprimen en el navegador** antes de persistir; `FaviconSetter` restaura `public/favicon.svg` cuando no hay `appIcon`.

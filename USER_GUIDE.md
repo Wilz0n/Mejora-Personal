@@ -220,11 +220,13 @@ En **Finanzas del Mes** verás un **desglose completo**: el total gastado en hor
 
 Se abre desde **Ajustes** en el menú o con el **icono de perfil** (arriba a la derecha).
 
-- **Identidad:** tu nombre, correo y foto de perfil. Con **"Editar Perfil"** puedes:
+- **Identidad e Icono:** tu nombre, correo y foto de perfil. Con **"Editar Perfil"** puedes:
   - **Cambiar tu nombre** → aparece en el saludo del Dashboard ("Hola, tu nombre") y en toda la app.
   - **Subir una foto de perfil** desde tu equipo. La app la **optimiza automáticamente** (la achica y comprime) para que ocupe muy poco. Puedes usar **AVIF (recomendado, más ligero)**, PNG, WebP o JPG. Tu foto se verá en el icono de perfil (arriba a la derecha) y en esta sección.
-  - **Cerrar sesión:** justo debajo de "Editar Perfil" verás el botón **"Cerrar sesión"** (en rojo). Cierra tu sesión y te lleva a la pantalla de inicio de sesión. Si la app está en **Modo Usuario Único** (sin login), en su lugar verás el indicador *"Modo Usuario Único activo"* y no hay botón de cerrar sesión (no hace falta).
+  - **Icono de la App:** justo debajo de "Editar Perfil". Sube tu propio icono (**.png**, **.avif**, .webp o .jpg) y se usará en **dos lugares**: el **icono de la pestaña del navegador** (favicon) y el **logo de la barra lateral** (junto a "LifeTracker"). Se guarda en tu cuenta, así lo verás igual en todos tus dispositivos. Con **"Restablecer"** vuelves al icono por defecto (la hoja) y el anterior se elimina.
+  - **Cerrar sesión:** verás el botón **"Cerrar sesión"** (en rojo). Cierra tu sesión y te lleva a la pantalla de inicio de sesión. Si la app está en **Modo Usuario Único** (sin login), en su lugar verás el indicador *"Modo Usuario Único activo"* y no hay botón de cerrar sesión (no hace falta).
 - **Moneda por Defecto:** elige **USD ($)** o **PEN (S/)**. Se aplica a todo Finanzas.
+- **Personalización (temas con QuickCSS):** cambia por completo el aspecto de la app (colores, fondo, tipografía, efectos). Abre el editor, edita las variables que vienen explicadas o **pega un tema** que tú mismo hagas o que te genere una IA (ChatGPT/Claude/Gemini). Botones: **Guardar y Aplicar**, **Copiar** (para llevar la plantilla a tu IA) y **Restablecer** (vuelve al diseño por defecto). Tu tema se guarda **en tu cuenta**, por lo que se aplica **igual en tu PC y en tu móvil**. En el móvil el menú sigue abajo como siempre; solo cambia el estilo.
 - **Gestión de Datos:**
   - **Exportar como JSON / CSV:** descarga una copia de todos tus datos (hábitos, finanzas, proyectos, cierres mensuales y gastos hormiga). Usa **JSON** para volver a verlos dentro de la web (en *Ver Análisis / Backup*) y **CSV** para analizarlos con métricas en Excel o Google Sheets.
   - **Ver Análisis / Backup:** abre una página donde puedes **volver a subir tu archivo JSON** para revisar el consolidado de tus meses de uso. Muestra:
@@ -269,6 +271,16 @@ Sí, porque la tasa es días completados sobre días del periodo. Al avanzar el 
 ## ✨ Novedades recientes
 
 Estas son las mejoras más recientes de LifeTracker:
+
+### 🎨 Personaliza el aspecto de tu app (temas)
+En **Ajustes → Personalización** tienes un editor para **cambiar por completo el estilo** de LifeTracker: colores, fondo, tipografía y efectos. Puedes editar las variables que vienen explicadas o **pegar un tema** hecho por ti o generado por una IA (ChatGPT/Claude/Gemini) — solo cópiale la plantilla y pídele el estilo que quieras (por ejemplo, uno tipo terminal, neón, etc.). Botones: **Guardar y Aplicar**, **Copiar** y **Restablecer** (vuelve al diseño original). Tu tema **se guarda en tu cuenta**, así que lo verás **igual en tu computadora y en tu celular**.
+
+### 🖼️ Pon tu propio icono de la app
+En **Ajustes → Identidad e Icono → "Icono de la App"** puedes subir tu propia imagen (**.png**, **.avif**, .webp o .jpg). Se usará como **icono de la pestaña del navegador** y como **logo de la barra lateral**. Con **"Restablecer"** vuelves al icono por defecto.
+
+### ↔️ Oculta/muestra el menú lateral (en computadora)
+En pantallas grandes, haz clic en el **logo** de la barra lateral (arriba a la izquierda) para **ocultarla** y ganar espacio; el icono queda en la esquina para **volver a mostrarla** con otro clic, con una animación suave. En el celular no cambia nada: el menú sigue abajo como siempre.
+
 
 ### 🐷 Confirmación de ahorro al cierre del mes (aviso sutil)
 

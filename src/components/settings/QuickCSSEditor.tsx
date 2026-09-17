@@ -1,47 +1,49 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/components/comun/ui/Icon";
 import { DEFAULT_QUICK_CSS } from "@/lib/constants/default-css";
-import {
-  readQuickCSS,
-  resetQuickCSS,
-  saveAndApplyQuickCSS,
-} from "@/lib/quick-css";
+import { setQuickCss, clearQuickCss } from "@/app/actions/settings";
+import { applyQuickCssPreview, clearQuickCssPreview } from "@/lib/quick-css";
 
 /**
  * "Personalización LifeTracker" — editor de QuickCSS (inspirado en Vencord).
  *
- * Tarjeta de acción rápida que abre un editor a casi pantalla completa con:
- * numeración de líneas, tipografía monoespaciada, y acciones para guardar,
- * restablecer y copiar la plantilla. El CSS se persiste en `localStorage` y se
- * inyecta en el <head> (ver `QuickCSSInjector` + `src/lib/quick-css.ts`).
+ * El tema se persiste en la **base de datos** (`User.quickCss`) para que se
+ * aplique en todos los dispositivos del usuario. La inyección definitiva la hace
+ * `QuickCssStyle` (server-side, sin FOUC). Este editor usa una **vista previa en
+ * vivo** (`applyQuickCssPreview`, nodo propio) mientras se edita; al Guardar
+ * persiste en BD y al Restablecer BORRA el registro (no deja basura).
  *
  * No reutiliza `comun/ui/Modal` porque ese modal está fijado a `max-w-md`; en su
  * lugar usa su propio overlay grande, también vía React Portal (obligatorio por
  * el `backdrop-filter` de `.glass-panel`, invariante de diseño #10).
  */
-export function QuickCSSEditor() {
+export function QuickCSSEditor({ quickCss }: { quickCss: string | null }) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [code, setCode] = useState(DEFAULT_QUICK_CSS);
-  const [customActive, setCustomActive] = useState(false);
+  const [code, setCode] = useState(quickCss ?? DEFAULT_QUICK_CSS);
+  const [customActive, setCustomActive] = useState(Boolean(quickCss));
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const gutterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
 
-  // Al abrir, carga el CSS guardado (si existe) o la plantilla por defecto.
+  // Al abrir, carga el CSS persistido en la BD (o la plantilla por defecto).
   useEffect(() => {
     if (!open) return;
-    const stored = readQuickCSS();
-    setCustomActive(Boolean(stored));
-    setCode(stored && stored.length > 0 ? stored : DEFAULT_QUICK_CSS);
-  }, [open]);
+    setCustomActive(Boolean(quickCss));
+    setCode(quickCss && quickCss.length > 0 ? quickCss : DEFAULT_QUICK_CSS);
+    setError(null);
+  }, [open, quickCss]);
 
   // Cerrar con Escape + bloquear scroll del body mientras está abierto.
   useEffect(() => {
@@ -55,6 +57,11 @@ export function QuickCSSEditor() {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
+  }, [open]);
+
+  // Al cerrar el editor sin guardar, quita la vista previa (vuelve al tema real).
+  useEffect(() => {
+    if (!open) clearQuickCssPreview();
   }, [open]);
 
   // Números de línea sincronizados con el contenido.
@@ -71,17 +78,43 @@ export function QuickCSSEditor() {
     }
   }
 
+  // Vista previa en vivo al escribir (no persiste hasta Guardar).
+  function handleChange(value: string) {
+    setCode(value);
+    applyQuickCssPreview(value);
+  }
+
   function handleSave() {
-    saveAndApplyQuickCSS(code);
-    setCustomActive(code.trim().length > 0);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1600);
+    setError(null);
+    startTransition(async () => {
+      const res = await setQuickCss({ quickCss: code });
+      if (!res.ok) {
+        setError(res.fieldErrors?.quickCss?.[0] ?? res.error);
+        return;
+      }
+      // La BD es la fuente de verdad; quita el preview y refresca para que el
+      // <style> server-side (QuickCssStyle) refleje lo guardado.
+      clearQuickCssPreview();
+      setCustomActive(code.trim().length > 0);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1600);
+      router.refresh();
+    });
   }
 
   function handleReset() {
-    resetQuickCSS();
-    setCode(DEFAULT_QUICK_CSS);
-    setCustomActive(false);
+    setError(null);
+    startTransition(async () => {
+      const res = await clearQuickCss();
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      clearQuickCssPreview();
+      setCode(DEFAULT_QUICK_CSS);
+      setCustomActive(false);
+      router.refresh();
+    });
   }
 
   async function handleCopy() {
@@ -102,7 +135,7 @@ export function QuickCSSEditor() {
       const start = el.selectionStart;
       const end = el.selectionEnd;
       const next = code.slice(0, start) + "  " + code.slice(end);
-      setCode(next);
+      handleChange(next);
       requestAnimationFrame(() => {
         el.selectionStart = el.selectionEnd = start + 2;
       });
@@ -212,7 +245,7 @@ export function QuickCSSEditor() {
                 <textarea
                   ref={textareaRef}
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
+                  onChange={(e) => handleChange(e.target.value)}
                   onScroll={syncScroll}
                   onKeyDown={handleKeyDown}
                   spellCheck={false}
@@ -236,13 +269,19 @@ export function QuickCSSEditor() {
 
               {/* Footer con acciones: apiladas/anchas en móvil, en fila en desktop */}
               <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 border-t border-outline-variant shrink-0">
+                {error && (
+                  <p className="w-full text-error text-body-sm sm:order-last sm:w-auto">
+                    {error}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="w-full sm:w-auto justify-center py-2.5 px-5 rounded-xl bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                  disabled={isPending}
+                  className="w-full sm:w-auto justify-center py-2.5 px-5 rounded-xl bg-primary text-on-primary font-medium hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <Icon name={saved ? "check" : "save"} className="text-[18px]" />
-                  {saved ? "Aplicado" : "Guardar y Aplicar"}
+                  {isPending ? "Guardando..." : saved ? "Aplicado" : "Guardar y Aplicar"}
                 </button>
                 <div className="flex gap-2 sm:gap-3">
                   <button
@@ -259,7 +298,8 @@ export function QuickCSSEditor() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="flex-1 sm:flex-none justify-center py-2.5 px-4 rounded-xl border border-transparent text-error hover:bg-error-container/10 hover:border-error/40 transition-colors flex items-center gap-2"
+                    disabled={isPending}
+                    className="flex-1 sm:flex-none justify-center py-2.5 px-4 rounded-xl border border-transparent text-error hover:bg-error-container/10 hover:border-error/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Icon name="restart_alt" className="text-[18px]" />
                     <span>Restablecer</span>

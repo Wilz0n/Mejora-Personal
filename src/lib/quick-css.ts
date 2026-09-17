@@ -1,63 +1,36 @@
-import {
-  QUICK_CSS_STORAGE_KEY,
-  QUICK_CSS_STYLE_ID,
-} from "@/lib/constants/default-css";
+import { QUICK_CSS_PREVIEW_STYLE_ID } from "@/lib/constants/default-css";
 
 /**
- * Helpers client-side para el sistema QuickCSS.
+ * Helpers client-side para la **vista previa en vivo** del editor QuickCSS.
  *
- * Centralizan la lectura/escritura en `localStorage` y la manipulación del
- * <style id="custom-lifetracker-css"> del <head>, de forma que el editor y
- * cualquier otro consumidor apliquen los cambios de manera consistente y en
- * tiempo real (sin recargar la página).
+ * La fuente de verdad del tema es la base de datos (`User.quickCss`), que se
+ * inyecta en el servidor (`QuickCssStyle` → `<style id="custom-lifetracker-css">`).
+ * Estos helpers solo manejan un <style id="quickcss-live-preview"> **propio del
+ * editor** para previsualizar cambios sin guardar; NUNCA tocan el nodo que
+ * controla React (evita el bug de reconciliación `removeChild`).
  */
 
-/** Devuelve el CSS guardado por el usuario, o `null` si no hay ninguno. */
-export function readQuickCSS(): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(QUICK_CSS_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Inyecta (o actualiza) el <style> con el CSS dado en el <head>.
- * Si `css` está vacío, elimina el <style>.
- */
-export function applyQuickCSSToDom(css: string): void {
+/** Aplica una vista previa del CSS en vivo (crea/actualiza el <style> propio). */
+export function applyQuickCssPreview(css: string): void {
   if (typeof document === "undefined") return;
-  const existing = document.getElementById(QUICK_CSS_STYLE_ID);
+  const existing = document.getElementById(
+    QUICK_CSS_PREVIEW_STYLE_ID,
+  ) as HTMLStyleElement | null;
+
   if (!css.trim()) {
     existing?.remove();
     return;
   }
-  let el = existing as HTMLStyleElement | null;
-  if (!el) {
-    el = document.createElement("style");
-    el.id = QUICK_CSS_STYLE_ID;
+  const el = existing ?? document.createElement("style");
+  if (!existing) {
+    el.id = QUICK_CSS_PREVIEW_STYLE_ID;
     document.head.appendChild(el);
   }
   el.textContent = css;
 }
 
-/** Guarda el CSS en `localStorage` y lo aplica al DOM inmediatamente. */
-export function saveAndApplyQuickCSS(css: string): void {
-  try {
-    window.localStorage.setItem(QUICK_CSS_STORAGE_KEY, css);
-  } catch {
-    /* ignore quota / privacy-mode errors */
-  }
-  applyQuickCSSToDom(css);
-}
-
-/** Borra el CSS personalizado (vuelve al diseño por defecto "Nocturne"). */
-export function resetQuickCSS(): void {
-  try {
-    window.localStorage.removeItem(QUICK_CSS_STORAGE_KEY);
-  } catch {
-    /* ignore */
-  }
-  document.getElementById(QUICK_CSS_STYLE_ID)?.remove();
+/** Elimina la vista previa en vivo (deja el tema persistido de la BD). */
+export function clearQuickCssPreview(): void {
+  if (typeof document === "undefined") return;
+  document.getElementById(QUICK_CSS_PREVIEW_STYLE_ID)?.remove();
 }
