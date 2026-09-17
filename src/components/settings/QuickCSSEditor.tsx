@@ -166,14 +166,12 @@ export function QuickCSSEditor({ quickCss }: { quickCss: string | null }) {
             Personalización LifeTracker
           </h4>
 
-          {/* Fila: badge de estado a la izquierda, icono de código a la derecha */}
-          <div className="flex items-center justify-between gap-2">
-            {customActive ? (
+          {/* Fila: badge "Tema activo" e icono de código, juntos a la izquierda */}
+          <div className="flex items-center gap-2">
+            {customActive && (
               <span className="text-label-caps font-label-caps uppercase px-2 py-0.5 rounded-full bg-primary/20 text-primary whitespace-nowrap">
                 Tema activo
               </span>
-            ) : (
-              <span />
             )}
             <Icon
               name="code"
