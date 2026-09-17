@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 import { getUserId } from "@/lib/db/session";
-import { updateProfileSchema, setCurrencySchema, updateAppIconSchema } from "@/lib/validators";
+import { updateProfileSchema, setCurrencySchema, updateAppIconSchema, updateQuickCssSchema } from "@/lib/validators";
 import type { ActionResult } from "@/lib/action-result";
 
 /** Actualiza el nombre (y opcionalmente el avatar por URL) del usuario. */
@@ -62,6 +62,52 @@ export async function setAppIcon(input: unknown): Promise<ActionResult> {
   // El icono afecta a todo el layout (sidebar) y al favicon del <head>.
   revalidatePath("/", "layout");
   revalidatePath("/settings");
+  return { ok: true };
+}
+
+/**
+ * Guarda el tema personalizado (QuickCSS) del usuario. Se persiste en la BD para
+ * que el mismo tema se aplique en todos sus dispositivos. Cadena vacía → borra
+ * el tema (equivalente a `clearQuickCss`), evitando guardar contenido inútil.
+ */
+export async function setQuickCss(input: unknown): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  const parsed = updateQuickCssSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      error: "CSS inválido",
+      fieldErrors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const css = parsed.data.quickCss.trim();
+
+  await prisma.user.update({
+    where: { id: userId },
+    // Si está vacío, se guarda null → no ocupa almacenamiento innecesario.
+    data: { quickCss: css === "" ? null : css },
+  });
+
+  // El tema afecta a toda la app (se inyecta desde el layout root).
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+/**
+ * Restablece el tema por defecto: BORRA el QuickCSS del usuario en la BD
+ * (`null`). Así no se acumula contenido innecesario ni se malgasta almacenamiento.
+ */
+export async function clearQuickCss(): Promise<ActionResult> {
+  const userId = await getUserId();
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { quickCss: null },
+  });
+
+  revalidatePath("/", "layout");
   return { ok: true };
 }
 

@@ -137,7 +137,7 @@ export default async function SettingsPage() {
                   páginas.
                 </p>
               </div>
-              <QuickCSSEditor />
+              <QuickCSSEditor quickCss={profile.quickCss} />
             </div>
 
             {/* Persistencia */}
