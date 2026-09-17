@@ -31,7 +31,7 @@ export default async function AppLayout({
         <SidebarReopenButton appIcon={profile.appIcon} />
         <MainContent>
           <Topbar avatar={profile.image} />
-          <div className="p-gutter max-w-container-max mx-auto w-full min-w-0 overflow-x-hidden pb-24 md:pb-12">
+          <div className="p-gutter max-w-container-max mx-auto w-full min-w-0 overflow-x-hidden pb-[calc(4rem+env(safe-area-inset-bottom)+1.5rem)] md:pb-12">
             <PageScope>{children}</PageScope>
           </div>
         </MainContent>
