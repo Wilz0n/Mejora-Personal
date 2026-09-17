@@ -178,7 +178,7 @@ export function RemoveHabitButton({ habits }: RemoveHabitButtonProps) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex flex-none items-center justify-center gap-2 border border-primary/40 text-primary font-medium px-4 py-2 rounded-xl hover:bg-primary/10 transition-colors whitespace-nowrap"
+        className="flex flex-1 sm:flex-none items-center justify-center gap-2 border border-primary/40 text-primary font-medium px-4 py-2 rounded-xl hover:bg-primary/10 transition-colors whitespace-nowrap"
       >
         <Icon name="edit" className="text-[20px] shrink-0" />
         <span>Modificar Hábito</span>

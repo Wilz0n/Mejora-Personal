@@ -153,33 +153,40 @@ export function QuickCSSEditor({ quickCss }: { quickCss: string | null }) {
       {/* Tarjeta / botón de acción rápida */}
       <button
         onClick={() => setOpen(true)}
-        className="w-full text-left flex flex-col gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant hover:border-primary/50 hover:bg-surface-variant transition-colors group"
+        className="w-full text-left flex items-start gap-3 p-4 bg-surface-container-low rounded-lg border border-surface-variant hover:border-primary/50 hover:bg-surface-variant transition-colors group"
       >
-        {/* Fila superior: icono + título · badge + acción */}
-        <div className="flex items-center gap-3">
-          <div className="shrink-0 w-11 h-11 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
-            <Icon name="palette" filled />
-          </div>
-          <h4 className="text-body-lg font-body-lg text-on-surface font-medium min-w-0 flex-1">
+        {/* Icono principal */}
+        <div className="shrink-0 w-11 h-11 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
+          <Icon name="palette" filled />
+        </div>
+
+        {/* Contenido en columna: título · (Tema activo + code) · descripción */}
+        <div className="min-w-0 flex-1 flex flex-col gap-2">
+          <h4 className="text-body-lg font-body-lg text-on-surface font-medium">
             Personalización LifeTracker
           </h4>
-          <div className="flex items-center gap-2 shrink-0">
-            {customActive && (
+
+          {/* Fila: badge de estado a la izquierda, icono de código a la derecha */}
+          <div className="flex items-center justify-between gap-2">
+            {customActive ? (
               <span className="text-label-caps font-label-caps uppercase px-2 py-0.5 rounded-full bg-primary/20 text-primary whitespace-nowrap">
                 Tema activo
               </span>
+            ) : (
+              <span />
             )}
             <Icon
               name="code"
-              className="text-on-surface-variant group-hover:text-primary group-hover:scale-110 transition-all"
+              className="shrink-0 text-on-surface-variant group-hover:text-primary group-hover:scale-110 transition-all"
             />
           </div>
+
+          {/* Descripción */}
+          <p className="text-body-sm font-body-sm text-on-surface-variant">
+            Editor QuickCSS: cambia colores, fuentes, glass y efectos de toda la
+            app.
+          </p>
         </div>
-        {/* Descripción a lo ancho, debajo */}
-        <p className="text-body-sm font-body-sm text-on-surface-variant">
-          Editor QuickCSS: cambia colores, fuentes, glass y efectos de toda la
-          app.
-        </p>
       </button>
 
       {open &&
